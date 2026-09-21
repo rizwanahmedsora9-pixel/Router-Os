@@ -1,0 +1,296 @@
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkHelpRpm.htm:20:<p><B>SSID</B> - Enter a value of up to 32 characters. The same 
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkHelpRpm.htm:21:Name (SSID) must be assigned to all wireless devices in your network.</p>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkHelpRpm.htm:22:<p><B>Channel</B> - This field determines which operating frequency will be used. It is not necessary to change the wireless channel unless you notice interference problems with another nearby access point. If you select auto, then AP will choose the best channel automatically.</p>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkHelpRpm.htm:24:<p><B>Channel Width</B> - The bandwidth of the wireless channel.</p>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkHelpRpm.htm:31:<p><B>Enable SSID Broadcast</B> - If you select the <B>Enable SSID Broadcast</B> 
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkHelpRpm.htm:32:checkbox, the wireless router will broadcast its name (SSID) on the air. </p>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkHelpRpm.htm:34:<DIV id="display_wds" style="display:none">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkHelpRpm.htm:35:<p><B>Enable WDS</B> - You can select this to enable WDS, 
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkHelpRpm.htm:36:with this function, the Router can bridge two or more Wlans. NOTE: If this checkbox is selected, you had better make sure the following settings are correct. </p>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkHelpRpm.htm:37:<p><B>SSID(to be bridged)</B> - The SSID of the AP your Router is going to connect to as a client.
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkHelpRpm.htm:38:You can also use the search function to select the SSID to join.</p>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkHelpRpm.htm:39:<p><B>BSSID(to be bridged)</B> - The BSSID of the AP your Router is going to connect to as a client.
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkHelpRpm.htm:40:You can also use the search function to select the BSSID to join.</p>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkHelpRpm.htm:41:<p><B>Search</B> - Click this button, you can search the AP which runs in the current channel.</p>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkHelpRpm.htm:49:document.getElementById("display_wds").style.display = wlan_wds == 1? "" : "none";
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:104:var wlanChannelWidthArray = new Array(
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:107:"<span id=\"t_automatic\" name=\"t_automatic\">Automatic<\/span>",
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:114:<FORM action="StatusRpm.htm" enctype="multipart/form-data" method="get">
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:138:        <TD width=25% class=Item id = "t_mac_addr" name="t_mac_addr">MAC Address:</TD>
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:142:        <TD class=Item id = "t_ip_addr" name="t_ip_addr">IP Address:</TD>
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:146:        <TD class=Item id = "t_sub_mask" name="t_sub_mask">Subnet Mask:</TD>
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:153:function writeSSIDOnPage(ssid)
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:156:	for (i=0;i<ssid.length; i++)
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:158:		if (ssid.charAt(i) == ' ')
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:160:		else if (ssid.charAt(i) == '<')
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:165:		  	document.write(ssid.charAt(i));
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:175:		var wlanChannel = "<SPAN id=\"t_auto\" name=\"t_auto\">Auto</SPAN> (<SPAN id=\"t_cur_chl\" name=\"t_cur_chl\">Current channel</SPAN> " +wlanPara[9]+ ")" ;
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:177:		var wlanChannel=wlanPara[2];
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:181:	var wlanWDSStatus=wlanPara[10];
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:195:				document.write('<TR><TD class=Item id = "t_name_ssid">Name (SSID):<\/TD><TD colspan=2>'); 
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:201:			writeSSIDOnPage(wlanName);
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:206:	document.write('<TR><TD class=Item id = "t_channel">Channel:<\/TD><TD colspan=2>' + wlanChannel +'<\/TD><\/TR>');
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:210:	document.write('<TR><TD class=Item id="t_chanel_width">Channel Width:<\/TD><td>'+ wlanChannelWidthArray[wlanPara[6]] +'<\/td>');
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:211:	document.write('<TR><TD class=Item id = "t_mac_addr" name="t_mac_addr">MAC Address:<\/TD><TD colspan=2>' + wlanMac +'<\/TD><\/TR>');
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:212:	switch (wlanWDSStatus)
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:214:		case 0:wlanWDSStatus = "<SPAN id=\"t_wds_init\">Init...</SPAN>";break;
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:215:		case 1:wlanWDSStatus = "<SPAN id=\"t_wds_scan\">Scan...</SPAN>";break;
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:216:		case 2:wlanWDSStatus = "<SPAN id=\"t_wds_join\">Join...</SPAN>";break;
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:217:		case 3:wlanWDSStatus = "<SPAN id=\"t_wds_auth\">Auth...</SPAN>";break;
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:218:		case 4:wlanWDSStatus = "<SPAN id=\"t_wds_asso\">Assoc...</SPAN>";break;
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:219:		case 5:wlanWDSStatus = "<SPAN id=\"t_wds_run\">Run</SPAN>";break;
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:220:		case 6:wlanWDSStatus = "<SPAN id=\"t_wds_dis\">Disable</SPAN>";break;
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:221:		default:wlanWDSStatus = "<SPAN id=\"t_wds_inv\">Invalid</SPAN>";break;
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:223:	if (wlan_wds)
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:224:       document.write('<TR><TD class=Item id = "t_wds_status">WDS Status:<\/TD><TD colspan=2>' + wlanWDSStatus +'<\/TD><\/TR>');
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:249:	document.write('<TR><TD class=Item id = "t_mac_addr"  name="t_mac_addr">MAC Address:<\/TD><TD colspan=2>' + wanPara[row+1] +'<\/TD><\/TR>');
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:252:	document.write('<TR><TD class=Item id = "t_ip_addr" name="t_ip_addr">IP Address:<\/TD><TD>' + wanPara[row+2] +'<\/TD><TD>' + wanTypeStringArray[wanTypeIndex] +'<\/TD><\/TR>');
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:254:	document.write('<TR><TD class=Item id = "t_sub_mask" name="t_sub_mask">Subnet Mask:<\/TD><TD>' + wanPara[row+4] +'<\/TD>');
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:258:		document.write('<TD class=emp><input name=Logout type=button class=button value=Logout onClick="return doLogout(' + i +');">&nbsp;&nbsp;' + IEEE8021xLoginStringArray[IEEE8021xStatusIndex] +'<\/TD><\/TR>');
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:262:		document.write('<TD class=emp><input name=Login type=button class=button value=Login onClick="return 	doLogin(' + i +');">&nbsp;&nbsp;' + IEEE8021xLoginStringArray[IEEE8021xStatusIndex] +'<\/TD><\/TR>');
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:273:		document.write('<TD class=emp><input name=ReleaseIp type=button class=button value=Release 	    onClick="return doRelease(' + i +');" ' + DHCPBtnStatus +'>&nbsp;&nbsp;' + DHCPStringArray[DHCPStatusIndex] +'<\/TD><\/TR>');
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:277:		document.write('<TD class=emp><input name=RenewIp type=button class=button value=Renew onClick="return doRenew(' + i +');" ' + DHCPBtnStatus +'>&nbsp;&nbsp;' + DHCPStringArray[DHCPStatusIndex] +'<\/TD><\/TR>');
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:292:			document.write('<TD><input name=Connect type=button class=button id=Connect value=Connect onClick="return doConnect(' + i +');" ><\/TD><\/TR>');
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:294:			document.write('<TD><input name=Disconnect type=button class=button id=Disconnect value=Disconnect onClick="return doDisConnect(' + i +');" ><\/TD><\/TR>');
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:304:			document.write('<TR><TD class=Item id = "t_ip_addr" name="t_ip_addr">IP Address:<\/TD><TD>' + wanPara[15] +'<\/TD><TD>' + wanTypeStringArray[SecType] +'<\/TD><\/TR>');
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:305:			document.write('<TR><TD class=Item id = "t_sub_mask" name="t_sub_mask">Subnet Mask:<\/TD><TD>' + wanPara[16] +'<\/TD>');
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:311:					document.write('<TD class=emp><input name=RenewSecIp type=button class=button value=Renew onClick="return doSecRenew(' + i +');">&nbsp;&nbsp;' + DHCPStringArray[SecDHCPStat] +'<\/TD><\/TR>');
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:315:					document.write('<TD class=emp><input name=ReleaseSecIp type=button class=button value=Release onClick="return doSecRelease(' + i +');">&nbsp;&nbsp;' + DHCPStringArray[SecDHCPStat] +'<\/TD><\/TR>');
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:319:					document.write('<TD class=emp><input name=RenewSecIp type=button class=button value=Renew onClick="return doSecRenew(' + i +');" disabled>&nbsp;&nbsp;' + DHCPStringArray[SecDHCPStat] +'<\/TD><\/TR>');
+wr720n/unpacked-os/v2.0-160426/webroot/StatusRpm.htm:369:        <TD><INPUT name="Refresh" class="button" type="button" id="Refresh" value="Refresh" onClick="return doRefresh();"></TD>
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:4:function doBack(){location.href="/userRpm/WlanNetworkRpm.htm?newBridgessid=&ssid=" + transToURL(pagePara[0].toString())
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:6:	                              + "&channel=" + pagePara[2] 
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:15:	location.href="/userRpm/popupSiteSurveyRpm.htm?refresh=" + rescan
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:16:	               + "&ssid=" + transToURL(pagePara[0].toString())
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:18:	               + "&channel=" + pagePara[2]
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:64:var bssidName = new Array(
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:66:	"apBssid",
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:67:	"staBssid",
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:68:	"staBssid",
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:69:	"rptBssid",
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:70:	"pptBssid",
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:71:	"mptBssid",
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:72:	"rptBssid"
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:74:var ssidName = new Array(
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:76:	"apSsid",
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:77:	"staSsid",
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:78:	"staSsid",
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:79:	"rptSsid",
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:80:	"pptSsid",
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:81:	"mptSsid",
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:82:	"rptSsid"
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:88:<BODY onLoad="setTagStr(document,'ntw_sit_survey'); LoadHelp('SiteSurveyHelpRpm.htm'); resize(this);" >
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:89:  <FORM action="SiteSurveyRpm.htm" enctype="multipart/form-data" method="get" onSubmit="return doSubmit();">
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:107:								document.write(siteSurveyPara[1]);
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:116:                                <TD >BSSID</TD>
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:117:                                <TD>SSID</TD>
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:119:                                <TD id="t_channel">Channel</TD>
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:124:var listLen = siteSurveyPara[1];
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:151:		if ((0 == siteSurveyPara[0]) || (1 == siteSurveyPara[0]))
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:157:			document.write('<td>' + '<a href="/userRpm/WlanNetworkRpm.htm?newBridgessid=' + transToURL(siteList[row + 1].toString())+ '&newBrdgeBssid=' + transToURL(siteList[row + 0].toString()) + '&ssid=' + transToURL(pagePara[0].toString())+ '&curRegion=32' + '&channel=' + pagePara[2]+ '&BrlChannel=' + siteList[row+3] + '&chanWidth=' + pagePara[3]+ '&mode=' + pagePara[4]+ '&wrr=' + pagePara[5]+ '&sb=' + pagePara[6]+ '&select=' + pagePara[7] + '" id="t_conn" name="t_conn">Connect<\/a><\/td><\/tr>');}
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:180:        	<TD> <INPUT name="Back" type="button" class="button" value="Back" onClick="doBack();">
+wr720n/unpacked-os/v2.0-160426/webroot/popupSiteSurveyRpm.htm:181:             <INPUT name="Reflesh" type="button" class="button" value="Refresh" onClick="doRefresh(1);"></TD>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:19:// check len of ssid
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:20:function checkssid(ssid)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:22:	return getValLen(ssid);
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:25:function checkbrlssid()
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:28:	return getValLen(cf.brlssid.value);
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:115:	if (cf.wdsbrl.checked)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:117:		document.getElementById("wdsshow").style.display = "";
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:119:		if (cf.keytype.value == 1)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:123:			cf.keytext.disabled = true;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:125:		if ((cf.keytype.value == 2) || (cf.keytype.value == 3))
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:128:			cf.keytext.disabled = false;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:130:			cf.keytext.maxLength = (cf.keytype.value == 2)? 16:32;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:132:		else if(cf.keytype.value == 4)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:134:			cf.keytext.disabled = false;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:137:			cf.keytext.maxLength = 64;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:142:		document.getElementById("wdsshow").style.display = "none";
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:147:function doSelKeytype()
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:150:	if ((cf.keytype.value == 2) || (cf.keytype.value == 3))
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:154:		cf.keytext.disabled = false;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:155:		cf.keytext.maxLength = (cf.keytype.value == 2)? 16:32;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:157:	else if(cf.keytype.value == 4)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:159:		cf.keytext.disabled = false;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:162:		cf.keytext.maxLength = 64;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:166:		cf.keytext.disabled = true;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:174:function doCheckPskPasswd()
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:177:	len = getValLen(cf.keytext.value);
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:180:		alert(js_psk_empty="Empty PSK password, please input one!");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:185:		alert(js_psk_char="PSK password should not be less than 8 characters, please input again!");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:194:			c = cf.pskSecret.value.charAt(i);
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:197:				alert(js_psk_hex="The 64 bytes PSK password include non-hexadecimal characters, please input again.");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:205:function doSurvey()
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:207:	var ss = document.forms[0].ssid1.value;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:208:	if(document.forms[0].wdsbrl.checked)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:209:		location.href="popupSiteSurveyRpm.htm?select=" + document.forms[0].wdsbrl.checked
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:212:									+ "&ssid=" + transToURL(ss.toString())
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:214:									+ "&channel=" + document.forms[0].channel.value
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:223:	var STALen = getValLen(cf.keytext.value);
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:229:		if (wlanPara[35].charAt(i) != cf.keytext.value.charAt(i))
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:238:	var ressid;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:239:	var brlressid;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:244:		var ssidName = "ssid" + i;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:245:		var ssiden;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:246:		var ssidValue;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:249:			checkboxName = "enssid" + i;		
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:250:			ssiden = document.getElementById(checkboxName);
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:252:		ssidValue = document.getElementById(ssidName);
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:254:		if (i == 1 || ssiden.checked == true)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:256:			ressid = checkssid(ssidValue.value);
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:257:			if(0 == ressid)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:259:				alert(js_input_ssid="Please input SSID!");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:260:				doSelKeytype();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:263:			if(ressid > 32)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:265:				alert(js_ssid_exe="The SSID cannot exceed 32 characters. Please input correctly!");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:266:				doSelKeytype();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:271:	if (cf.wdsbrl.checked)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:273:		brlressid = checkbrlssid();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:274:		if(brlressid > 32)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:276:			alert(js_ssid_exe="The SSID cannot exceed 32 characters. Please input correctly!");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:277:			doSelKeytype();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:280:		if(0 == brlressid)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:282:			alert(js_input_bridge_ssid="Please input Bridged SSID!");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:283:			doSelKeytype();			
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:286:		var bssid = cf.brlbssid.value;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:287:		if (macverify(bssid) == false)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:289:			doSelKeytype();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:293:        if (isBroadcast(bssid) == true)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:295:			alert(js_bridge_broadcast="The bridged BSSID is broadcast address, please input again!");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:296:			doSelKeytype();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:300:		if (isAllzero(bssid) == true)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:302:			alert(js_bridge_invalid="The bridged BSSID is invalid, please input again!");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:303:			doSelKeytype();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:307:		if (isMulticast(bssid) == true)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:309:			alert(js_bridge_multicast="The bridged BSSID is multicast address, please input again!");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:310:			doSelKeytype();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:314:		if ((cf.keytype.value == 2)&&((getValLen(cf.keytext.value)!=5) && (getValLen(cf.keytext.value)!=13) && (getValLen(cf.keytext.value)!=16)))
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:317:			doSelKeytype();			
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:320:		else if ((cf.keytype.value == 3)&&((getValLen(cf.keytext.value)!=10) && (getValLen(cf.keytext.value)!=26) && (getValLen(cf.keytext.value)!=32)))
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:323:			doSelKeytype();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:327:		if (cf.keytype.value == 3)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:329:			if (checkwephexkey(cf.keytext.value) == false)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:332:				doSelKeytype();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:336:		if (cf.keytype.value == 4)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:338:			if ((getValLen(cf.keytext.value) == 64) && (checkwephexkey(cf.keytext.value) == false))
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:340:				alert(js_pskkey_corret="The Hex PSK key includes illegal characters!");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:341:				doSelKeytype();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:347:	if ((!checkname(document.forms[0].ssid1.value)) || (!checkname(cf.brlssid.value)))
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:349:		alert(js_ssid_ill="The SSID contains illegal characters, please input another one!");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:350:		doSelKeytype();		
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:354:	// add by zanglei. ssid 1 to ssid 4 should all dont support chinese input.
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:355:	if ((!checkname(document.forms[0].ssid2.value)) || (!checkname(cf.brlssid.value)))
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:357:		alert(js_ssid_ill="The SSID contains illegal characters, please input another one!");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:358:		doSelKeytype();		
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:362:	if ((!checkname(document.forms[0].ssid3.value)) || (!checkname(cf.brlssid.value)))
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:364:		alert(js_ssid_ill="The SSID contains illegal characters, please input another one!");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:365:		doSelKeytype();		
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:368:	if ((!checkname(document.forms[0].ssid4.value)) || (!checkname(cf.brlssid.value)))
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:370:		alert(js_ssid_ill="The SSID contains illegal characters, please input another one!");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:371:		doSelKeytype();		
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:390:					doSelKeytype();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:400:					doSelKeytype();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:407:	if (cf.wdsbrl.checked == false)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:409:		cf.brlssid.value = "";
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:410:		cf.brlbssid.value = "";
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:411:		cf.keytype.value = 1;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:412:		cf.keytext.value = "";
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:416:		if (cf.channel.value == 0)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:418:			alert(js_bridge_chan_error="AP channel can't be set to auto if the WDS is checked!");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:422:	if ((cf.wdsbrl.checked == true) &&(wlanPara[31] != 0) && (cf.channel.value != wlanPara[31]))
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:424:    //    alert(js_bridge_not_same="The Bridged AP's channel is "+wlanPara[31]+", not the same as your AP's.Please reset your channel or disable the bridge function.");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:425:	    alert(js_bridge_not_same="The Bridged AP's channel is not the same as your AP's.Please reset your channel or disable the bridge function.");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:426:		doSelKeytype();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:430:	if ((cf.wdsbrl.checked==true) && (wlanPara[28]==1) && (wlanPara[29] == 1))
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:432:	    if ((wlanPara[33] > 1) && (cf.keytype.value == 4))
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:434:			doSelKeytype();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:435:			alert(js_security_not_set="Your AP's security is WEP and the index isn't 1, so you can't use the wpa_psk as WDS's security.")
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:440:			if (((cf.keytype.value == 2) && (wlanPara[34] == 2))
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:441:				|| ((cf.keytype.value == 3) && (wlanPara[34] == 1)))
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:445:					doSelKeytype();		
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:446:					alert(js_wep_notsame="If both your AP and WDS use WEP with the same index as security mode, then you should make sure the keys are the same!");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:450:			if (((cf.keytype.value == 2) && (wlanPara[34] == 1))
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:451:				|| ((cf.keytype.value == 3) && (wlanPara[34] == 2)))
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:453:				doSelKeytype();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:454:				alert(js_wep_notsame="If both your AP and WDS use WEP with the same index as security mode, then you should make sure the keys are the same!");
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:461:	if (cf.keytype.value == 4)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:463:		if (doCheckPskPasswd() == false)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:465:			doSelKeytype();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:487:	var channelIndex = 32;	
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:491:	channelIndex = (channelIndex)*4;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:513:	var oldChannel = cf.channel.value;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:515:	cf.channel.options.length = 1;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:516:	var channelIndex = 32;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:517:	channelIndex = (channelIndex)*4;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:519:	var oldRegion = regionInfo[channelIndex];
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:520:	while(oldRegion == regionInfo[channelIndex])
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:522:		for (var i=regionInfo[channelIndex+1]; i<=regionInfo[channelIndex+2]; i++)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:540:			cf.channel.options[j++]=optionObj;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:541:			if (i == oldChannel)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:542:				cf.channel.value =i;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:544:		channelIndex =channelIndex+4;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:659:function doMutilSsid()
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:662:	if(cf.enssid2.checked || cf.enssid3.checked || cf.enssid4.checked)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:664:		cf.wdsbrl.checked = false;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:666:		cf.wdsbrl.disabled = true;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:669:		cf.wdsbrl.disabled = false;
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:673:function doSsidCheck(mutilSsid, i)
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:675:	doMutilSsid();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:676:	document.getElementById("ssid"+i).disabled =!mutilSsid.checked; 
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:683:  <FORM onSubmit="return doSubmit();" action="WlanNetworkRpm.htm" method="get" enctype="multipart/form-data">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:693:			<TD class="Item" id="t_ssid1">SSID1:</TD><TD><INPUT class="text" name="ssid1" id="ssid1" maxLength=32 size=32></TD>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:696:			<TD class="Item" id="t_ssid2">SSID2:</TD><TD><INPUT class="text" name="ssid2" id="ssid2" maxLength=32 size=32 disabled ="disabled">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:697:				<INPUT type="checkbox" value=2 name="enssid2" id="enssid2" onclick = "doSsidCheck(this, 2)">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:701:			<TD class="Item" id="t_ssid3">SSID3:</TD><TD><INPUT class="text" name="ssid3" id="ssid3" maxLength=32 size=32 disabled ="disabled">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:702:				<INPUT type="checkbox" value=3 name="enssid3" id="enssid3" onclick = "doSsidCheck(this, 3)">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:706:			<TD class="Item" id="t_ssid4">SSID4:</TD><TD><INPUT class="text" name="ssid4" id="ssid4" maxLength=32 size=32 disabled ="disabled">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:707:				<INPUT type="checkbox" value=4 name="enssid4" id="enssid4" onclick = "doSsidCheck(this, 4)">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:711:          <TD class="Item" id="t_channel">Channel:</TD>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:712:          <TD><SELECT id="channel" name="channel" class="listS">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:713:          	<OPTION value=0 id="t_auto" name="t_auto">Auto</OPTION>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:718:          <TD><SELECT name="mode" class="listL" onChange="changeRegion();">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:729:          <TD class="Item" id="t_chn_width">Channel Width:</TD>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:730:          <TD><SELECT name="chanWidth" class="listS">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:731:              <OPTION value=2 id="t_auto" name="t_auto">Auto</OPTION>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:732:              <OPTION value=1 id="t_20M" name="t_20M">20MHz</OPTION>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:733:              <OPTION value=3 id="t_40M" name="t_40M">40MHz</OPTION>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:741:          <TD><INPUT type="checkbox" value=1 name="ap">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:746:          <TD><INPUT type="checkbox" value=2 name="broadcast">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:747:            &nbsp;<A id="t_enSsidBroadcast">Enable SSID Broadcast</A></TD>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:749:        <TR id="display_wds">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:751:          <TD ><INPUT type="checkbox" value=2 name="wdsbrl" id="wdsbrl" onClick="doBrl()">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:752:            &nbsp;<A id="t_enWdsbrl">Enable WDS</A></TD>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:754:      <TABLE id="wdsshow" style="display:none">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:756:          <TD class="Item" id="t_brlssid">SSID(to be bridged):</TD>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:757:          <TD><INPUT class="text" id="brlssid" name="brlssid" maxlength=32 size=32></TD>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:760:          <TD class="Item" id="t_brlbssid">BSSID(to be bridged):</TD>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:761:          <TD><INPUT class="text" id="brlbssid" name="brlbssid" maxlength=17 size=17>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:766:          <TD align="left"><INPUT name="Survey" id="Survey" type="button" class="button" value="Survey" onClick="doSurvey();"></TD>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:769:          <TD class="Item" id="t_keytype">Key type:</TD>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:770:          <TD><SELECT name="keytype" style = "width:180px" onChange="doSelKeytype()">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:774:              <OPTION value=4  id="t_wpapsk">WPA-PSK/WPA2-PSK</OPTION>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:779:          <TD><SELECT name="wepindex" style = "width:180px">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:788:          <TD><SELECT name="authtype" id="authtype" style = "width:180px">
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:794:          <TD class=Item style="padding-left:40px" id="t_keytext">Password:</TD>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:795:          <TD colspan = "3"><INPUT name="keytext" type=text class=text id="keytext"></TD>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:802://added by ZQQ,08.12.05, add the reboot information
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:803:    document.write('<TR><TD><\/TD><TD><span style="color:#FF0000" id="t_chng">The change of wireless config will not take effect until the Router reboots, please <\/span><A href="../userRpm/SysRebootRpm.htm" id="t_click">click here<\/A><span id="t_to_reboot" style="color:#FF0000"> to reboot.<\/span><\/TD><\/TR>');  
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:813:        <TD><INPUT class="buttonBig" id="Save" type="submit" value="Save" name="Save"></TD>
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:824:document.forms[0].ssid1.value = wlanPara[3];
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:825:document.forms[0].ssid2.value = wlanPara[16];
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:826:document.forms[0].ssid3.value = wlanPara[17];
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:827:document.forms[0].ssid4.value = wlanPara[18];
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:828:document.forms[0].enssid2.checked = wlanPara[19];
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:829:document.forms[0].enssid3.checked = wlanPara[20];
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:830:document.forms[0].enssid4.checked = wlanPara[21];
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:831:document.forms[0].ssid2.disabled = !wlanPara[19];
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:832:document.forms[0].ssid3.disabled = !wlanPara[20];
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:833:document.forms[0].ssid4.disabled = !wlanPara[21];
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:834:doMutilSsid();
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:837:document.forms[0].channel.value = wlanPara[10];
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:841:document.forms[0].wdsbrl.checked = wlanPara[22];
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:842:document.forms[0].brlssid.value  = wlanPara[23];
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:843:document.forms[0].brlbssid.value  = wlanPara[24];
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:844:document.forms[0].keytype.value = wlanPara[25];
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:845:document.forms[0].keytext.value = wlanPara[26];
+wr720n/unpacked-os/v2.0-160426/webroot/WlanNetworkRpm.htm:848:document.getElementById("display_wds").style.display = wlan_wds == 1? "" : "none";

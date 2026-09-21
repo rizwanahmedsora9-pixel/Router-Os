@@ -1,0 +1,14 @@
+Status follow-up validation — 2026-09-21
+PASS: pre-change archive matches all 244 source files (checked before edits).
+PASS: pre-change bundle verification and current archive/bundle SHA-256 checks.
+PASS: all original tracked files retain baseline hashes (sha256sum -c).
+PASS: exactly five planned Markdown edits and four additions versus pre-step manifest; no deletions.
+PASS: local Markdown links and authored-document whitespace.
+PASS: 1096 saved disassembly instructions match original image bytes and bounded ranges; repeat Capstone decoding agrees.
+PASS: input hashes in trace match original binaries.
+PASS: date/time bytes, header version bytes and release-time arithmetic match reported version components.
+PASS: five key JAL targets independently decoded from raw instruction words.
+PASS: stock container verify: all 194 web records pass.
+PASS: git diff --check, original tracked files unchanged, expected session branch.
+NOT RUN: live router access, settings changes, packet forwarding verification, no-reboot switching, persistence fault or recovery tests.
+LIMIT: static analysis and a user-reported version are not an installed-flash byte comparison or safe runtime ABI.

@@ -1,0 +1,1117 @@
+ 2c8c34 Assertion failed: mac, file C:/Tornado2.2/target/config/ar9331/ag7240End.c, line 631
+ 2c8d1c Assertion failed: MACInfo->mac_dev == NULL, file C:/Tornado2.2/target/config/ar9331/ag7240End.c, line 1117
+ 2c8d88 Assertion failed: 0, file C:/Tornado2.2/target/config/ar9331/ag7240End.c, line 1451
+ 2c8ec8 Assertion failed: !ag7240_tx_owned_by_dma(ds), file C:/Tornado2.2/target/config/ar9331/ag7240End.c, line 3109
+ 2c8f38 Assertion failed: pkt_len <= AE_BUF_SIZE, file C:/Tornado2.2/target/config/ar9331/ag7240End.c, line 3244
+ 2c8fa4 Assertion failed: count == pkt_len, file C:/Tornado2.2/target/config/ar9331/ag7240End.c, line 3271
+ 2c9008 Assertion failed: isr == (isr & imr), file C:/Tornado2.2/target/config/ar9331/ag7240End.c, line 3401
+ 2c9070 Assertion failed: 0, file C:/Tornado2.2/target/config/ar9331/ag7240End.c, line 3469
+ 2c90c8 Assertion failed: 0, file C:/Tornado2.2/target/config/ar9331/ag7240End.c, line 3476
+ 2c9120 Assertion failed: 0, file C:/Tornado2.2/target/config/ar9331/ag7240End.c, line 3484
+ 2c9178 Assertion failed: pRxMblk, file C:/Tornado2.2/target/config/ar9331/ag7240End.c, line 3582
+ 2c935c Atheros AR7240 Ethernet
+ 2c9374 Assertion failed: mac->refCount > 0, file C:/Tornado2.2/target/config/ar9331/ag7240End.c, line 4617
+ 2c93dc Assertion failed: pRxMblk, file C:/Tornado2.2/target/config/ar9331/ag7240End.c, line 4910
+ 2c9620 global: AR7240_MISC_INT_STATUS = %#.8X
+ 2c964c global: AR7240_MISC_INT_MASK = %#.8X
+ 2c9674 global: AR7240_GLOBAL_INT_STATUS = %#.8X
+ 2c9c88 AR7240 JumpStart init..........
+ 2c9d1e ACI $Id: //depot/sw/branches/mBSSID_dev/src/ap/os/vxworks/target/config/ar531xPlus/sysLib.c#1 $
+ 2c9d94 AR9330: AP121 Board
+ 2c9da8 1.0 WLAN 0.0.0.9999
+ 2c9dd4 mirror(0,0):vxWorks.st e=192.168.1.1 h=192.168.1.15 g=192.168.1.1 tn=ap121 o=eth1
+ 2c9e28 mirror(0,0):vxWorks e=192.168.1.1 h=192.168.1.100 f=0x80
+ 2c9e82 -->starting wireless...
+ 2c9ea0 mirror(0,0):vxWorks.st e=192.168.1.1 h=192.168.1.15 g=192.168.1.1 tn=ap121 o=eth1
+ 2c9fe0 tffs
+ 2ca870 VxWorks
+ 2ca880 VxWorks5.5.1
+ 2d09a1 VxWorks Events
+ 2d1038 cached flash, %d bytes, consume %u ticks
+ 2d1064 uncached flash, %d bytes, consume %u ticks
+ 2d10a8 wlan
+ 2d115a -->set mac %02x-%02x-%02x-%02x-%02x-%02x into nvram @ %p...
+ 2d13fc wlaninfo	show wlan info
+ 2d1418 wlaninfo
+ 2d147c dumpnvram	dump NVRAM
+ 2d1494 dumpnvram
+ 2d14cc wlandebug	set 802.11 debug flags
+ 2d14f0 wlandebug
+ 2d1710 reboot		Reboot the systerm
+ 2d172c reboot
+ 2d1908 netPoolShow	netPoolShow [data][sys][eth][wlan]
+ 2d29e8 UC_WLAN_CFG_T
+ 2d2a30 UC_QOS_ROUTER_CONF_FLASH_T
+ 2d2af0 UC_AUTO_REBOOT
+ 2d2b00 usrAutoRebootd
+ 2d34ce  swDstSetEnv:%s.
+ 2d352e swDstSetEnvTime%s.
+ 2d356c swDstAdjustTime
+ 2d3700 usrRebootd
+ 2d3e68 Assertion failed: 0, file ../../wlan9331/os/vxWorks/osdep.h, line 919
+ 2d3ee0 Assertion failed: 0, file ../../wlan9331/os/vxWorks/osdep.h, line 1012
+ 2d3f74 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../../wlan9331/os/vxWorks/wbuf_private.h, line 257
+ 2d3fe8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../../wlan9331/os/vxWorks/wbuf_private.h, line 324
+ 2d40a0 Assertion failed: 0, file ../../wlan9331/os/vxWorks/wbuf_private.h, line 437
+ 2d40f0 Assertion failed: 0, file ../../wlan9331/os/vxWorks/wbuf_private.h, line 443
+ 2d42a8 -->Error: invailed wireless mode %d
+ 2d4638 ERROR:wireless OR ACL disable
+ 2d7250 WindNet NAT - FTP ALG v1.0 - Copyright 2000 Wind River Systems, Inc.
+ 2d7330 WindNet NAT - H.323/H.225 ALG v1.0 - Copyright 2001 Wind River Systems, Inc.
+ 2d738c WindNet NAT - H.323/H.245 ALG v1.0 - Copyright 2001 Wind River Systems, Inc.
+ 2d7bd1 WindNet NAT FCS 1.1
+ 2d87f0 WlanSecCheck ALG v1.0
+ 2d8808 WlanSecCheck ALG
+ 2d88e4 WlanSecCheck.htm
+ 2d8900 WindNet NAT - RTSP ALG v1.0 - Copyright 2009 TP-Link Technologies CO.,LTD
+ 2d9130 tffs
+ 2da71c DHCP client tx request(rebooting) failed.
+ 2da748 DHCP client tx request(rebooting).
+ 2db184 User-Agent: vxWorks/2.1.3
+ 2db6d0 eraseWlanCalData
+ 2db82c oem_pf_autoRebootMinute
+ 2db844 oem_pf_autoRebootHour
+ 2db85c oem_pf_autoRebootDay
+ 2db874 oem_pf_autoRebootEnabled
+ 2dbacc oem_pf_uWlanSecCheck
+ 2dbc84 oem_pf_incWlanAdv
+ 2dbc98 oem_pf_incWlanSiteSurvey
+ 2dbcb4 oem_pf_incWlanBasicCfg
+ 2dbccc oem_pf_incWlanBasicMode
+ 2dbce4 oem_pf_incWlan
+ 2dbd8c oem_pf_incWlanWps
+ 2dbdb8 oem_pf_incWzdWlanEnc
+ 2dbdd0 oem_pf_incWzdWlan
+ 2dc030 wlan_wps_cfged
+ 2dc040 wlan_usr_pin
+ 2dc050 wlan_wps_en
+ 2dc05c wlan_xr_disable
+ 2dc06c wlan_dtim_intv
+ 2dc07c wlan_isolate
+ 2dc08c wlan_shortGI
+ 2dc09c wlan_pwr
+ 2dc0a8 wlan_beacon_intv
+ 2dc0bc wlan_frag_thrh
+ 2dc0cc wlan_rts_thrh
+ 2dc0dc wlan_shortPrm_dis
+ 2dc0f0 wlan_wme_en
+ 2dc0fc wlan_mode_mptAp
+ 2dc10c wlan_mode_pptAp
+ 2dc11c wlan_mode_mpt
+ 2dc12c wlan_mode_pptBssid
+ 2dc140 wlan_mode_urptBssid
+ 2dc154 wlan_mode_rptBssid
+ 2dc168 wlan_mode_staBssid
+ 2dc17c wlan_mode_staSsid
+ 2dc190 wlan_mode_wds
+ 2dc1a0 wlan_mode_staType
+ 2dc1b4 wlan_entry_en4
+ 2dc1c4 wlan_entry_mac4
+ 2dc1d4 wlan_entry_name4
+ 2dc1e8 wlan_entry_rcd4
+ 2dc1f8 wlan_entry_en3
+ 2dc208 wlan_entry_mac3
+ 2dc218 wlan_entry_name3
+ 2dc22c wlan_entry_rcd3
+ 2dc23c wlan_entry_en2
+ 2dc24c wlan_entry_mac2
+ 2dc25c wlan_entry_name2
+ 2dc270 wlan_entry_rcd2
+ 2dc280 wlan_entry_en1
+ 2dc290 wlan_entry_mac1
+ 2dc2a0 wlan_entry_name1
+ 2dc2b4 wlan_entry_rcd1
+ 2dc2c4 wlan_exc_unlist
+ 2dc2d4 wlan_acl_mode
+ 2dc2e4 wlan_security_check
+ 2dc2f8 wlan_vapIdx
+ 2dc304 wlan_key_val
+ 2dc314 wlan_key_len
+ 2dc324 wlan_priv_defkey
+ 2dc338 wlan_Pirv_key
+ 2dc348 wlan_pskCipher
+ 2dc358 wlan_wpaCipher
+ 2dc368 wlan_GroupKeyUpdateWpa
+ 2dc380 wlan_GroupKeyUpdate
+ 2dc394 wlan_PskSecret
+ 2dc3a4 wlan_RadiusSecret
+ 2dc3b8 wlan_RadiusPort
+ 2dc3c8 wlan_Radius
+ 2dc3d4 wlan_secSubType3
+ 2dc3e8 wlan_secSubType2
+ 2dc3fc wlan_secSubType1
+ 2dc410 wlan_Auth
+ 2dc41c wlan_security_en
+ 2dc430 wlan_wdsframesupport
+ 2dc448 wlan_passwd
+ 2dc454 wlan_authtype
+ 2dc464 wlan_wepIdx
+ 2dc470 wlan_sec
+ 2dc47c wlan_bridgeBssid
+ 2dc490 wlan_bridgeSsid
+ 2dc4a0 wlan_bridgeEn
+ 2dc4b0 wlan_page_style
+ 2dc4c0 wlan_rate
+ 2dc4cc wlan_chanWidth
+ 2dc4dc wlan_mode
+ 2dc4e8 wlan_chnnl
+ 2dc4f4 wlan_fixed_region
+ 2dc508 wlan_rgn_ind
+ 2dc518 wlan_mbssid_str
+ 2dc528 wlan_mbssid_en
+ 2dc538 wlan_ssid_brd
+ 2dc548 wlan_ap_mode
+ 2dc558 wlan_en
+ 2dd574 reboot
+ 2df7ec Write log flash failed.
+ 2df804 System: Writting log flash failed.
+ 2dfc86 "tNetTask" is susppend! Forced to reboot!
+ 2e42e4 wlanPara
+ 2e4330 SysRebootRpm
+ 2e4340 /userRpm/SysRebootRpm.htm
+ 2e435c Reboot
+ 2e436c autoReboot
+ 2e4434 autoRebootInfo
+ 2e446c rebootInf
+ 2e4adc Reboot
+ 2e6fe0 /userRpm/WzdWlanRpm.htm
+ 2e6ff8 /userRpm/WzdWlanApcRpm.htm
+ 2e70c8 wzdWlanInf
+ 2e7100 wzdWlanApcInf
+ 2e7110 WlanBasicRpm
+ 2e7120 /userRpm/WlanBasicRpm.htm
+ 2e7170 location.href="/userRpm/WlanMacFilterRpm.htm?page=%d&vapIdx=%d";
+ 2e72c4 wlanFilterPara
+ 2e72e8 wlanFilterList
+ 2e7324 /userRpm/WlanMacFilterRpm.htm
+ 2e7344 wlanFilterAdvPara
+ 2e7358 /userRpm/WlanMacFilterAdvRpm.htm
+ 2e737c WlanMacFilterRpm
+ 2e7390 WlanModeRpm
+ 2e739c /userRpm/WlanModeRpm.htm
+ 2e73e0 wlanSecurityOnSaveRpmHtm: Get wrong vap index %d !
+ 2e74d0 reboot
+ 2e752c wlanPara
+ 2e754c wlanList
+ 2e7564 /userRpm/WlanSecurityRpm.htm
+ 2e7584 WlanSecurityRpm
+ 2e75f4 wlanHostPara
+ 2e7644 /userRpm/WlanStationRpm.htm
+ 2e7660 WlanStationRpm
+ 2e7874 wdsbrl
+ 2e7884 brlbssid
+ 2e78b8 wdssupport
+ 2e78cc newBrdgeBssid
+ 2e7970 wlanPara
+ 2e7990 /userRpm/WlanNetworkRpm.htm
+ 2e79ac WlanNetworkRpm
+ 2e83c8 wlanAdv
+ 2e83e4 /userRpm/WlanAdvRpm.htm
+ 2e83fc WlanAdvRpm
+ 2e8488 /userRpm/WlanWpsChkModeRpm.htm
+ 2e84fc wlanSecurityOnSaveRpmHtm: Get wrong vap index %d !
+ 2e85a0 /userRpm/WlanWpsRpm.htm
+ 2e873c siteSurveyPara
+ 2e87e0 /userRpm/popupSiteSurveyRpm.htm
+ 2e8800 popupSiteSurveyRpm
+ 2ea308 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2ea374 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2ea3d0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 2ea438 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 2ea4e4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 2ea528 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 2ea6ec wlan queue %u:
+ 2ea8c0 wlan queue %u, qdepth: %u
+ 2ea8dc Assertion failed: qdepth < HAL_TXFIFO_DEPTH, file ../os/vxWorks/if_ath_ahb.c, line 131
+ 2ea960 Assertion failed: 0, file ../os/vxWorks/if_ath_ahb.c, line 139
+ 2ea9e8 Assertion failed: 0, file ../os/vxWorks/if_ath_ahb.c, line 147
+ 2eaa28 wlan txq %u: %u bufs
+ 2eaa68 wlan netpool -- 
+ 2eab38 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2eaba4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2eac44 AR9380
+ 2eac4c Atheros 5210
+ 2eac5c Atheros 5211
+ 2eac6c Atheros 5211 (FPGA)
+ 2eac80 Atheros 5212 (FPGA)
+ 2eac94 Atheros 5312 WiSoC
+ 2eaca8 Atheros 2315 WiSoC
+ 2eacbc Atheros 2317 WiSoC
+ 2eacd0 Atheros 2313 WiSoC
+ 2eace4 Atheros 5424
+ 2eacf4 Atheros 5212
+ 2ead04 Atheros 5212/2417
+ 2ead18 Atheros 9380
+ 2ead28 Atheros 9340
+ 2ead38 Atheros 9485
+ 2eb2e8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2eb354 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2eea48 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2eeab4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2eec48 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2eecb4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2eed10 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 2eed78 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 2eee24 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 2eee68 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 2eef44 tWLANEventTask
+ 2eef54 Create WLAN event task %s
+ 2eef70 Error in creating WLAN event task
+ 2eef94 Entering WLAN event Task Loop
+ 2ef058 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2ef0c4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2ef120 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 2ef188 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 2ef234 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 2ef278 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 2ef408 Assertion failed: 0, file ../os/vxWorks/ath_wbuf.c, line 22
+ 2ef448 Assertion failed: g_ath_wbuf_part != ((void *)0), file ../os/vxWorks/ath_wbuf.c, line 26
+ 2ef534 Assertion failed: mBlk->mBlkHdr.mLen >= 0, file ../os/vxWorks/ath_wbuf.c, line 154
+ 2ef588 Assertion failed: numSG < 16, file ../os/vxWorks/ath_wbuf.c, line 164
+ 2ef5d0 Assertion failed: numSG != 0, file ../os/vxWorks/ath_wbuf.c, line 169
+ 2ef798 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2ef804 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2ef860 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 2ef8c8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 2ef974 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 2ef9b8 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 2efcf8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2efd64 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2f3d4c ar9300Attach
+ 2f3e30 %s:failed ar9300FillCapabilityInfo
+ 2f3e84 ../hal/ar9300/ar9300_attach.c
+ 2f3ed0 ar9300NewState
+ 2f3f38 ar9300ChipTest
+ 2f3f68 ar9300FillCapabilityInfo
+ 2f3fc4 ar9300RadioAttach
+ 2f4028 ar9300GetRadioRev
+ 2f405c ar9300HwAttach
+ 2f40bc ar9300GetPll3SqsumDvc
+ 2f4178 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2f41e4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2f4360 ar9300SetStaBeaconTimers
+ 2f4458 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2f44c4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2f462c ar9300OtpRead
+ 2f4660 ar9300FlashMap
+ 2f46ef ,ar9300EepromDefINIFixup: FIXME
+ 2f472c ar9300SetTargetPowerFromEeprom
+ 2f47a4 ar9300AntCtrlApply
+ 2f485c ar9300EepromCalPierGet
+ 2f4908 ar9300CalibrationApply
+ 2f4b70 ar9300EepromSetTransmitPower
+ 2f4ce4 FIXME: ar9300EepromDefSetAddac called
+ 2f4d30 ar9300CalibrationDataReadEeprom
+ 2f4d70 ar9300CalibrationDataReadOtp
+ 2f4dcc ar9300UncompressBlock
+ 2f4e5c ar9300EepromRestoreInternalAddress
+ 2f4fb0 Restoring Cal data from Flash
+ 2f5068 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2f50d4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2f52c8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2f5334 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2f5498 ar9300GetPendingInterrupts
+ 2f5524 ar9300SetInterrupts
+ 2f56e8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2f5754 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2f58a8 ar9300ResetKeyCacheEntry
+ 2f58e4 ar9300SetKeyCacheEntryMac
+ 2f59a8 ar9300SetKeyCacheEntry
+ 2f5b38 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2f5ba4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2f5d2c ar9300ResetTsf
+ 2f5d54 ar9300SetSlotTime
+ 2f5d80 ar9300SetAckTimeout
+ 2f5dac ar9300SetCTSTimeout
+ 2f64f4 ar9300DmaRegDump
+ 2f6680 ar9300GetMibCycleCountsPct
+ 2f669c ar9300Get11nExtBusy
+ 2f66d4 ar9300ConfigBbPanicWatchdog
+ 2f686c ar9300PpmForce
+ 2f68a4 ar9300DetectMacHang
+ 2f6998 ar9300DetectBbHang
+ 2f6a88 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2f6af4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2f6c44 ar9300GetRateTable
+ 2f6cf8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2f6d64 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2f6ebc ar9300SetPowerModeAwake
+ 2f6f18 ar9300SetPowerMode
+ 2f6f78 ar9300GetPowerMode
+ 2f7028 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2f7094 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2f7268 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2f72d4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2f743c ar9300SetRxAbort
+ 2f74bc ar9300StopDmaReceive
+ 2f7534 ar9300ReadPktlogReg
+ 2f75ac ar9300WritePktlogReg
+ 2f7668 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2f76d4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2f78a8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2f7914 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2f7a68 ar9300InitMFP
+ 2f7ad0 ar9300UploadNoiseFloor
+ 2f7bd0 FIXME: ar9300GetMinCCAPwr
+ 2f7c18 ar9300UpdateNFHistBuff
+ 2f7c70 ar9300StoreNewNf
+ 2f7d04 ar9300CheckChan
+ 2f7dac ar9300ChannelChange
+ 2f7e3c ar9300SetReset
+ 2f7ea0 ar9300SetResetPowerOn
+ 2f7ee0 ar9300SetupCalibration
+ 2f7fbc ar9300LoadNF
+ 2f7ff8 ar9300Calibration
+ 2f831c ar9300ProcessIni: Skipping OS-REG-WRITE(ah, AR-PHY(0), 0x00000007)
+ 2f8360 ar9300ProcessIni: no ADDac programming
+ 2f8388 ar9300ProcessIni: Rx Gain programming
+ 2f83b0 ar9300ProcessIni: Tx Gain programming
+ 2f8408 ar9300ProcessIni
+ 2f8498 ar9300RunInitCals
+ 2f8518 ar9300InitCal
+ 2f857c ar9300ResetCalValid
+ 2f8608 ar9300InitUserSettings
+ 2f8660 ar9300Reset
+ 2f866c %s[%d]: ar9300StopDmaReceive failed
+ 2f8728 ar9300SolveIqCal
+ 2f8778 ar9300CalcIqCorr
+ 2f87b4 %s: Call to ar9300SolveIqCal failed.
+ 2f899c ar9300_tx_iq_cal_hw_run
+ 2f89f0 ar9300_tx_iq_cal_post_proc
+ 2f8b28 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2f8b94 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 2f8d14 Ar9300PAPDSetupSingleTable
+ 2f8d90 ar9300CheckChan
+ 2f8e30 ar9300EnablePAPD
+ 2f8e70 ar9300PopulatePaprdSingleTable
+ 2f8fe8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 2f9054 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 302908 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 302974 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 3030a8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 303114 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30319c Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 303204 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 3032b0 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 3032f4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 303bd8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 303c44 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 303ccc Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 303d34 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 303de0 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 303e24 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 304568 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 3045d4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30465c Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 3046c4 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 304770 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 3047b4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 304a28 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 304a94 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 304b1c Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 304b84 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 304c30 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 304c74 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 304f58 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 304fc4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30504c Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 3050b4 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 305160 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 3051a4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 3059d8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 305a44 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 305acc Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 305b34 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 305be0 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 305c24 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 305e98 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 305f04 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 305f8c Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 305ff4 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 3060a0 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 3060e4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 306338 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 3063a4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30642c Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 306494 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 306540 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 306584 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 306818 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 306884 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30690c Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 306974 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 306a20 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 306a64 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 306e28 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 306e94 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 306ef0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 306f58 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 307004 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 307048 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 3071f8 Assertion failed: nwbuf, file ../os/vxWorks/ath_osdep.c, line 169
+ 3072d8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 307344 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 3073a0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 307408 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 3074b4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 3074f8 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 308188 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 3081f4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 308250 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 3082b8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 308364 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 3083a8 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 308624 ieee80211_wireless_event: no buf available
+ 3088b4 %s :vap up ,connection up to bssid=%s, ifname=%s
+ 308a38 Error: Did start connection SM : num desired_bssid %d ssid len %d 
+ 308b58 ../os/vxWorks/osif_umac.c
+ 308c98 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 308d04 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 308d60 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 308dc8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 308e74 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 308eb8 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 30912c ../os/vxWorks/ieee80211_wireless.c
+ 30940c %s:wlan_set_key failed,ret:%d
+ 309528 Warning: wlan_set_mcast_cipher failed. cache the mcast cipher
+ 3095d4 Warning: wlan_set_ucast_cipher failed. cache the ucast cipher
+ 309778 [%s] non sta mode, skip to set bssid
+ 309928 IOCTL getwlaninfo
+ 309c40 failed to get NAWDS entry %d
+ 309cc4 bssid:%02x:%02x:%02x:%02x:%02x:%02x.
+ 309fe8 invalid wlan unit %u
+ 30a000 Assertion failed: 0, file ../os/vxWorks/ieee80211_wireless.c, line 6124
+ 30a04c wlan unit %u not allocated
+ 30a068 Assertion failed: 0, file ../os/vxWorks/ieee80211_wireless.c, line 6125
+ 30a158 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 30a1c4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30a220 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 30a288 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 30a334 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 30a378 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 30a568 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 30a5d4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30a630 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 30a698 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 30a744 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 30a788 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 30a8c0 ../umac/wds/ieee80211_wds.c
+ 30a8dc Adding WDS entry for %s, through 
+ 30a908 Adding WDS entry for %s
+ 30a964  Setting IEEE80211_NODE_F_WDS_START for ni=%s
+ 30a9b8 _ieee80211_find_wds_node
+ 30a9d4 %s: nawds mode off or node inactive
+ 30a9fc ieee80211_nawds_send_wbuf
+ 30aa18 nawds: %s: 
+ 30aa84 NAWDS repeater learned %s: %d
+ 30ab48 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 30abb4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30ac3c Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 30aca4 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 30ad50 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 30ad94 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 30afe8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 30b054 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30b0b0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 30b118 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 30b1c4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 30b208 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 30b468 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 30b4d4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30b530 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 30b598 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 30b644 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 30b688 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 30b9d8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 30ba44 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30bb7c [%s] error on wlan intr enable/disable control, investigate it.
+ 30bbc0 ar9300UpdateTxTrigLevel
+ 30bbf4 ar9300SetTxQueueProps
+ 30bc0c ar9300GetTxQueueProps
+ 30bc40 ar9300SetupTxQueue
+ 30bcf4 ar9300ReleaseTxQueue
+ 30bd3c ar9300ResetTxQueue
+ 30bd90 ar9300StopTxDma
+ 30beb4 ar9300GetTxIntrQueue: Should not be called
+ 30bf00 ar9300SetGlobalTxTimeout
+ 30bf4c ar9300ResetTxStatusRing
+ 30c008 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 30c074 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30c1d0 ar9300TxReqIntrDesc
+ 30c200 ar9300ProcTxDesc
+ 30c2b8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 30c324 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30c5a4 ar9300EnableMIBCounters
+ 30c5d8 ar9300DisableMIBCounters
+ 30c628 ar9300GetAniChannelIndex
+ 30c698 ar9300AniDetach
+ 30c6e0 ar9300AniInitDefaults
+ 30c72c ar9300AniSetOdfmNoiseImmunityLevel
+ 30c780 ar9300AniSetCckNoiseImmunityLevel
+ 30c7cc ar9300AniControl
+ 30ca0c ar9300AniReset
+ 30cab4 ar9300AniArPoll
+ 30cac4 %s: must restore - calling ar9300AniRestart
+ 30caf4 %s: listenTime=%d - calling ar9300AniRestart
+ 30cbd0 %s: 1. listenTime=%d OFDM:%d errs=%d/s(<%d)  CCK:%d errs=%d/s(<%d) -> ar9300AniLowerImmunity
+ 30cc30 %s: 1 listenTime=%d ofdm=%d/s cck=%d/s - calling ar9300AniRestart
+ 30cc74 %s: 2 listenTime=%d OFDM:%d errs=%d/s(>%d) -> ar9300AniOfdmErrTrigger
+ 30ccbc %s: 3 listenTime=%d CCK:%d errs=%d/s(>%d) -> ar9300AniCckErrTrigger
+ 30cda8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 30ce14 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30ce9c Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 30cf04 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 30cfb0 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 30cff4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 30d3f8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 30d464 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30d4ec Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 30d554 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 30d600 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 30d644 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 30dad8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 30db44 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30dbcc Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 30dc34 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 30dce0 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 30dd24 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 30e108 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 30e174 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30e1fc Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 30e264 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 30e310 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 30e354 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 30edf8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 30ee64 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30eeec Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 30ef54 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 30f000 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 30f044 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 30f488 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 30f4f4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 30f57c Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 30f5e4 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 30f690 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 30f6d4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 3105a8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 310614 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 31069c Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 310704 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 3107b0 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 3107f4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 310a1f $Assertion failed: bssid != ((void *)0), file ../lmac/ath_dev/ath_ppm.c, line 577
+ 310b58 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 310bc4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 310c4c Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 310cb4 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 310d60 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 310da4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 310fa8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 311014 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 31109c Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 311104 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 3111b0 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 3111f4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 311968 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 3119d4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 311a30 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 311a98 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 311b44 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 311b88 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 31220c %s: wlan_scan_unregister_event_handler() failed handler=%08p,%08p rc=%08X
+ 3122f8 %s: wlan_scan_register_event_handler() failed handler=%08p,%08p rc=%08X
+ 312528 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 312594 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 3125f0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 312658 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 312704 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 312748 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 312c7c wlan_set_channel
+ 312d28 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 312d94 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 312df0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 312e58 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 312f04 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 312f48 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 313150 wlan_set_device_param
+ 313328 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 313394 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 3133f0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 313458 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 313504 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 313548 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 313924 wlan_set_chanswitch
+ 3139d8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 313a44 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 313aa0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 313b08 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 313bb4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 313bf8 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 313e38 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 313ea4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 313f00 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 313f68 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 314014 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 314058 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 314a38 	bssid %s essid "%.*s" channel %u:0x%x
+ 314b28 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 314b94 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 314bf0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 314c58 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 314d04 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 314d48 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 315358 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 3153c4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 315420 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 315488 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 315534 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 315578 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 315c28 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 315c94 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 315cf0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 315d58 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 315e04 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 315e48 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 316034 IEEE80211_M_WDS
+ 3160a4 wlan_vap_create
+ 316128 wlan_vap_delete
+ 3163d8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 316444 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 3164a0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 316508 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 3165b4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 3165f8 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 316734 wlan_mlme_join_infra
+ 3168d8 wlan_mlme_auth_request
+ 316964 wlan_mlme_assoc_request
+ 31697c wlan_mlme_reassoc_request
+ 3170e8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 317154 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 3171b0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 317218 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 3172c4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 317308 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 3174cc %s: wlan_scan_register_event_handler() failed handler=%08p,%08p rc=%08X
+ 317544 %s: wlan_scan_unregister_event_handler() failed handler=%08p,%08p rc=%08X
+ 3177f8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 317864 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 3178c0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 317928 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 3179d4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 317a18 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 317cf0 %s: wlan_scan_register_event_handler() failed handler=%08p,%08p rc=%08X
+ 317d54 %s: wlan_scan_unregister_event_handler() failed handler=%08p,%08p rc=%08X
+ 3187f8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 318864 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 3188c0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 318928 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 3189d4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 318a18 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 318f08 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 318f74 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 318fd0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 319038 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 3190e4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 319128 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 319728 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 319794 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 3197f0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 319858 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 319904 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 319948 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 31a9f8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 31aa64 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 31aac0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 31ab28 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 31abd4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 31ac18 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 31ad8c wrong bssid
+ 31b208 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 31b274 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 31b2d0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 31b338 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 31b3e4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 31b428 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 31b718 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 31b784 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 31b7e0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 31b848 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 31b8f4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 31b938 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 31bbb4 wlan_mlme_deauth_request
+ 31bbd0 wlan_mlme_disassoc_request
+ 31bc68 wlan_mlme_start_bss
+ 31bd24 wlan_mlme_stop_bss
+ 31bdfc wlan_mlme_pause_bss
+ 31be54 wlan_mlme_resume_bss
+ 31beb0 wlan_mlme_cancel
+ 31bee0 wlan_mlme_connection_reset
+ 31bf74 wlan_mlme_set_appie
+ 31c03c wlan_mlme_get_appie
+ 31c0bc wlan_mlme_set_optie
+ 31c118 wlan_mlme_get_optie
+ 31c12c wlan_mlme_connection_up
+ 31c144 wlan_mlme_connection_down
+ 31c518 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 31c584 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 31c5e0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 31c648 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 31c6f4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 31c738 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 31cd98 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 31ce04 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 31ce60 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 31cec8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 31cf74 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 31cfb8 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 31d614 wlan_set_authmodes
+ 31d64c wlan_set_ucast_ciphers
+ 31d680 wlan_set_mcast_ciphers
+ 31d6b8 wlan_set_rsn_cipher_param
+ 31d6d4 wlan_get_rsn_cipher_param
+ 31d708 wlan_set_default_keyid
+ 31d740 wlan_get_key
+ 31d7c4 wlan_del_key
+ 31d878 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 31d8e4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 31d940 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 31d9a8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 31da54 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 31da98 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 31e1c8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 31e234 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 31e290 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 31e2f8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 31e3a4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 31e3e8 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 31e838 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 31e8a4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 31e900 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 31e968 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 31ea14 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 31ea58 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 31ec68 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 31ecd4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 31ed30 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 31ed98 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 31ee44 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 31ee88 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 31f0b8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 31f124 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 31f180 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 31f1e8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 31f294 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 31f2d8 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 321d38 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 321da4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 321e00 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 321e68 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 321f14 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 321f58 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 3225f8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 322664 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 3226c0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 322728 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 3227d4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 322818 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 3229e8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 322a54 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 322ab0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 322b18 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 322bc4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 322c08 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 322eb8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 322f24 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 322f80 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 322fe8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 323094 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 3230d8 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 3235b8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 323624 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 323680 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 3236e8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 323794 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 3237d8 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 323a08 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 323a74 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 323ad0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 323b38 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 323be4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 323c28 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 323fa4 BSSID=%02X:%02X:%02X:%02X:%02X:%02X Ut=%5d Rk=%3d (hyst=(%d * %d) RSSI:%2d => %d, mode:%s, pref:%d, demerit:%d delta=%d load:%d)
+ 324028 Selected BSSID=%02X:%02X:%02X:%02X:%02X:%02X PhyType=%08X Ch=%3d Rank=%05d Flag=%d
+ 32420c  - Reject (Not in desired BSSID list)
+ 324578 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 3245e4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 324640 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 3246a8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 324754 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 324798 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 326360 BSSID_MATCH
+ 3265b8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 326624 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 326680 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 3266e8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 326794 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 3267d8 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 326aa1     MAC=%02X:%02X:%02X:%02X:%02X:%02X BSSID=%02X:%02X:%02X:%02X:%02X:%02X RSSI=%2d avg=%2d Phy=%08X Ch=%3d Mismatch=%d Ref=%2d p=%8p
+ 326bc9     MAC=%02X:%02X:%02X:%02X:%02X:%02X BSSID=%02X:%02X:%02X:%02X:%02X:%02X RSSI=%2d avg=%2d Phy=%08X Ch=%3d Mismatch=%d Ref=%2d p=%8p
+ 326c50 %s: Update BSSID: MAC=%02X:%02X:%02X:%02X:%02X:%02X BSSID=%02X:%02X:%02X:%02X:%02X:%02X => %02X:%02X:%02X:%02X:%02X:%02X
+ 326ccc %s: BSSID mismatch MAC=%02X:%02X:%02X:%02X:%02X:%02X BSSID=%02X:%02X:%02X:%02X:%02X:%02X FrameBSSID=%02X:%02X:%02X:%02X:%02X:%02X
+ 326d50 %s: MAC=%02X:%02X:%02X:%02X:%02X:%02X ssid=%.*s l=%d BSSID=%02X:%02X:%02X:%02X:%02X:%02X se_timestamp=%lu subtype=%02X ch=%3d rssi=%2d avg_rssi=%2d ssid_match=%d ch_mismatch=%d
+ 327458 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 3274c4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 327520 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 327588 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 327634 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 327678 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 327ac8 %s wlan_assoc_sm_start failed
+ 327d9c wlan_connection_sm_create
+ 327db8 %s : wlan_assoc_sm_create failed
+ 327dec %s: wlan_scan_register_event_handler() failed handler=%08p,%08p rc=%08X
+ 327e64 wlan_connection_sm_delete
+ 327ee0 wlan_connection_sm_start
+ 327f28 wlan_connection_sm_stop
+ 3280a8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 328114 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 328170 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 3281d8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 328284 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 3282c8 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 328878 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 3288e4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 328940 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 3289a8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 328a54 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 328a98 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 3290cc wlan_assoc_sm_create
+ 329110 wlan_assoc_sm_delete
+ 3291ac wlan_assoc_sm_start
+ 3291f0 wlan_assoc_sm_stop
+ 329328 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 329394 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 3293f0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 329458 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 329504 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 329548 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 3298c8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 329934 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 329990 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 3299f8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 329aa4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 329ae8 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 329e88 WDS not enabled
+ 32a06c *** WDS *** WDS ADDR1 %s, BSSID %s
+ 32a1c8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 32a234 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 32a290 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 32a2f8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 32a3a4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 32a3e8 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 32a6d8 wlan_vap_send
+ 32aa68 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 32aad4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 32ab30 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 32ab98 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 32ac44 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 32ac88 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 32b028 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 32b094 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 32b0f0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 32b158 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 32b204 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 32b248 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 32b478 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 32b4e4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 32b540 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 32b5a8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 32b654 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 32b698 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 32b974 wlan_send_addts
+ 32b9b4 wlan_send_delts
+ 32ba68 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 32bad4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 32bb30 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 32bb98 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 32bc44 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 32bc88 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 32c2c8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 32c334 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 32c3bc Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 32c424 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 32c4d0 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 32c514 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 32c5f8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 32c664 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 32c6ec Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 32c754 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 32c800 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 32c844 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 32cc78 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 32cce4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 32cd40 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 32cda8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 32ce54 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 32ce98 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 32d7a8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 32d814 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 32d870 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 32d8d8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 32d984 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 32d9c8 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 32dc58 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 32dcc4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 32dd20 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 32dd88 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 32de34 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 32de78 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 32e344 wlan_mlme_app_ie_create
+ 32e37c wlan_mlme_app_ie_delete
+ 32e470 wlan_mlme_app_ie_set
+ 32e760 wlan_mlme_app_ie_get
+ 32e888 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 32e8f4 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 32e950 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 32e9b8 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 32ea64 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 32eaa8 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 32ecd8 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 32ed44 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 32eda0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 32ee08 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 32eeb4 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 32eef8 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 32f1d8 Assertion failed: 0, file ../../os/vxWorks/osdep.h, line 919
+ 32f248 Assertion failed: 0, file ../../os/vxWorks/osdep.h, line 1012
+ 32f2d4 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../../os/vxWorks/wbuf_private.h, line 257
+ 32f340 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../../os/vxWorks/wbuf_private.h, line 324
+ 32f3ec Assertion failed: 0, file ../../os/vxWorks/wbuf_private.h, line 437
+ 32f434 Assertion failed: 0, file ../../os/vxWorks/wbuf_private.h, line 443
+ 32fdc0 Atheros
+ 330350 Error in getting the wlan status or Device not found
+ 33063c Error in getting the wlan status
+ 33089d WLAN IOCTL %s=%s=%s=%s=%d
+ 3308e0 FLASH NVARAM APCFG ID WRONG, COMIT FIRST
+ 330930 AP_IPADDR NVRAM READ FAILED 
+ 330950 apcfg_wlan_addmac: Incorrect mac address %s 
+ 330980 apcfg_wlan_delmac: Incorrect mac address %s 
+ 3309b0 apcfg_wlan_kickmac: Incorrect mac address %s 
+ 330a14 apcfg_wlan_setmaccmd: Invalid command %d 
+ 330b2c APCFG Commit flash
+ 330b40 Writing %d bytes to Flash  
+ 330b60 sysNvRamSet done
+ 330bf0 Starting WLAN !!!! 
+ 330c98 apcfg_wlan_start
+ 330d30 Unable to find wireless device
+ 330dac >>> WDS 1 ,IEEE80211IOCTL_WDS=%d, vapid=%d
+ 330f78 Disabling WLAN !!!! 
+ 330fec sysWlanInit ...
+ 331384 apcfg_wlanscanresult_get
+ 331f1c Copyright (c) 2007-2008, Atheros Communications
+ 333570 Duplicate BSSID %02x:%02x:%02x:%02x:%02x:%02x on interface '%s' and '%s'.
+ 333988 Wireless N Router
+ 333c8c bssid=%02x:%02x:%02x:%02x:%02x:%02x
+ 333f20 bssid
+ 333f28 CTRL_IFACE CONFIGME: invalid bssid '%s'
+ 333fe4 CTRL_IFACE CONFIGTHEM: invalid bssid '%s'
+ 338498 Received association response from unexpected address (SA=%02x:%02x:%02x:%02x:%02x:%02x BSSID=%02x:%02x:%02x:%02x:%02x:%02x
+ 338920 MGMT: BSSID=%02x:%02x:%02x:%02x:%02x:%02x not our address
+ 33c8ec ENTER wps_opt_upnp_received_req_put_wlan_event_response
+ 33c97c wps_opt_upnp_received_req_put_wlan_event_response execute
+ 33c9b8 wps_opt_upnp_received_req_put_wlan_event_response NO eapsm waiting
+ 33cbc8 Assertion failed: 0, file ../../os/vxWorks/osdep.h, line 919
+ 33cc38 Assertion failed: 0, file ../../os/vxWorks/osdep.h, line 1012
+ 33cc98 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../../os/vxWorks/wbuf_private.h, line 257
+ 33cd04 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../../os/vxWorks/wbuf_private.h, line 324
+ 33cdb0 Assertion failed: 0, file ../../os/vxWorks/wbuf_private.h, line 437
+ 33cdf8 Assertion failed: 0, file ../../os/vxWorks/wbuf_private.h, line 443
+ 33d520 Custom wireless event: '%s'
+ 33d6b8 Wireless event: cmd=0x%x len=%d
+ 33ece4 WLAN Authentication
+ 33ed20 WLAN Preauthentication
+ 33f1f8 Assertion failed: 0, file ../../os/vxWorks/osdep.h, line 919
+ 33f268 Assertion failed: 0, file ../../os/vxWorks/osdep.h, line 1012
+ 33fef0 WLANEventMAC
+ 33ff00 WLANEventType
+ 33ff10 WLANEvent
+ 34026c %s: urn:schemas-wifialliance-org:service:WFAWLANConfig:1
+ 3402a8 USN: uuid:%s::urn:schemas-wifialliance-org:service:WFAWLANConfig:1
+ 3405e8 urn:schemas-wifialliance-org:service:WFAWLANConfig:1
+ 340974         <serviceType>urn:schemas-wifialliance-org:service:WFAWLANConfig:1</serviceType>
+ 3409d0         <serviceId>urn:wifialliance-org:serviceId:WFAWLANConfig1</serviceId>
+ 341671       <name>PutWLANResponse</name>
+ 341768           <name>NewWLANEventType</name>
+ 3417b4           <relatedStateVariable>WLANEventType</relatedStateVariable>
+ 341820           <name>NewWLANEventMAC</name>
+ 34186b           <relatedStateVariable>WLANEventMAC</relatedStateVariable>
+ 341a0e       <name>RebootAP</name>
+ 341c2f       <name>RebootSTA</name>
+ 342267       <name>WLANEvent</name>
+ 3422e3       <name>WLANEventType</name>
+ 34235c       <name>WLANEventMAC</name>
+ 3423d7       <name>WLANResponse</name>
+ 342cbc         <WLANEvent>%s</WLANEvent>
+ 342e00 upnp wps device: ERROR: WLANEvent not known yet
+ 3430b4 urn:schemas-wifialliance-org:service:WFAWLANConfig:
+ 34331c PutWLANResponse
+ 34332c upnp wps device: handle PutWLANResponse
+ 343354 NewWLANEventType
+ 343368 NewWLANEventMAC
+ 343378 Fail: !sm->ctx->received_req_put_wlan_event_response
+ 3433b0 Fail: sm->ctx->received_req_put_wlan_event_response
+ 34342c RebootAP
+ 343438 upnp wps device: handle RebootAP
+ 343484 RebootSTA
+ 343490 upnp wps device: handle RebootSTA
+ 343650  xmlns:u="urn:schemas-wifialliance-org:service:WFAWLANConfig:1">
+ 343d2c upnp_wps_device_send_wlan_event: proxying WLANEvent from %s
+ 344983 Copyright (c) 2007-2008, Atheros Communications
+ 3453f8 BSSID not set when trying to send an EAPOL frame
+ 34542c Using current BSSID %02x:%02x:%02x:%02x:%02x:%02x from the driver as the EAPOL destination
+ 34558c BSSID %02x:%02x:%02x:%02x:%02x:%02x blacklist count incremented to %d
+ 3455d4 Added BSSID %02x:%02x:%02x:%02x:%02x:%02x into blacklist
+ 345610 Removed BSSID %02x:%02x:%02x:%02x:%02x:%02x from blacklist
+ 34564c Removed BSSID %02x:%02x:%02x:%02x:%02x:%02x from blacklist (clear)
+ 345cbc Could not read BSSID from driver.
+ 346420 Line %d: Invalid BSSID '%s'.
+ 346440 BSSID
+ 34711c bssid
+ 3483ac RSN: PMKID candidate event - bssid=%02x:%02x:%02x:%02x:%02x:%02x index=%d preauth=%d
+ 348788    skip - BSSID mismatch
+ 349654 WPA: Failed to read BSSID for EAPOL-Key destination address
+ 349690 WPA: Use BSSID (%02x:%02x:%02x:%02x:%02x:%02x) as the destination for EAPOL-Key
+ 3496f4 Failed to read BSSID for EAPOL-Key request
+ 34af58 Assertion failed: 0, file ../../os/vxWorks/osdep.h, line 919
+ 34afc8 Assertion failed: 0, file ../../os/vxWorks/osdep.h, line 1012
+ 34b054 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../../os/vxWorks/wbuf_private.h, line 257
+ 34b0c0 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../../os/vxWorks/wbuf_private.h, line 324
+ 34b16c Assertion failed: 0, file ../../os/vxWorks/wbuf_private.h, line 437
+ 34b1b4 Assertion failed: 0, file ../../os/vxWorks/wbuf_private.h, line 443
+ 34b688 MADWIFI 802.11 support (Atheros, etc.)
+ 34b758 Assertion failed: 0, file ../../os/vxWorks/osdep.h, line 919
+ 34b7c8 Assertion failed: 0, file ../../os/vxWorks/osdep.h, line 1012
+ 34b8cc wlan_ioctl[IEEE80211IOCTL_PARAM_AUTHMODE]
+ 34b8f8 wlan_ioctl[IEEE80211IOCTL_GETAP]
+ 34b91c wlan_ioctl[IEEE80211IOCTL_SETAP]
+ 34b940 wlan_ioctl[IEEE80211IOCTL_SETESSID]
+ 34b964 wlan_ioctl[IEEE8211IOCTL_SETFREQ]
+ 34b988 WEXT: Custom wireless event: '%s'
+ 34ba14 Michael MIC failure wireless event: flags=0x%x src_addr=%02x:%02x:%02x:%02x:%02x:%02x
+ 34ba6c PMKID candidate wireless event: flags=0x%x index=%d bssid=%02x:%02x:%02x:%02x:%02x:%02x
+ 34bac4 Wireless event: cmd=0x%x len=%d
+ 34bae4 Wireless event: new AP: %02x:%02x:%02x:%02x:%02x:%02x
+ 34bcb4 wlan
+ 34bd94 Invalid freq in scan results (BSSID=%02x:%02x:%02x:%02x:%02x:%02x: m=%d e=%d
+ 34c104 Added alternative ifindex %d (%s) for wireless events
+ 34c210 Linux wireless extensions (generic)
+ 34da50 Assertion failed: -1 == flash_load, file ../src/router_config/qos_RouterConfig.c, line 1034
+ 34ff10 Assertion failed: qos_cbqClassAddOptional(rate, qos_cbqCalculateZeroBandwidth(rate), 0, qos_cbqCalculateZeroBandwidth(rate), 1, BM_MIN_GUARANT, rta, len)==0, file ../src/config/qos_cbqConfig.c, line 295
+ 353618 version                        Print VxWorks version info, and boot line
+ 35d428 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 919
+ 35d494 Assertion failed: 0, file ../os/vxWorks/osdep.h, line 1012
+ 35d51c Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= size, file ../os/vxWorks/wbuf_private.h, line 257
+ 35d584 Assertion failed: M_TRAILINGSPACE((wbuf)->mblk) >= __wbuf_get_pktlen(wbuf), file ../os/vxWorks/wbuf_private.h, line 324
+ 35d630 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 437
+ 35d674 Assertion failed: 0, file ../os/vxWorks/wbuf_private.h, line 443
+ 35d7d8 ../os/vxWorks/ath_iw_handler.c
+ 365100 Cmvjdvjksd: magedgiflsimagedxaxbitmaplsimagedjpeglsimagedpjpeglsapplicationdxashockwaveaflashlsapplicationdvndtmsaexcellsapplicationdvndtmsapowerpointlsapplicationdmswordlsimagedgiflsimagedxaxbitmaplsimagedjpeglsimagedpjpeglsapplicationdxashockwaveaflashlsapplicationdvndtmsaexcellsapplicationdvndtmsapowerpointlsapplicationdmswordlsimagedgiflsimagedxaxbitmaplsimagedjpeglsimagedpjpeglsapplicationdxashockwaveaflashlsapplicationdvndtmsaexcellsapplicationdvndtmsapowerpointlsapplicationdmswordlsimagedgiflsimagedxaxbitmaplsimagedjpeglsimagedpjpeglsapplicationdxashockwaveaflashlsapplicationdvndtmsaexcellsapplicationdvndtmsapowerpointlsapplicationdmswordlsimagedgiflsimagedxaxbitmaplsimagedjpeglsimagedpjpeglsapplicationdxashockwaveaflashlsapplicationdvndtmsaexcellsapplicationdvndtmsapowerpointlsapplicationdmswordlsimagedgiflsimagedxaxbitmaplsimagedjpeglsimagedpjpeglsapplicationdxashockwaveaflashlsapplicationdvndtmsaexcellsapplicationdvndtmsapowerpointlsapplicationdmswordlsimagedgiflssimagedxaxbitmaplssimagedjpeglsimagedpjpeglssapplicationdxashockwaveaflashlsapplicationdvndtmsaexcellsapplicationdvndtmsapowerpointlsapplicationdmswordlsimagedgiflsimagedxaxbitmaplsimagedjpeglsimag
