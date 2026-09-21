@@ -1,0 +1,95 @@
+
+<script language=javascript><!--//
+function ResetStatus(strInfo)
+{
+window.status=strInfo;
+return true;
+}
+function doAll(val)
+{
+if(val=="DelAll")
+{
+if(!confirm(js_mksure_delete="Are you sure to delete all entries?"))
+return;
+}
+location.href="/userRpm/LanMacFilterRpm.htm?doAll="+val+"&Page="+curPage;
+}
+function doAdd(nPage)
+{
+location.href="/userRpm/LanMacFilterRpm.htm?Add=Add&Page="+nPage;
+}
+function doPage(nPage)
+{
+location.href="/userRpm/LanMacFilterRpm.htm?Page="+nPage;
+}
+//--></script></head>
+<BODY onload="setTagStr(document,'ntw_lan_mac_filter');LoadHelp('LanMacFilterHelpRpm.htm'); resize(this);" onResize="resize(this);">
+<center><form action="LanMacFilterRpm.htm" enctype="multipart/form-data" method="get">
+<TABLE id="autoWidth">
+<TR><TD class=h1 colspan=2 id = "t_title">MAC Address Filtering</TD></TR>
+<TR><TD class=blue colspan=2></TD></TR>
+<TR><TD class=h2 colspan=2 id = "t_fw_settings">Firewall Settings (You can change them on Firewall page)</TD></TR>
+<TR><TD class=Item id = "t_en_fw">Enable Firewall:</TD><TD class=emp><DIV ID="firewall"></DIV></TD></TR>
+<TR><TD class=Item id = "t_en_mac_flt">Enable MAC Address Filtering:</TD><TD class=emp><DIV ID="filter"></DIV></TD></TR>
+<TR><TD class=Item id = "t_flt_rul">Default Filtering Rules:</TD><TD class=emp><DIV ID="rules"></DIV></TD></TR>
+<TR><TD colspan=2></TD></TR>
+<TR><TD colspan=2>
+<table border=0>
+<TR>
+<TD class=ListTC1>ID</TD><TD class=ListTC2 id = "t_mac_add">MAC Address</TD>
+<td class=ListTC2 id = "t_description">Description</td>
+<TD class=ListTC2 id = "t_status">Status</TD><TD class=ListTC2 id = "t_modify">Modify</TD>
+<td width = "30%">&nbsp;</td>
+</TR>
+<script language="JavaScript">
+if ((mfList.length-2) >= 3)
+{
+var statusStr;
+var idStart = (mFilterInf[3]-1)*8;
+var modifyId;
+var maxRow = (mfList.length-2)/3;
+var row = 0;
+for(var i = 0;i < maxRow;i++)
+{
+row = i*3;
+modifyId = idStart;
+idStart++;
+document.write('<TR><TD class=ListC1>' + idStart + '</TD>');
+document.write('<TD class=ListC2>' + mfList[row] + '</TD>');
+document.write('<TD class=ListC2>&nbsp;' + escapeHtml(mfList[row+1]) + '</TD>');
+statusStr = (mfList[row+2])?"<span name=\"t_enable\" id = \"t_enable\">Enabled</span>":"<span name=\"t_disable\" id = \"t_disable\">Disabled</span>";
+document.write('<TD class=ListC2>' + statusStr + '</TD>');
+document.write('<TD class=ListC2><a href=\"/userRpm/LanMacFilterRpm.htm?Modify='
++ modifyId +
+'\" OnMouseOver=\"return ResetStatus(\'modify\');\" name=\"t_modify1\" id = \"t_modify1\">Modify</a> &nbsp;<a href=\"/userRpm/LanMacFilterRpm.htm?Del='
++ modifyId + '\" OnMouseOver=\"return ResetStatus(\'delete\');\" name=\"t_delete\" id = \"t_delete\">Delete</a></TD><td width = "30%">&nbsp;</td></TR>');
+}
+}
+</script>
+</table></TD></TR>
+<TR><TD colspan=2></TD></TR>
+<TR><TD colspan=2><input type="button" value="Add New..." name="Addnew" class="buttonBig" onClick="doAdd(curPage);">&nbsp;
+<input type="button" value="Enable All" name="Enall" class="buttonBig" onClick="doAll('EnAll');">&nbsp;
+<input type="button" value="Disable All" name="Disall" class="buttonBig" onClick="doAll('DisAll');">&nbsp;
+<input type="button" value="Delete All" name="Delall" class="buttonBig" onClick="doAll('DelAll');"></TD></TR>
+<TR><TD class=blue colspan=2></TD></TR>
+<TR><TD></TD><TD><input name="Previous" type="button" class="buttonBig" onClick="doPage(prePage);" value="Previous">&nbsp;<input name="Next" type="button" class="buttonBig" onClick="doPage(nextPage);" value="Next"><input name="Page" type="hidden" value="1"></TD></TR>
+</TABLE>
+</form></center></BODY><head><meta http-equiv="pragma" content="no-cache"></head></HTML>
+<script language="JavaScript">
+var tempStr = (mFilterInf[0] == 1)?"<span id =\"t_enable\">Enabled</span>":"<span id= \"t_disable\">Disabled</span>";
+document.getElementById("firewall").innerHTML = tempStr;
+tempStr = (mFilterInf[1] == 1)?"<span id =\"t_enabled\">Enabled</span>":"<span id= \"t_disabled\">Disabled</span>";
+document.getElementById("filter").innerHTML = tempStr;
+tempStr = (mFilterInf[2] ==1)?"<font color=\"#FF0000\"> <span id = \"t_allow\">Allow </span></font><span id = \"t_pc_acc\"> these PCs with the enabled rules to access the Internet.</span>":"<font color=\"#FF0000\"> <span id = \"t_deny\">Deny </span></font>&nbsp;<span id = \"t_pc_acce\"> these PCs with the enabled rules to access the Internet.</span>";
+document.getElementById("rules").innerHTML = tempStr;
+var curPage = mFilterInf[3];
+var prePage = (mFilterInf[3]==1)?1:(mFilterInf[3]-1);
+var nextPage =mFilterInf[3] + 1;
+document.forms[0].Enall.disabled = ((mfList.length-2) < 3)?true: false;
+document.forms[0].Disall.disabled = ((mfList.length-2) < 3)?true: false;
+document.forms[0].Delall.disabled = ((mfList.length-2) < 3)?true: false;
+document.forms[0].Previous.disabled = (mFilterInf[3] < 2)?true:false;
+document.forms[0].Next.disabled = mFilterInf[4];
+document.forms[0].Page.value = curPage;
+</script>

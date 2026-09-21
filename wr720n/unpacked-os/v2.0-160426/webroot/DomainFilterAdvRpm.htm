@@ -1,0 +1,89 @@
+
+<script language=javascript><!--//
+function doBack(nPage)
+{
+location.href="/userRpm/DomainFilterRpm.htm?Page="+nPage;
+}
+function is_numcharacter(num_string)
+{
+var c; var ch = "0123456789";
+for (var i = 0; i < num_string.length; i++)
+{
+c = num_string.charAt(i);
+if(ch.indexOf(c) == -1)
+return false;
+}
+return true;
+}
+function doSubmit()
+{
+var i;
+if (domainFilterAdvPara[7] > 0)
+{
+var begintime = document.forms[0].begintime;
+var endtime = document.forms[0].endtime;
+if((begintime.value=="") ||!is_numcharacter(begintime.value) || (begintime.value.length!=4))
+{
+alert(js_bad_start_time="Bad start time (only 4 numbers), please input another number!");
+return false;
+}
+if((endtime.value=="") ||!is_numcharacter(endtime.value) || (endtime.value.length!=4))
+{
+alert(js_bad_end_time="Bad end time (only 4 numbers), please input another number!");
+return false;
+}
+}
+if(document.forms[0].domain.value != "")
+{
+if(!is_domain(document.forms[0].domain.value))
+{
+return false;
+}
+}
+return true;
+}
+//--></script></head>
+<BODY onload="setTagStr(document,'ntw_domain_filter_adv');LoadHelp('DomainFilterHelpRpm.htm'); resize(this);" onResize="resize(this);">
+<center><form action="DomainFilterRpm.htm" enctype="multipart/form-data" method="get" onSubmit="return doSubmit();">
+<TABLE id="autoWidth">
+<TBODY>
+<TR><TD class=h1 colspan=2 id = "t_title">Add or Modify a Domain Filtering Entry</TD></TR>
+<TR><TD class=blue colspan=2></TD></TR>
+<script language="JavaScript">
+if (domainFilterAdvPara[7] > 0)	{
+document.write('<TR><TD class=Item id = "t_effect_time">Effective Time:</TD>');
+document.write('<TD><input name=begintime type=text class=text value="0001" size=4 maxlength=4> - <input name="endtime" type=text class=text value="0002" size=4 maxlength=4></TD></TR>');
+}
+</script>
+<TR>
+<TD class=Item id = "t_domain_name">Domain Name:</TD>
+<TD><input name="domain" type="text" class="text" value="" size="32" maxlength="30"></TD>
+</TR>
+<TR>
+<TD class=Item id = "t_status">Status:</TD><TD><select size="1" class=List name="State" >
+<option value="0" Selected id = "t_disable">Disabled</option>
+<option value="1" id = "t_enable">Enabled</option>
+</select></TD>
+</TR>
+<TR>
+<TD class=blue colspan=2></TD>
+</TR>
+<TR>
+<TD></TD>
+<TD><input name="Changed" type="hidden" value=1><input name="SelIndex" type="hidden" value="1"><input name="Page" type="hidden" value="1"><input name="Save" type="submit" class="buttonBig" value="Save">
+&nbsp;<input type="button" value="Return" name="Return" class="buttonBig" onClick="doBack(curPage);">
+</TD>
+</TR>
+</TBODY></TABLE>
+</form></center></BODY><head><meta http-equiv="pragma" content="no-cache"></head></HTML>
+<script language="JavaScript">
+if (domainFilterAdvPara[7] > 0) {
+document.forms[0].begintime.value =domainFilterAdvPara[0];
+document.forms[0].endtime.value =domainFilterAdvPara[1]; }
+document.forms[0].domain.value =domainFilterAdvPara[2];
+document.forms[0].State.value =domainFilterAdvPara[3];
+var curPage = domainFilterAdvPara[6];
+document.forms[0].Changed.value =domainFilterAdvPara[4];
+document.forms[0].SelIndex.value =domainFilterAdvPara[5];
+document.forms[0].Page.value = curPage;
+</script>

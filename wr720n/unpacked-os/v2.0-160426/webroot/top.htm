@@ -1,0 +1,81 @@
+
+
+
+<script type="text/javascript">
+
+var mh ;
+var mv ;
+var hl = "StatusHelpRpm.htm";
+var newWin;
+var url="http://www.tp-link.com";
+if(window.parent == window)
+window.location.href=url;
+function Click(){ window.event.returnValue=false;}
+document.oncontextmenu=Click;
+
+function NewW(){
+if(newWin) newWin.close();
+newWin=window.open(url,"","scrollbars=yes,resizable=yes,toolbar=yes,status=yes,menubar=yes,scrollbar=yes,location=yes");
+return true;
+}
+function ShowUrl() {
+status=url;
+return true;
+}
+function EraseUrl(){
+status="";
+return true;
+}
+var address;
+var errorFlag;
+function LoadPage(){
+if(true == errorFlag)
+parent.location.href = 'http://' + address;
+}
+function LoadNewIp(){
+errorFlag = true;
+setTimeout("LoadPage()",3000);
+}
+function stopLoad(){
+errorFlag = false;
+}
+</SCRIPT>
+
+
+<style type="text/css">
+
+.style1 {
+	font-family: "Arial";
+	color: #FFFFFF;
+	font-size: 14pt;
+	padding-right: 30px;
+	font-weight: bold;
+	white-space:nowrap;
+}
+.style2 {
+	font-size: 11pt;
+	font-family: "Arial";
+	font-weight: bold;
+	padding-right: 30px;
+	color: #FFFFFF;
+	white-space:nowrap;
+}
+
+
+</style>
+</HEAD>
+
+<BODY background="/images/top_bg.jpg" leftMargin=0 topMargin=0 marginheight="0" marginwidth="0" >
+<table cellpadding=0 cellspacing=0 width="100%">
+<tr>
+<td>
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  	<tr><td><a OnClick="return NewW();" onMouseOver="return ShowUrl();" onMouseOut="return EraseUrl();"><img src="/images/top1_1.jpg" border="0" style="cursor:pointer"></a></td>
+		<td width="490" align=right background="/images/top1_2.jpg" style="padding-top:26px;"><span class="style1" id="t_model_type">150Mbps Wireless N Router</span><br><span class="style2" id="t_model_no">Model No. TL-WR720N</span></td></tr>
+	</table>
+</td>
+</tr>
+<tr><td><IMG height=3 src="/images/top2.jpg" width="100%" align=top border=0></td></tr>
+</table>
+</BODY>
+</HTML>

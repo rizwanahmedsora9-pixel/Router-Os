@@ -1,0 +1,54 @@
+<BODY>
+<DIV id="autoWidth">
+
+<H1>MAC Address Filtering Help</H1>
+<P>Similar to <B>IP Address Filtering</B> page, the <B>MAC Address Filtering</B> page allows you to control to access Internet by users on your local network based on their MAC Addresses. Before setting up MAC Filtering entries, you must ensure that <B>Enable Firewall</B> and <B>Enable MAC Address Filtering</B> have been selected on the <B>Firewall</B> page.</P>
+
+<P>To Add a MAC Address filtering entry, click the <B>Add New...</B> button, and follow these instructions:</P>
+<ol type=1>
+<li>Enter an appropriate MAC address into the <strong>MAC Address</strong> field. The format of the MAC address is XX-XX-XX-XX-XX-XX (X is any hexadecimal digit). For example: 00-0A-EB-B0-00-0B.</li>
+<li>Enter a simple description of the station in the <strong>Description</strong> field. For example: John&rsquo;s PC.</li>
+
+<li><strong>Status</strong> - Select <strong>Enabled</strong> or <strong>Disabled</strong> for this entry from the <strong>Status</strong> pull-down list.</li>
+<li>Click the <strong>Save</strong> button to save this entry.</li>
+
+</ol>
+<p>To add another entry, repeat steps 1-4.</p>
+<P><B>To modify or delete an existing entry</B>:</P>
+<ol type=1>
+<lI>Find the desired entry in the table.</lI>
+
+<lI>Click <B>Modify</B> or <B>Delete</B> as desired on the <B>Modify</B> column.</lI>
+</ol>
+<P>Click the <strong>Enable All</strong> button to make all entries enabled.</P>
+
+<P>Click the <strong>Disable All</strong> button to make all entries disabled.</P>
+<P>Click the <strong>Delete All</strong> button to delete all entries.</P>
+<P>Click the <B>Next</B> button to go to the next page and click the <B>Previous</B> button to return to the previous page.</P>
+
+<P>For example: If you want to block the PCs with MAC Addresses 00-E0-4C-00-07-BE and 00-E0-4C-00-07-5F to access the Internet, first, Enable the <B>Firewall</B> and <B>MAC Address Filtering</B> on the <B>Firewall</B> page, then, you should specify the Default MAC Address Filtering Rule" <strong>Deny these PCs with enabled rules to access the Internet</strong> " on the <B>Firewall</B> page and the following MAC address filtering table on this page:</P>
+
+<table border width=65% align="center" cellspacing=1 cellpadding=1>
+<TR>
+<TH>ID</TH>
+<TH>MAC Address</TH>
+<TH>Description</TH>
+<TH>Status</TH>
+</TR>
+<TR align="center">
+<TD>1</TD>
+<TD>00-E0-4C-00-07-BE</TD>
+<TD>John's computer</TD>
+
+<TD><p>Enabled</p></TD>
+</TR>
+<TR align="center">
+<TD>2</TD>
+<TD>00-E0-4C-00-07-5F</TD>
+<TD>Alice's computer</TD>
+<TD><p>Enabled</p></TD>
+</TR>
+</table>
+
+</DIV>
+</BODY></HTML>

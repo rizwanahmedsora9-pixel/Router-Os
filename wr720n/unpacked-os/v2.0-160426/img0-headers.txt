@@ -1,0 +1,33 @@
+IMG0 header @ 0x000014
+  prefix_md5ish          00142fc00e3a8cd99ddeffae9ae3dc2399dc4bda
+  magic                  IMG0
+  length                 0x0017CEF0  (1560304)
+  version                0x07201101  (119542017)
+  nparts                 0x00000001  (1)
+  load_addr              0x5A041337  (1510216503)
+  flags                  0x01000000  (16777216)
+  build                  4555000000000000
+  field_0x54             0x00000080  (128)
+  part0_off              0x0017CE70  (1560176)
+  part1_size_or_off      0x00000000  (0)
+  part2_off              0x00000000  (0)
+  part3_size_or_off      0x00000000  (0)
+  part4_off              0x00000000  (0)
+  part5_size_or_off      0x00000000  (0)
+
+IMG0 header @ 0x040094
+  prefix_md5ish          0000000000000000000000000000000000000000
+  magic                  IMG0
+  length                 0x0013CE70  (1298032)
+  version                0x07201101  (119542017)
+  nparts                 0x00000001  (1)
+  load_addr              0x5A041337  (1510216503)
+  flags                  0x00000000  (0)
+  build                  4555000000000000
+  field_0x54             0x00000080  (128)
+  part0_off              0x000F2E53  (994899)
+  part1_size_or_off      0x000F2EE0  (995040)
+  part2_off              0x00048990  (297360)
+  part3_size_or_off      0x0013B870  (1292400)
+  part4_off              0x00001600  (5632)
+  part5_size_or_off      0x00000000  (0)

@@ -1,0 +1,116 @@
+
+<script language=javascript><!--//
+function doAll(val)
+{
+if(val=="DelAll")
+{
+if(domainFilterList.length < 5)
+{
+alert(js_no_entry="No entry exists in the table!");
+return;
+}
+if(!confirm(js_mksure_delete="Are you sure to delete all entries?"))
+return;
+}
+location.href="/userRpm/DomainFilterRpm.htm?doAll="+val+"&Page="+curPage;
+}
+function doAdd(nPage)
+{
+location.href="/userRpm/DomainFilterRpm.htm?Add=Add&Page="+nPage;
+}
+function doPage(nPage)
+{
+location.href="DomainFilterRpm.htm?Page="+nPage;
+}
+function ResetStatus(strInfo)
+{
+window.status=strInfo;
+return true;
+}
+//--></script></head>
+<BODY onload="setTagStr(document,'ntw_domain_filter');LoadHelp('DomainFilterHelpRpm.htm'); resize(this);" onResize="resize(this);">
+<center><form action="DomainFilterRpm.htm" enctype="multipart/form-data" method="get">
+<TABLE id="autoWidth" border =0>
+<TBODY>
+<TR>
+<TD class=h1 colspan=2 id = "t_title">Domain Filtering</TD>
+</TR>
+<TR>
+<TD class=blue colspan=2></TD>
+</TR>
+<TR>
+<TD class=h2 colspan=2 id = "t_fw_set" style = "white-space:nowrap">Firewall Settings (You can change them on Firewall page)</TD>
+</TR>
+<TR>
+<TD class=Item id = "t_en_fw">Enable Firewall:</TD><TD class=emp><DIV ID="firewallStatus">-</DIV></TD>
+</TR>
+<TR>
+<TD class=Item id = "t_en_domain_flt">Enable Domain Filtering:</TD>
+<TD class=emp><DIV ID="domainfilterStatus">-</DIV></TD>
+</TR>
+<TR><TD colspan=2></TD></TR>
+<TR><TD colspan=2>
+<table border= 0>
+<TR>
+<TD class=ListTC1>ID</TD>
+<script language="JavaScript">
+if (domainFilterPara[6] > 0)	{
+document.write('<TD class=ListTC2 id = \"t_effect_time\">Effective time</TD>');	}
+</script>
+<TD class=ListTC2 id = "t_domain_name">Domain Name</td>
+<TD class="ListTC2" id = "t_status" >Status</TD>
+<TD class=ListTC2 id = "t_modify">Modify</TD>
+</TR>
+<script language="JavaScript">
+if (domainFilterPara[4] > 0)	{
+var row = 0;
+var statusString;
+var idStart = (domainFilterPara[2]-1)*8;
+var modifyId;
+for(var i = 0; i < domainFilterPara[4]; i++)
+{
+modifyId = idStart;
+idStart++;
+row = i * domainFilterPara[5];
+statusString = (domainFilterList[row+2] == 1)?"<span name=\"t_enable\" id = \"t_enable\">Enabled</span>":"<span name=\"t_disable\" id = \"t_disable\">Disabled</span>";
+document.write('<tr><td class=ListC1>' + idStart + '</td>');
+if (domainFilterPara[6] > 0)
+{
+document.write('<td class=ListC2>' + domainFilterList[row] + '</td>');
+}
+document.write('<td class=ListC2>' + domainFilterList[row+1] + '&nbsp;</td>');
+document.write('<td class=ListC2>'
++ statusString + '</td>');
+document.write('<td class=ListC2><a href=\"/userRpm/DomainFilterRpm.htm?Modify=' +
+modifyId+'&Page='+domainFilterPara[2]+
+'\" OnMouseOver=\"return ResetStatus(\'modify\');\"><span name=\"t_modify1\" id = \"t_modify1\">Modify</span></a>&nbsp;<a href=\"/userRpm/DomainFilterRpm.htm?Del='+
+modifyId+'&Page='+domainFilterPara[2]+
+'\" OnMouseOver=\"return ResetStatus(\'delete\');\"><span name=\"t_delete\" id = \"t_delete\">Delete</span></a></td></tr>');
+}
+}
+</script>
+</table></TD></TR>
+<TR><TD colspan=2></TD></TR>
+<TR><TD colspan=2><input type="button" value="Add New..." name="Addnew" class="buttonBig" onClick="doAdd(curPage);">&nbsp;
+<input type="button" value="Enable All" name="Enall" class="buttonBig" onClick="doAll('EnAll');">&nbsp;
+<input type="button" value="Disable All" name="Disall" class="buttonBig" onClick="doAll('DisAll');">&nbsp;
+<input type="button" value="Delete All" name="Delall" class="buttonBig" onClick="doAll('DelAll');"><input name="Page" type="hidden" value="1"></TD></TR>
+<TR><TD class=blue colspan=2></TD></TR>
+<TR><TD></TD><TD><input name="Previous" type="button" class="buttonBig" onClick="doPage(prePage);" value="Previous" >&nbsp;<input name="Next" type="button" class="buttonBig" onClick="doPage(NextPage);" value="Next"></TD></TR>
+</TBODY></TABLE>
+</form></center></BODY><head><meta http-equiv="pragma" content="no-cache"></head></HTML>
+<script language="JavaScript">
+var curPage = domainFilterPara[2];
+var prePage = (domainFilterPara[2] == 1)?1:domainFilterPara[2]-1;
+var NextPage = domainFilterPara[2]+1;
+var tempStr = (domainFilterPara[0] ==1)?"<span id = \"t_enable\">Enabled</span>":"<span id = \"t_disable\">Disabled</span>";
+document.getElementById("firewallStatus").innerHTML = tempStr;
+tempStr = (domainFilterPara[1] ==1)?"<span id = \"t_enabled\">Enabled</span>":"<span id = \"t_disabled\">Disabled</span>";
+document.getElementById("domainfilterStatus").innerHTML = tempStr;
+document.forms[0].Page.value = curPage;
+document.forms[0].Enall.disabled = (domainFilterPara[4] < 1)?true: false;
+document.forms[0].Disall.disabled = (domainFilterPara[4] < 1)?true: false;
+document.forms[0].Delall.disabled = (domainFilterPara[4] < 1)?true: false;
+document.forms[0].Previous.disabled = (domainFilterPara[2] < 2)?true:false;
+document.forms[0].Next.disabled = (domainFilterPara[3] > 0)?false:true;
+</script>

@@ -1,0 +1,65 @@
+
+<BODY onload="setTagStr(document,'ntw_firewall');LoadHelp('FireWallHelpRpm.htm'); resize(this);" onResize="resize(this);">
+<center><form action="FireWallRpm.htm" enctype="multipart/form-data" method="get">
+<TABLE id="autoWidth" border = 0>
+<TR><TD class=h1 colspan=2 id = "t_title">Firewall</TD></TR>
+<TR><TD class=blue colspan=2></TD></TR>
+<TR>
+	<TD width="10%"></TD>
+	<TD><input name="FireWall" type="checkbox" value="2"><span id = "t_en_fw">&nbsp;Enable Firewall (the general firewall switch)</span></TD>
+</TR>
+<TR><TD colspan=2></TD></TR>
+<TR>
+	<TD></TD>
+	<TD><input name="IpFilt" type="checkbox" value="2"><span id = "t_en_ip_flt">&nbsp;Enable IP Address Filtering</span></TD>
+</TR>
+<TR>
+	<TD></TD>
+	<TD id = "t_ip_flt_rule" class = "ListB">Default IP Address Filtering Rules:</TD>
+</TR>
+<TR>
+	<TD></TD>
+	<TD><input name="IpRule" type="radio" value="1">&nbsp;<font color="#FF0000"> <span id = "t_allow0">Allow</span></font>&nbsp;<span id = "t_pcks_pass0">the packets not specified by any filtering rules to pass through the device</span></TD>
+</TR>
+<TR>
+	<TD></TD>
+	<TD><input name="IpRule" type="radio" value="0">&nbsp;<font color="#FF0000"> <span id = "t_deny0">Deny</span></font>&nbsp;<span id = "t_pcks_pass1">the packets not specified by any filtering rules to pass through the device</span ></TD>
+</TR>
+<TR><TD colspan=2></TD></TR>
+<TR>
+	<TD></TD>
+	<TD><input name="DomainFilt" type="checkbox" value="2">&nbsp; <span id = "t_en_domain" >Enable Domain Filtering</span></TD>
+</TR>
+<TR><TD colspan=2></TD></TR>
+<TR>
+	<TD></TD>
+	<TD><input name="MacFilt" type="checkbox" value="2">&nbsp; <span id = "t_en_mac">Enable MAC Address Filtering</span></TD>
+</TR>
+<TR>
+	<TD></TD>
+	<TD id = "t_mac_flt_rule" class = "ListB">Default MAC Address Filtering Rules:</TD>
+</TR>
+<TR>
+	<TD></TD>
+	<TD><input name="MacRule" type="radio" value="1">&nbsp;<font color="#FF0000"><span id = "t_allow1">Allow</span></font>&nbsp;<span id = "t_pc_acc0">these PCs with enabled rules to access the Internet</a></TD>
+</TR>
+<TR>
+	<TD></TD>
+	<TD><input name="MacRule" type="radio" value="0">&nbsp;<font color="#FF0000"><span id = "t_deny1">Deny</span></font>&nbsp;<span id = "t_pc_acc1">these PCs with enabled rules to access the Internet</a></TD>
+</TR>
+<TR><TD class=blue colspan=2></TD></TR>
+<TR>
+	<TD colspan=2 class=mbtn><input name="Save" type="submit" class="buttonBig" value="Save"></TD>
+</TR>
+</TABLE>
+</form></center></BODY></HTML>
+<script language="JavaScript">
+document.forms[0].FireWall.checked =firewallPara[0];
+document.forms[0].IpFilt.checked =firewallPara[1];
+if (firewallPara[2] == 1)	document.forms[0].IpRule[0].checked =true;
+else document.forms[0].IpRule[1].checked =true;
+document.forms[0].DomainFilt.checked =firewallPara[3];
+document.forms[0].MacFilt.checked =firewallPara[4];
+if (firewallPara[5] == 1)	document.forms[0].MacRule[0].checked =true;
+else document.forms[0].MacRule[1].checked =true;
+</script>

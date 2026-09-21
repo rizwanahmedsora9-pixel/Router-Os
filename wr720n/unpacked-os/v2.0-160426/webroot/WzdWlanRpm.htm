@@ -1,0 +1,566 @@
+
+<SCRIPT type="text/javascript">
+<!-- 
+function checkssid()
+{
+	var cf = document.forms[0];
+	var len = 0;
+	var i = 0;
+	for (i = 0; i < cf.ssid.value.length; i ++)
+	{
+		var c = cf.ssid.value.charAt(i);
+		len += ((c >= ' ') && (c <= '~')) ? 1 : 2;
+	}
+	return len;
+}
+// check ssid when keyup event occurs
+function checkkeyup()
+{
+	return true;
+}
+// check ssid when keydown event occurs
+function checkkeydown()
+{
+	var len = checkssid();
+	var c = window.event.keyCode;
+	if ((len >= 31) && (c > 127))
+	{
+		return false;
+	}
+	return true;
+}
+
+
+
+function changeInfo()
+{
+    var secTypes = document.forms[0].secType;
+    
+    if(secTypes[0].checked)
+    {
+
+    }
+    else if (secTypes[1].checked)
+    {
+    	if (wzdWlanInf[14])
+    	{
+    	 	document.forms[0].pskSecret.value = wzdWlanInf[17];
+    	}
+    	else
+    	{
+    		document.document.forms[0].pskSecret.value = " ";
+    	}
+    }
+    else if (secTypes[2].checked)
+    {
+    	
+    	document.document.forms[0].pskSecret.value = " ";
+    }
+    else
+    {
+    }
+}
+
+function doSubmit()
+{
+	var cf = document.forms[0];
+	if  (document.forms[0].ssid.value.length == 0)		
+	{
+		alert(js_pl_ssid="Please input SSID!");		
+		return false;
+	}
+	
+	ressid = checkssid();
+	if  (ressid == 0)		
+	{
+		alert(js_pl_ssid="Please input SSID!");
+		return false;	
+	}
+	if  (ressid > 32)	
+	{
+		alert(js_ssid_exc_alp="The SSID cannot exceed 32 alphanumeric characters. Please input correctly!");
+		return false;	
+	}
+	
+	if (!checkAuth())
+	{
+		return false;
+	}
+	
+	if (!checkpwd())
+	{
+		return false;
+	}
+	
+	return true;
+}
+
+var strMode = new Array(
+"id=\"t_11b_only\">11b only<",
+"id=\"t_11g_only\">11g only<",
+"id=\"t_11n_only\">11n only<",
+"id=\"t_11bg_mix\">11bg mixed<",
+"id=\"t_11bgn_mix\">11bgn mixed<"
+);
+
+function changeMode()
+{
+	var cf = document.forms[0];
+	var maxMode = 1;
+	var optionObj;
+	var regionNum;
+	var oldMode = cf.mode.value;
+	var channelIndex = 32;
+	var i = 0;
+	var modeCount = 5;
+	
+	channelIndex = (channelIndex)*4;
+
+	maxMode = modeCount;
+	if (oldMode > maxMode)
+		oldMode =1;
+	cf.mode.value = oldMode;
+
+	if((cf.mode.selectedIndex == 0) || (cf.mode.selectedIndex == 1) || (cf.mode.selectedIndex == 3))
+	{
+		cf.chanWidth.value = 1;
+		cf.chanWidth.disabled = true;
+	}
+	else
+	{
+		cf.chanWidth.value = wzdWlanInf[11];
+		cf.chanWidth.disabled = false;
+	}
+}
+function changeRegion()
+{
+	changeMode();
+	var cf = document.forms[0];
+	var oldChannel = cf.channel.value;
+	cf.channel.options.length = 1;
+	var channelIndex = 32;
+	channelIndex = (channelIndex)*4;
+	var j=1;
+	var oldRegion = regionInfo[channelIndex];
+	while(oldRegion == regionInfo[channelIndex])
+	{	
+		for (var i=regionInfo[channelIndex+1]; i<=regionInfo[channelIndex+2]; i++)
+		{
+			if ((i == 14) && (document.forms[0].mode.value == 2))
+				continue;
+			var optionObj = new Option(i,i,false,false);
+			cf.channel.options[j++]=optionObj;
+			if (i == oldChannel)
+				cf.channel.value =i;
+		}
+		channelIndex =channelIndex+4;
+	}
+}
+//region name,	start channel,	end channel,	special mode disable,0:disable, 1:enable	
+var regionInfo = new Array(
+	"id=\"t_Albania\">Albania<", 1, 13, 2,
+	"id=\"t_Algeria\">Algeria<", 1, 13, 2,
+	"id=\"t_Argentina\">Argentina<", 1, 13, 2,
+	"id=\"t_Armenia\">Armenia<", 1, 13, 2,
+	"id=\"t_Australia\">Australia<", 1, 13, 2,
+	"id=\"t_Austria\">Austria<", 1, 13, 2,
+	"id=\"t_Azerbaijan\">Azerbaijan<", 1, 13, 2,
+	"id=\"t_Bahrain\">Bahrain<", 1, 13, 2,
+	"id=\"t_Belarus\">Belarus<", 1, 13, 2,
+	"id=\"t_Belgium\">Belgium<", 1, 13, 2,
+	"id=\"t_Belize\">Belize<", 1, 13, 2,
+	"id=\"t_Bolivia\">Bolivia<", 1, 13, 2,
+	"id=\"t_Brazil\">Brazil<", 1, 13, 2,
+	"id=\"t_Brunei\">Brunei Darussalam<", 1, 13, 2,
+	"id=\"t_Bulgaria\">Bulgaria<", 1, 13, 2,
+	"id=\"t_Canada\">Canada<", 1, 11, 2,
+	"id=\"t_Chile\">Chile<", 1, 13, 2,
+	"id=\"t_China\">China<", 1, 13, 1,
+	"id=\"t_Colombia\">Colombia<", 1, 11, 2,
+	"id=\"t_Costa\">Costa Rica<", 1, 13, 2,
+	"id=\"t_Croatia\">Croatia<", 1, 13, 2,
+	"id=\"t_Cyprus\">Cyprus<", 1, 13, 2,
+	"id=\"t_Czech\">Czech Republic<", 1, 13, 2,
+	"id=\"t_Denmark\">Denmark<", 1, 13, 2,
+	"id=\"t_Dominican\">Dominican Republic<", 1, 11, 2,
+	"id=\"t_Ecuador\">Ecuador<", 1, 13, 2,
+	"id=\"t_Egypt\">Egypt<", 1, 13, 2,
+	"id=\"t_El\">El Salvador<", 1, 13, 2,
+	"id=\"t_Estonia\">Estonia<", 1, 13, 2,
+	"id=\"t_Finland\">Finland<", 1, 13, 2,
+	"id=\"t_France\">France<", 1, 13, 2,
+	"id=\"t_Georgia\">Georgia<", 1, 13, 2,
+	"id=\"t_Germany\">Germany<", 1, 13, 2,
+	"id=\"t_Greece\">Greece<", 1, 13, 2,
+	"id=\"t_Guatemala\">Guatemala<", 1, 11, 2,
+	"id=\"t_Honduras\">Honduras<", 1, 13, 2,
+	"id=\"t_Hong\">Hong Kong<", 1, 13, 2,
+	"id=\"t_Hungary\">Hungary<", 1, 13, 2,
+	"id=\"t_Iceland\">Iceland<", 1, 13, 2,
+	"id=\"t_India\">India<", 1, 13, 2,
+	"id=\"t_Indonesia\">Indonesia<", 1, 13, 2,
+	"id=\"t_Iran\">Iran<", 1, 13, 2,
+	"id=\"t_Ireland\">Ireland<", 1, 13, 2,
+	"id=\"t_Israel\">Israel<", 1, 13, 2,
+	"id=\"t_Italy\">Italy<", 1, 13, 2,
+	"id=\"t_Japan\">Japan<", 1, 14, 2,
+	"id=\"t_Japan1\">Japan1<", 1, 14, 2,
+	"id=\"t_Japan2\">Japan2<", 1, 11, 2,
+	"id=\"t_Japan3\">Japan3<", 1, 14, 2,
+	"id=\"t_Japan4\">Japan4<", 1, 14, 2,
+	"id=\"t_Japan5\">Japan5<", 1, 14, 2,
+	"id=\"t_Japan6\">Japan6<", 1, 13, 2,
+	"id=\"t_Jordan\">Jordan<", 1, 13, 2,
+	"id=\"t_Kazakhstan\">Kazakhstan<", 1, 13, 2,
+	"id=\"t_North\">North Korea<", 1, 13, 2,
+	"id=\"t_Korea\">Korea Republic<", 1, 13, 2,
+	"id=\"t_Korea2\">Korea Republic3<", 1, 13, 2,
+	"id=\"t_Kuwait\">Kuwait<", 1, 13, 2,
+	"id=\"t_Latvia\">Latvia<", 1, 13, 2,
+	"id=\"t_Lebanon\">Lebanon<", 1, 13, 2,
+	"id=\"t_Liechtenstein\">Liechtenstein<", 1, 13, 2,
+	"id=\"t_Lithuania\">Lithuania<", 1, 13, 2,
+	"id=\"t_Luxembourg\">Luxembourg<", 1, 13, 2,
+	"id=\"t_Macau\">Macau<", 1, 13, 2,
+	"id=\"t_Macedonia\">Macedonia<", 1, 13, 2,
+	"id=\"t_Malaysia\">Malaysia<", 1, 13, 2,
+	"id=\"t_Malta\">Malta<", 1, 13, 2,
+	"id=\"t_Mexico\">Mexico<", 1, 11, 2,
+	"id=\"t_Monaco\">Monaco<", 1, 13, 2,
+	"id=\"t_Morocco\">Morocco<", 1, 13, 2,
+	"id=\"t_Netherlands\">Netherlands<", 1, 13, 2,
+	"id=\"t_New\">New Zealand<", 1, 13, 2,
+	"id=\"t_Norway\">Norway<", 1, 13, 2,
+	"id=\"t_Oman\">Oman<", 1, 13, 2,
+	"id=\"t_Pakistan\">Pakistan<", 1, 13, 2,
+	"id=\"t_Panama\">Panama<", 1, 11, 2,
+	"id=\"t_Peru\">Peru<", 1, 13, 2,
+	"id=\"t_Philippines\">Philippines<", 1, 13, 2,
+	"id=\"t_Poland\">Poland<", 1, 13, 2,
+	"id=\"t_Portugal\">Portugal<", 1, 13, 2,
+	"id=\"t_Puerto\">Puerto Rico<", 1, 11, 2,
+	"id=\"t_Qatar\">Qatar<", 1, 13, 2,
+	"id=\"t_Romania\">Romania<", 1, 13, 2,
+	"id=\"t_Russia\">Russia<", 1, 13, 2,
+	"id=\"t_Saudi\">Saudi Arabia<", 1, 13, 2,
+	"id=\"t_Singapore\">Singapore<", 1, 13, 2,
+	"id=\"t_Slovak\">Slovak Republic<", 1, 13, 2,
+	"id=\"t_Slovenia\">Slovenia<", 1, 13, 2,
+	"id=\"t_South\">South Africa<", 1, 13, 2,
+	"id=\"t_Spain\">Spain<", 1, 13, 2,
+	"id=\"t_Sweden\">Sweden<", 1, 13, 2,
+	"id=\"t_Switzerland\">Switzerland<", 1, 13, 2,
+	"id=\"t_Syria\">Syria<", 1, 13, 2,
+	"id=\"t_Taiwan\">Taiwan<", 1, 11, 2,
+	"id=\"t_Thailand\">Thailand<", 1, 13, 2,
+	"id=\"t_Trinidad\">Trinidad & Tobago<", 1, 13, 2,
+	"id=\"t_Tunisia\">Tunisia<", 1, 13, 2,
+	"id=\"t_Turkey\">Turkey<", 1, 13, 2,
+	"id=\"t_Ukraine\">Ukraine<", 1, 13, 2,
+	"id=\"t_UnitedA\">United Arab Emirates<", 1, 13, 2,
+	"id=\"t_UnitedK\">United Kingdom<", 1, 13, 2,
+	"id=\"t_UnitedS\">United States<", 1, 11, 2,
+	"id=\"t_Uruguay\">Uruguay<", 1, 13, 2,
+	"id=\"t_Uzbekistan\">Uzbekistan<", 1, 11, 2,
+	"id=\"t_Venezuela\">Venezuela<", 1, 13, 2,
+	"id=\"t_Viet\">Viet Nam<", 1, 13, 2,
+	"id=\"t_Yemen\">Yemen<", 1, 13, 2,
+	"id=\"t_Zimbabwe\">Zimbabwe<", 1, 13, 2
+); 
+
+function saveBtnVal(val)
+{
+	var cf = document.forms[0];
+	
+    if(val == 0)
+    {
+        document.forms[0].btnValue.value = 0;
+    }
+    else
+    {
+        document.forms[0].btnValue.value = 1;
+    }
+	
+	//add by weizq,2008-10-16
+	if(cf.mode.selectedIndex == 2)
+	{
+		if(wzdWlanInf[13] == 1)//security enabled
+		{
+			//wep
+			if(wzdWlanInf[14] == 1)
+			{
+				var bContinue = window.confirm(js_cur_exc_wep="Current encryption is WEP,11n only mode is not support,if you select ok,the security setting will be loss,continue?");
+				if(!bContinue)
+				{
+					return false;
+				}
+			}
+			//cipher = tkip or auto
+			if(((wzdWlanInf[14] == 2) || (wzdWlanInf[14] == 3)) && (wzdWlanInf[15] == 1 || wzdWlanInf[15] == 2))
+			{
+				var bContinue = window.confirm(js_cur_enc_auto="Current encryption is Automatic or TKIP,11n only mode is not support for TKIP,if you select ok,the encryption will be changed to AES,continue?");
+				if(!bContinue)
+				{
+					return false;
+				}
+			}
+		}
+	}
+	//end add
+	
+    if(doSubmit())
+    {
+    document.wlancfg.submit();
+}
+}
+
+//add by caishaoji on 2008/12/8
+function getValLen(val)
+{
+	var len = 0;
+	var i = 0;
+	for (i = 0; i < val.length; i ++)
+	{
+		var c = val.charAt(i);
+		len += ((c >= ' ') && (c <= '~')) ? 1 : 2;
+	}
+	return len;
+}
+
+function checkAuth()
+{
+	var cf = document.forms[0];
+	var len;
+	var st = 0;
+	
+
+	
+	//WPARadius JS
+	if (cf.secType[0].checked)
+	{
+		st = 0;
+	}
+	else if (cf.secType[1].checked)
+	{
+		st = 1;
+	}
+	else if (cf.secType[2].checked)
+	{
+		st = 2;
+	}
+
+	
+	len = getValLen(cf.pskSecret.value);
+	
+	if ((st == 1) && (len <= 0))
+	{
+		alert(js_empty_psk_password="Empty PSK password, please input one!");
+		cf.pskSecret.focus();
+		return false;
+	}
+	if ((len > 0) && (len < 8))
+	{
+		alert(js_psk_char="PSK password should not be less than 8 characters, please input again!");
+		cf.pskSecret.focus();
+		cf.pskSecret.select();
+		return false;
+	}
+	
+	if (len > 64)
+	{
+		alert(js_psk_too_long = "PSK password should not be longer than 64 characters, please input again!");
+		cf.pskSecret.focus();
+		cf.pskSecret.select();
+		return false;
+	}
+	
+        if(len == 64)
+        {
+            var ch="ABCDEFabcdef0123456789";
+            var c;
+            for(i = 0; i < len; i++)
+            {
+                c = cf.pskSecret.value.charAt(i);
+                if(ch.indexOf(c) == -1)
+                {
+                    alert(js_psk_hex="The 64 bytes PSK password include non-hexadecimal characters, please input again.");
+                    cf.pskSecret.focus();
+                    cf.pskSecret.select();
+                    return false;
+                }
+            }
+        }
+        
+        return true;
+	
+	
+	
+}
+
+function checkpwd()
+{
+    var c;
+    var obj = document.forms[0];
+    var ch = "0123456789ABCDEFabcdefGHIJKLMNOPQRSTUVWXYZghijklmnopqrstuvwxyz`~!@#$^&*()-=_+[]{};:\'\"\\|/?.,<>/% ";
+    var pwd;
+    var chr;
+
+    if(obj.secType[1].checked == true)
+    {
+        pwd = obj.pskSecret.value;
+        for(var i = 0; i < pwd.length; i++)
+        {
+            chr = pwd.charAt(i);
+            if(ch.indexOf(chr) == -1)
+            {
+                alert(js_illegal_passwd = "The password value contain illegal characters, please input another one!");
+                return false;
+            }
+        }
+    }
+    return true;
+}
+
+function changeSecType(num)
+{
+	var cf = document.forms[0];
+	switch(num)
+	{
+	case 3:
+		cf.pskSecret.disabled = false;
+		break;
+	case 0:
+	case 4:
+		cf.pskSecret.disabled = true;
+		break;
+	}
+}
+//add end
+//-->
+</SCRIPT>
+</HEAD>
+<BODY onLoad="setTagStr(document,'ntw_wzd_wlan');LoadHelp('WzdWlanHelpRpm.htm'); resize(this);"  onresize="resize(this);">
+<FORM  name="wlancfg" action="WzdWlanRpm.htm" enctype="multipart/form-data" method="get" onSubmit="return doSubmit();">
+  <TABLE id="autoWidth">
+    <TR>
+      <TD class=h1 colspan=2 id="t_title">Quick Setup - Wireless</TD>
+    </TR>
+    <TR>
+      <TD class=blue colspan=2></TD>
+    </TR>
+    <TR>
+      <TD class=Item id="t_radio">Wireless Radio:</TD>
+      <TD><SELECT name="ap" class="list" id="ap" >
+          <OPTION value="0" id="t_disable">Disable</OPTION>
+          <OPTION value="1" id="t_enable">Enable</OPTION>
+        </SELECT></TD>
+    </TR>
+    <TR>
+      <TD class=Item id="t_ssid">SSID:</TD>
+      <TD><INPUT name="ssid" type="text" class="text" id="ssid" size="32" maxlength="32" value=""></TD>
+    </TR>
+    <TR>
+      <TD class=Item id="t_channel">Channel:</TD>
+      <TD><SELECT name="channel" class="listS" id="channel">
+      	<OPTION value=0 id="t_auto" name="t_auto">Auto</OPTION>
+        </SELECT></TD>
+    </TR>
+    <TR id="wlMode">
+      <TD class=Item id="t_mode">Mode:</TD>
+      <TD><SELECT name="mode"class="listL" id="mode" onChange="changeRegion();">
+          <SCRIPT type="text/javascript">
+    var i = 0;
+    for(i=0;i<strMode.length;i++)
+    {
+        document.write('<option value='+(i+1)+' '+strMode[i]+'\/option>');
+    }
+
+</SCRIPT>
+        </SELECT></TD>
+    </TR>
+    <TR>
+      <TD class=Item id="t_channel_wd">Channel Width:</TD>
+      <TD><SELECT name="chanWidth" class="listL">
+          <OPTION value=2 id="t_auto" name="t_auto">Auto</OPTION>
+          <OPTION value=1 id="t_20M" name="t_20M">20MHz</OPTION>
+          <OPTION value=3 id="t_40M" name="t_40M">40MHz</OPTION>
+        </SELECT></TD>
+    </TR>
+    <TR style="display:none;">
+      <TD class=Item id="t_enb_ssid_bc">Enable SSID Broadcast:</TD>
+      <TD align = "left"><INPUT type="checkbox" value=2 name="broadcast"></TD>
+    </TR>
+    <TR>
+      <TD></TD>
+    </TR>
+    <TR>
+      <TD class="Item" id="t_wireless_sec">Wireless Security:</TD>
+    </TR>
+    <TR>
+      <TD class="Item" style="font-weight:bold;font-size:14px"><INPUT name="secType" id="secType" type="radio" value="0" onclick="changeSecType(0);"></TD>
+      <TD>&nbsp;<A><B id="t_disSec">Disable Security</B></A></TD>
+    </TR>
+    <TR>
+      <TD class="Item" style="font-weight:bold;font-size:14px"><INPUT name="secType" id="secType" type="radio" value="3" onclick="changeSecType(3);"></TD>
+      <TD>&nbsp;<B id="t_wpapsk">WPA-PSK/WPA2-PSK</B></TD>
+    </TR>
+    <TR>
+      <TD class= "Item" id="t_psk_pwd">PSK Password:</TD>
+      <TD><INPUT name=pskSecret type=text class=text id="pskSecret" value="" size="64" maxlength="64"></TD>
+    </TR>
+    <TR>
+      <TD>&nbsp;</TD>
+      <TD  colspan = 3 id="t_psk_note">(You can enter ASCII characters between 8 and 63 or Hexadecimal characters between 8 and 64.)</TD>
+    </TR>
+    <TR>
+      <TD class="Item"><INPUT name="secType" id="secType" type="radio" value="4" onclick="changeSecType(4);"></TD>
+      <TD><B id="t_no_change">No Change</B></TD>
+    </TR>
+    <TR>
+      <TD class=blue colspan=2></TD>
+    </TR>
+    <TR>
+      <TD colspan=2 class=mbtn><INPUT type = "hidden" name = "btnValue" id = "btnValue">
+        <INPUT name="Return" type="button" class="buttonBig" id="Return" value="Back" onclick = "saveBtnVal(0)">
+        &nbsp; &nbsp;
+        <INPUT name="Next" type="button" class="buttonBig" id="Submit"  value="Next" onclick = "saveBtnVal(1)">
+        <INPUT type="hidden" name="ClientId" value="">
+        <INPUT type="hidden" name="wlanpage" value="1"></TD>
+    </TR>
+  </TABLE>
+</FORM>
+</BODY>
+</HTML>
+<SCRIPT type="text/javascript">
+changeRegion();
+document.forms[0].ap.value = wzdWlanInf[2];
+document.forms[0].ssid.value = wzdWlanInf[1];
+document.forms[0].mode.value = wzdWlanInf[6];
+document.forms[0].ClientId.value = wzdWlanInf[7];
+document.forms[0].channel.value = wzdWlanInf[10];	
+document.forms[0].broadcast.checked = true;
+changeMode();
+
+//caishaoji add on 2008/12/9
+	
+  	var secIndex = wzdWlanInf[14];
+  	if(!wzdWlanInf[13])
+  	{
+  		document.forms[0].secType[0].checked  = 1;	
+  	}
+  	else if (secIndex == 3)
+  	{
+  	    document.forms[0].secType[1].checked = 1;
+  	}
+  	else
+  	{
+  	    document.forms[0].secType[2].checked = 1;
+  	}
+    	document.forms[0].pskSecret.value = wzdWlanInf[17];
+//add end
+
+if (0)
+{
+	document.getElementById("wlMode").style.display="none";
+}
+</SCRIPT>

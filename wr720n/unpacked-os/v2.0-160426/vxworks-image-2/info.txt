@@ -1,0 +1,7 @@
+source file      : wr720nv2-eu-up.bin
+compressed at    : 0x40114
+compressed size  : 994899 bytes (0xF2E53)
+uncompressed size: 3660912 bytes (0x37DC70)
+LZMA props       : 0x6E   dict size: 8388608
+md5              : 055acd0411970ec83ba8b92a22067ddf
+sha256           : 5b5fc740f90b66505626a9b600fbbd86b9e1ef20d404ee2ee6b58b9b385a3207

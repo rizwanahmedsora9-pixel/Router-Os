@@ -1,0 +1,58 @@
+
+<meta http-equiv="pragma" content="no-cache">
+<meta http-equiv="expires" content="wed, 26 Feb 1997 08:21:57 GMT">
+<LINK href="/dynaform/css_main.css" rel=stylesheet>
+<script language="JavaScript" src="/dynaform/common.js" type="text/JavaScript"></script>
+<!--<TP_C_TAG>-->
+<script language=javascript><!--//
+function doLoad()
+{
+    doReFresh();
+	/* lzy,2009-5-25.改回原样。*/
+	location.href = tempPageInf[2];
+}
+var timeout = 0;
+function doReFresh()
+{
+	/* lzy,2009-5-25. 增长滚动条刷的时间，以满足WR541G的等mips机型的需要。 */
+	timeout = tempPageInf[0] * 10;	
+    window.setTimeout("showTime()",timeout);
+}
+var rate = 0;
+function showTime()
+{
+    rate = rate + 1;
+	td1.style.width = rate + "%";
+	if(rate >= 100)
+	{
+       parent.bottomLeftFrame.collapseAll();
+		return;
+	}
+	doReFresh();
+}
+
+//--></script></head>
+<body onLoad="setTagStr(document,'ntw_update_temp');return doLoad();">
+<center>
+<table border =0>
+<script language=javascript>
+if(tempPageInf[1] == 0)
+{
+document.write('<TR><TD class=h1 id = "t_title0">Configuration Import</TD></TR>');
+}
+else
+{
+document.write('<TR><TD class=h1 id = "t_title1">Firmware Upgrade</TD></TR>');
+}
+</script>
+<TR><TD class=blue></TD></TR>
+<TR><TD class=h2 id = "t_notice0">Processing...</TD></TR>
+<TR><TD class=h2 id = "t_notice1">Please wait until system reboots...</TD></TR>
+<tr><Td align = "center">
+<table border="0" cellpadding="0" cellspacing="0" height="10" align="center" bordercolor="#66BA33" class="space" width="40%">
+<tr><td style = "width:80%">
+<table id="td1" border="0" cellpadding="0" cellspacing="0" height="10" style="width:0px" bgcolor="#66BA33"><td bgcolor="#66BA33"><td></td></td></tr>
+</table>
+</td></tr>
+</table></td></tr><TR><TD class=blue></TD></TR></table></center>
+</body></html>

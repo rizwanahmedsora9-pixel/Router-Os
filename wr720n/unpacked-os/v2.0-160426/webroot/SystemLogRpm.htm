@@ -1,0 +1,114 @@
+
+<script language=javascript><!--//
+function doSubmit()
+{
+	if(confirm(js_mksure_delete="Are you sure to clear all the logs?"))
+	{
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+}
+function doClick()
+{
+location.href="/userRpm/SystemLogRpm.htm";
+}
+//--></script>
+</HEAD>
+<BODY onload="setTagStr(document,'ntw_sys_log');LoadHelp('SystemLogHelpRpm.htm'); resize(this);" onResize="resize(this);">
+<center><form action="SystemLogRpm.htm" enctype="multipart/form-data" method="get" onSubmit="return doSubmit();">
+<TABLE id="autoWidth">
+<TR><TD class=h1 id = "t_title">System Log</TD></TR>
+<TR>
+<TD class=blue></TD>
+</TR>
+<TR>
+	<TD>
+	<TABLE border="0" width="698" cellspacing="0" cellpadding="0" class="space">
+		<TR>
+			<TD width ="150">
+				<B id="t_auto_mail">&nbsp;&nbsp;Auto Mail Feature:</B>
+			</TD>
+			<TD class=emp width="100">
+				<SCRIPT type="text/javascript">
+				if (syslogWebConf[0] == 0)
+				{
+					document.write("<div id=\"t_disabled\">Disabled<\/div>");
+				}
+				else
+				{
+					document.write("<div id=\"t_enabled\">Enabled<\/div>");
+				}
+				</SCRIPT>
+			</TD>&nbsp;&nbsp;
+			<TD>
+				<INPUT name="AutoMail" type="button" class="buttonBigL" value="Mail Settings" onClick="location.href='AutoEmailRpm.htm';" onmousewheel=disabled>
+			</TD>
+		</TR>
+	</TABLE>
+	</TD>
+</TR>
+<TR><TD>
+<table border=0>
+<TR>
+	<TD class=ListB align="center" width="41" nowrap id = "t_index" >Index</TD>
+	<TD class=ListB align="center" width="61" id = "t_level">Level</TD>
+	<TD class=ListB align="center" id = "t_log">Log Content</TD>
+</TR>
+<script language="JavaScript">
+var maxRow;
+var i;
+if((logList.length-2)>=1)
+{
+maxRow = logList.length-2;
+document.write('<table border="1" align="center" width="598" cellspacing="0" cellpadding="0" class="space">');
+for(i = 0; i < maxRow; i++)
+{
+	document.write('<TR><TD align="center" width=40>'+(maxRow-i)+'</TD>');
+	document.write('<TD align="center" width=60>INFO</TD>');
+	document.write('<TD><p align="left">&nbsp;'+logList[maxRow-i-1]+'</p></TD></TR>');
+};
+}
+if((logExpList.length-2)>=1)
+{
+	maxRow = logExpList.length-2;
+	for(i = 0;i < maxRow;i++)
+	{
+		document.write('<TR><TD align="center" width=40>'+'E'+(maxRow-i)+'</TD>');
+		document.write('<TD align="center" width=60>DEBUG</TD>');
+		document.write('<TD colspan ="2">'+logExpList[maxRow-i-1]+'</TD></TR>');
+	};
+}
+document.write('</table></td></tr>');
+document.write('<tr><td width="598"><table border="0" align="left" cellpadding="0" cellspacing="0" class="space">');
+if(1 != isAp[0])
+{
+	document.write('<TR><TD class=ListB>' + logInf[0]+'</TD></TR>');
+}
+document.write('<TR><TD class=ListB>' + logInf[1]+'</TD></TR>');
+document.write('<TR><TD class=ListB>' + logInf[2]+'</TD></TR>');
+if(1 != isAp[0])
+{
+	if((logWanList.length-2)>=1)
+	{
+		maxRow = logWanList.length-2;
+		for(i=0;i<maxRow;i++)
+		{
+			document.write('<TR><TD class=ListB>' + logWanList[i]+'</TD></TR>');
+		}
+	}
+	document.write('<TR><TD class=ListB>' + logInf[3]+'</TD></TR>');
+}
+document.write('</table></td></tr>');
+</script>
+</table>
+<TR><TD class=blue></TD></TR>
+<TR><TD class="mbtn">
+&nbsp;&nbsp;<INPUT name="DownLoad" type="button" class="buttonBig" value="Save Log" onClick="location.href='SystemLog.txt';" >
+&nbsp;&nbsp;<INPUT name="MailLog" type="button" class="buttonBig" value="Mail Log" onClick="this.disabled = true; location.href='SystemLogRpm.htm?doMailLog=2';" >
+&nbsp;&nbsp;<INPUT class="buttonBig" type="button" value="Refresh" name="Refresh" onClick="doClick();">
+&nbsp;&nbsp;<INPUT class="buttonBigL" type="submit" value="Clear All" name="Clearlog"> </TD></TR>
+</TABLE>
+</form></center></BODY></HTML>
