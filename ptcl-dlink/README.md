@@ -52,6 +52,21 @@ http://<router-ip>/cgi-bin/webproc?getpage=html/index.html&errorpage=html/index.
 `<router-ip>` is whatever your PTCL unit answers on — PTCL-shipped builds commonly use
 **`192.168.10.1`** (also seen: `192.168.1.1`). Check the sticker on the bottom of the unit.
 
+### "Is it just one URL?"
+
+**No — but one URL is enough.** It is one *mechanism* with many URLs, not one magic link:
+
+* `var:subpage=` picks which wizard step renders, so each step is its own URL. Only
+  **`wizentrance`** and **`wizwl`** are named in public research; the wizard has five steps
+  and the other three names are not published.
+* `getpage=` accepts a filesystem path, so there are as many URLs as there are files on the
+  device. That is the whole of CVE-2025-34048.
+* Both management IPs (`192.168.10.1` and `192.168.1.1`) can work on the same unit.
+
+Any **one** of the wizard URLs gets you in; you do not need to chain them. Run
+`python3 tools/ptcl_check.py <router-ip> --urls` to print the full list with your host
+substituted (no network traffic — it just prints).
+
 > ⚠️ **I could not see a URL in your message.** Your note said *"check that url"*, but the
 > message you sent contained no link or address — only the description. The URLs above are
 > the known PTCL/D-Link bypass URLs from published research. **If you meant one specific URL
@@ -91,7 +106,8 @@ setting, and does not dump secrets — it tells you which of the symptoms above 
 ```bash
 cd ptcl-dlink
 
-python3 tools/ptcl_check.py 192.168.10.1
+python3 tools/ptcl_check.py 192.168.10.1 --urls          # just print the URLs, no probing
+python3 tools/ptcl_check.py 192.168.10.1                 # full read-only check
 python3 tools/ptcl_check.py 192.168.1.1 --json research/check-$(date +%F).json
 ```
 

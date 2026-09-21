@@ -18,10 +18,21 @@ python3 ptcl_check.py 192.168.10.1 -v          # log every request
 | `--port N` | management port, default `80` |
 | `--timeout S` | per-request timeout, default `6.0` |
 | `--json PATH` | also write the raw result as JSON |
+| `--urls` | print every URL variant and **exit without probing anything** |
 | `-v`, `--verbose` | print every request and response code |
 
 **Exit codes:** `0` = not vulnerable · `1` = **vulnerable** (so it drops straight into a
 script or cron job) · `2` = refused, the target is not on your LAN.
+
+### Just want the URLs?
+
+```bash
+python3 ptcl_check.py 192.168.10.1 --urls
+```
+
+Prints the seven URL variants with your host substituted and exits. Makes **no network
+requests at all** — verified against a dead port (`--port 1 --urls` exits `0` without a
+connection attempt), so it is a safe quick reference to copy from.
 
 ### What it checks
 

