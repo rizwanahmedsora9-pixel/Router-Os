@@ -1,0 +1,5 @@
+http://192.168.10.1/cgi-bin/webproc?getpage=html/index.html&errorpage=html/index.html&var:language=en_us&var:menu=setup&var:subpage=wizentrance&var:page=wizard
+http://192.168.10.1/cgi-bin/webproc?getpage=html/index.html&errorpage=html/index.html&var:language=en_us&var:menu=setup&var:subpage=wizentrance&var:page=wizard
+http://192.168.10.1/cgi-bin/webproc?getpage=html/index.html&var:menu=setup&var:page=wizard
+http://192.168.10.1/cgi-bin/webproc?getpage=html/index.html&errorpage=html/index.html&var:language=en_us&var:menu=setup&var:subpage=wizwl&var:page=wizard
+http://192.168.10.1/cgi-bin/webproc?getpage=/proc/version&errorpage=html/main.html&var:language=en_us&var:menu=setup&var:page=wizard
