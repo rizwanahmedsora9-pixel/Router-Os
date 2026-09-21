@@ -1,0 +1,153 @@
+
+<SCRIPT language="JavaScript"><!-- 
+var str_action = "fresh";
+
+window.onbeforeunload = function()
+{
+	if (typeof event == "undefined")
+	{
+		return;
+	}
+	with (event)
+	{
+		if (clientX > document.body.clientWidth && clientY < 0 || altKey)
+		{
+			// DO NOTHING
+		}
+		else			
+		{
+			if (str_action == "fresh")
+			{
+				if (window.parent == window)
+				{						
+					LoadMain();
+					return false;
+				}	
+			}
+			else
+			{
+				// DO NOTHING
+			}
+		}
+	}
+}
+document.onkeydown = function()
+{
+	if (typeof event == "undefined")
+	{
+		alert("Please wait until system reboots...");
+		LoadMain();		
+	}
+	else
+	{
+		with(event)
+		{
+			if (event.keyCode == 116 ||
+				event.keyCode == 8 ||
+				(ctrlKey && event.keyCode == 82) )
+				
+			{
+				event.keyCode = 0;
+				event.returnValue =  false;
+			}
+		}
+	}
+}
+
+function LoadMain()
+{
+	if (updateInf[4] == 1)
+	{
+		if (updateInf[5] != 0)
+		{
+			parent.location.href = "http://" + updateInf[5] + ":" + updateInf[1];
+		}
+		else
+		{
+			parent.location.href = "http://" + updateInf[0] + ":" + updateInf[1];
+		}
+	}
+	else
+	{
+		parent.location.href = "http://" + updateInf[0] + ":" + updateInf[1];
+	}
+	
+	return true;
+}
+
+function doRefresh()
+{
+	location.href="/userRpm/FirmwareUpdateTemp.htm";
+	return true;
+}
+
+function doLoad()
+{
+	if (0 == updateInf[3])
+	{
+		window.setTimeout("growUp()",timeout);
+	}
+	else
+	{
+		var obj = document.getElementById('td1');
+		obj.style.width = "100%";
+		var per=document.getElementById("percent");
+		per.innerHTML="100%";
+		str_action = "close";
+		var obj=document.getElementById("tag_notice");
+		obj.style.display="block";
+		var info = document.getElementById("t_info");
+		info.innerHTML = "Software Upgrade Successfully!";
+		info.style.color = "green";
+		per.style.color="green";
+		window.setTimeout("LoadMain()", 3000);
+	}
+}
+var timeout = updateInf[2] * 10;
+var rate = 0;
+
+function growUp()
+{
+	var obj = document.getElementById('td1');
+	if (rate < 100)
+	rate = rate + 1;
+	obj.style.width = rate + "%";
+	var per=document.getElementById("percent");
+	per.innerHTML=rate+"%";
+	if(rate > 99)
+	{
+		str_action = "close";
+		doRefresh();
+	}
+	window.setTimeout("growUp()",timeout);
+	return;
+}
+
+//--></SCRIPT>
+</HEAD>
+<BODY onLoad="return doLoad();">
+<CENTER>
+<FORM>
+<TABLE border=0>
+<TBODY>
+<TR><TD class=h1 id = "t_title" >Firmware Upgrade</TD></TR>
+<TR><TD class=blue></TD></TR>
+<TR><TD class=h2 id="t_info">Processing...</TD></TR>
+<TR><TD align = "center" style="padding-left:5%"><TABLE border="0" cellpadding="0" cellspacing="0" height="10" align="center" class="space" width="40%">
+<TR><TD><DIV id="percent"></DIV></TD>
+<TD style = "width:98%"><TABLE id="td1"  class="guage" border="0" cellpadding="0" cellspacing="0" height="10" style="width:0px;">
+<TR><TD></TD></TR>
+</TABLE></TD></TR>
+</TABLE></TD>
+</TR>
+<TR><TD class = "h2" id ="tag_notice" style="display:none">Please wait a moment, if the browser does not refresh automatically, click Refresh on the top of your browser.</TD></TR>
+<TR><TD class=blue></TD></TR>
+</TBODY>
+</TABLE>
+ </FORM>
+</CENTER>
+</BODY>
+<HEAD>
+<META http-equiv="pragma" content="no-cache">
+</HEAD>
+</HTML>

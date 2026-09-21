@@ -1,0 +1,85 @@
+
+<script language=javascript><!--//
+function doSubmit(){
+if(document.forms[0].filename.value == "")
+{
+alert(js_input_file="Please choose a file to upgrade!");
+return false;
+}
+var tmp = document.forms[0].filename.value;
+var filename=/\.bin$/;
+if(!filename.test(tmp))
+{
+	alert(js_choose_file="Please choose a correct file to upgrade!");
+	return false;
+}
+filename =/[^\\]*\.bin/;
+var arr=filename.exec(tmp);
+if(arr[0].length >= 64)
+{
+alert(js_bad_file="The filename should not be longer than 64!");
+return false;
+}
+/*
+ if(false == GetFileSize())
+ {
+       return false;
+ }
+*/
+if(!confirm(js_mksure_upgrade="Are you sure to upgrade the firmware?"))
+{
+return false;
+}
+return true;
+}
+
+//added by ZQQ,09.04.13 
+/*
+function GetFileSize()
+{
+    var fileLength = 0;
+    var filePath = document.getElementById('filename').value;
+    var image = new Image();
+    image.dynsrc = filePath;
+    fileLength = image.fileSize;
+    if((fileLength > softUpInf[2]) || (fileLength <= 0))
+    {
+        alert(js_err_file_len="The file size oversteps the allowable value!");
+        return false;
+    }
+    return true;
+}
+*/
+//--></script></head>
+<BODY onload="LoadHelp('SoftwareUpgradeHelpRpm.htm'); setTagStr(document,'ntw_software_upgrade');resize(this);" onResize="resize(this);">
+<center><form action="/incoming/Firmware.htm" enctype="multipart/form-data" method="post" onSubmit="return doSubmit();">
+<TABLE id="autoWidth">
+<TR><TD class=h1 colspan=2 id="t_title">Firmware Upgrade</TD></TR>
+<TR><TD class=blue colspan=2></TD></TR>
+<TR id="wan_deny" name="wan_deny" style="display:none">
+	<TD colspan="2" id="t_note_wan_deny" name="t_note_wan_deny" style="color:red; white-space:normal;">The device cannot perform software upgrades via the remote management tool. Please upgrade software from within the LAN. </TD>
+</TR>	
+<TR><TD class=Item id="t_file">File:</TD><td ><input class="text" name="filename" type="file" size="35" onkeydown="return false"></td></TR>
+<TR><TD class=Item id="t_softversion">Firmware Version:</TD><TD><DIV ID="fversion"></DIV></TD></TR>
+<TR><TD class=Item id="t_hardversion">Hardware Version:</TD><TD><DIV ID="hversion"></DIV></TD></TR>
+<TR><TD class=blue colspan=3></TD></TR>
+<TR><TD></TD>
+<TD colspan=3> <input name="Upgrade" type="submit" class="buttonBig" id="Submit" value="Upgrade"></TD></TR>
+</TABLE>
+</form></center></BODY></HTML>
+<script language="JavaScript">
+document.getElementById("fversion").innerHTML = softUpInf[0];
+document.getElementById("hversion").innerHTML = softUpInf[1];
+if (0 == softUpInf[2])
+{
+	document.forms[0].filename.disabled = true;
+	document.forms[0].Upgrade.disabled = true;
+	document.getElementById("wan_deny").style.display = "";	
+}
+else
+{
+	document.forms[0].filename.disabled = false;
+	document.forms[0].Upgrade.disabled = false;	
+	document.getElementById("wan_deny").style.display = "none";	
+}
+</script>

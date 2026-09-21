@@ -1,0 +1,84 @@
+
+<style type="text/css">
+TABLE{ Width:100%%;	margin: 0px;	padding: 0px;}  
+BODY {margin-top:33px;margin-left:15px; FONT-SIZE: 12px;FONT-FAMILY: "Arial","Helvetica","Geneva","Swiss","SunSans-Regular", "sans-serif";color:black;background-color:#fafafa;}
+TD{ FONT-SIZE: 12px; height: 24px; text-align: left; white-space:nowrap; vertical-align: middle;}   
+TD.h1 {FONT-SIZE: 16px; height: 20px; COLOR: WHITE; FONT-WEIGHT: bold;background-color:#66BA33;padding-left: 2%%;} 
+TD.h2 {	FONT-SIZE: 16px; height: 30px; FONT-WEIGHT: bold ; white-space:normal;padding-left: 2%%;}
+TD.h3 {FONT-SIZE: 14px; height: 30px; white-space:normal;}  
+TD.blue p{display:block;background-color:#66BA33;height:2px;overflow:hidden;} 
+</style>
+<script language="javascript"><!--//
+function LoadMain()
+{
+	if (rebootInf[4] == 1)
+	{
+		if (rebootInf[5] != 0)
+		{
+			parent.location.href = "http://" + rebootInf[5] + ":" + rebootInf[1];
+		}
+		else
+		{
+			parent.location.href = "http://" + rebootInf[0] + ":" + rebootInf[1];
+		}
+	}
+	else
+	{
+		parent.location.href = "http://" + rebootInf[0] + ":" + rebootInf[1];
+	}
+}
+function JumpToMain()
+{
+    window.setTimeout("LoadMain()",rebootInf[2]*1000);
+    return true;
+}
+//--></script></head><body onload="return JumpToMain();">
+<center><form><table border = 0><tbody>
+<tr><td class="h1" id="t_title">Restart</td></tr>
+<tr><td class="blue"><p></p></td></tr>
+</td></tr>
+<script language="JavaScript"><!--
+switch (rebootInf[3])
+{
+	case 0:
+		document.write("<TR><TD class=h2 id = \"t_reboot\">Router Reboot Successfully!</TD></TR>");
+		break;	
+	case 1:
+		document.write("<TR><TD class=h2 id = \"t_def\">Factory Settings Restored Successfully!</TD></TR>");
+		break;	
+	case 2:
+		document.write("<TR><TD class=h2 id = \"t_upgrade\">Software Upgraded Successfully!</TD></TR>");
+		break;
+    case 3:
+    	document.write("<TR><TD class=h2 id = \"t_upload\">Configuration Uploaded Successfully!</TD></TR>");
+		break;
+	case 4:
+		document.write("<TR><TD class=h2 id = \"t_config_save\">Configuration Saved Successfully!</TD></TR>");
+		break;
+	case 5:
+		document.write("<TR><TD class=h2 id = \"t_reboot\">Router Reboot Successfully!</TD></TR>");
+		break;
+	case 6:
+		document.write("<TR><TD class=h2 id = \"t_change_ip\">Change LAN IP address Successfully!</TD></TR>");
+		break;
+	case 7:
+		document.write("<TR><TD class=h2 id = \"t_change_ip\">Change System Mode config Successfully!</TD></TR>");
+		break;
+	case 8:
+		document.write("<TR><TD class=h2 id = \"t_change_ip\">Setup Wizard Successfully!</TD></TR>");
+		break;
+	case 9:
+		document.write("<TR><TD class=h2 id = \"t_change_ip\">Config Upload Successfully,but there are some unknown commands:</TD></TR>");
+		break;
+	default:
+		document.write("<TR><TD class=h2 id = \"t_setting\">Configuration Completed Successfully.</TD></TR>");
+	break;
+}
+//--></script>
+<tr>
+<td class="h2" id="t_notice">Please wait a moment, if the browser does not refresh automatically, click Refresh in the top of your browser.</td>
+</tr>
+<tr><td class="blue"><p></p></td></tr>
+</tbody></table>
+</form></center>
+</body></html>

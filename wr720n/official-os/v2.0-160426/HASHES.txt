@@ -1,0 +1,28 @@
+# TP-Link TL-WR720N (EU) V2 -- build 160426 (2016-04-26)
+# stock vendor files, kept byte-identical
+
+wr720nv2-eu-up.bin
+  1560324 bytes
+  md5    c79f88e79f2735995cd91cb2a5bd0a09
+  sha256 0289bed287db6fa34346973957f1a4b88b902a300a530aebf3c1831f3a0542be
+
+../TL-WR720N(EU)_V2_160426.zip           (the vendor archive itself)
+  1812633 bytes
+  md5    9882e1177854b240bc92f08154b7afb0
+  sha256 34a9450f45a5f2170bdca24b774072919103d41a3cf0938bc3bf0bb41417956b
+
+GPL License Terms.pdf
+  112046 bytes
+  md5    d260652418c834e6a2d95e5b2803f88f
+  sha256 662a372a8200eb553d0c3061494f1a85c17623496c242c56d35d38d77004a6fd
+
+How to upgrade TP-LINK Wireless  N Router.pdf
+  259952 bytes
+  md5    0ad731e5df305ab8c89998556473e619
+  sha256 59818a7ed09e19ccbce6eed0af1de61a333375392ee4b7a7d7a1f5b7bd0b0b2a
+
+# ---- derived artefacts (see ../../unpacked-os/v2.0-160426/) ----
+# vxworks-image-1/main-code.bin   636256 bytes  md5 9ca8aa137b7dc5d4774f5f661391fb0d
+# vxworks-image-2/main-code.bin  3660912 bytes  md5 055acd0411970ec83ba8b92a22067ddf
+# tail-part/part-5632.bin           5632 bytes  md5 d1699542504132a0c0408f680c881f38
+# webroot/                       194 files, 999820 bytes uncompressed

@@ -1,0 +1,329 @@
+
+<script language="Javascript"><!--
+function doSb(){
+	if(document.forms[0].down_bandWidth.value == ""){
+		alert(js_input_bdwth_apply="Please input Bandwidth Apply!");
+		document.forms[0].down_bandWidth.select();
+		return false;
+	}
+	if(!is_number(document.forms[0].down_bandWidth.value)){
+		document.forms[0].down_bandWidth.select();
+		return false;
+	}
+	if(parseInt(document.forms[0].down_bandWidth.value, 10) == 0){
+		alert(js_bad_bdwth0="Bandwidth Apply can not be 0, please input again.");
+		document.forms[0].down_bandWidth.select();
+		return false;
+	}
+	if(parseInt(document.forms[0].down_bandWidth.value, 10)>100000){
+		alert(js_bad_bdwth1="Bandwidth Apply can not be bigger than 100000! please input again.");
+		document.forms[0].down_bandWidth.select();
+		return false;
+	}
+	var existedIP = new Array([-1,256], [-1,256], [-1,256], [-1,256], [-1,256], [-1,256], [-1,256], [-1,256], [-1,256], [-1,256], [-1,256], [-1,256], [-1,256], [-1,256], [-1,256], [-1,256]);
+	var curIP = new Array(-1, 256);
+	var bandWidthSum = 0;
+	var j = 0;
+	for (var i=1; i<QoSRuleListParam[2]+1; i++)
+	{
+		if (!is_number(document.forms[0].elements['ip_start_'+i].value))
+		{
+			document.forms[0].elements['ip_start_'+i].select();
+			return false;
+		}
+		if (parseInt(document.forms[0].elements['ip_start_'+i].value, 10)<=0 || parseInt(document.forms[0].elements['ip_start_'+i].value, 10)>255){
+			alert(js_bad_start_ip="Bad start IP address!");
+			document.forms[0].elements['ip_start_'+i].select();
+			return false;
+		}
+		if (!is_number(document.forms[0].elements['ip_end_'+i].value))
+		{
+			document.forms[0].elements['ip_end_'+i].select();
+			return false;
+		}
+		if (parseInt(document.forms[0].elements['ip_end_'+i].value, 10)<=0 || parseInt(document.forms[0].elements['ip_end_'+i].value, 10)>255){
+			alert(js_bad_end_ip="Bad end IP address!");
+			document.forms[0].elements['ip_end_'+i].select();
+			return false;
+		}
+		if (parseInt(document.forms[0].elements['ip_start_'+i].value, 10) > parseInt(document.forms[0].elements['ip_end_'+i].value, 10)){
+			alert(js_end_bigger_start="End IP address should bigger than start IP address!");
+			document.forms[0].elements['ip_end_'+i].select();
+			return false;
+		}
+		if ((document.forms[0].elements['ip_start_'+i].value !="" || document.forms[0].elements['ip_end_'+i].value != "") && document.forms[0].elements['bandWidth_'+i].value == ""){
+			alert(js_input_bdwth="Please input bandwidth!");
+			document.forms[0].elements['bandWidth_'+i].select();
+			return false;
+		}
+		if (!is_number(document.forms[0].elements['bandWidth_'+i].value))
+		{
+			document.forms[0].elements['bandWidth_'+i].select();
+			return false;
+		}
+		if (parseInt(document.forms[0].elements['bandWidth_'+i].value, 10)<0){
+			alert(js_bad_bdwth2="Bad bandwidth for rule!");
+			document.forms[0].elements['bandWidth_'+i].select();
+			return false;
+		}
+		if (document.forms[0].elements['mode_'+i].value == "0" && parseInt(document.forms[0].elements['bandWidth_'+i].value, 10) > parseInt(document.forms[0].down_bandWidth.value, 10)){
+			alert(js_mbg_big0="The Minimum Bandwidth Guarantee is larger than the total bandwidth in rule!");
+			document.forms[0].elements['bandWidth_'+i].select();
+			return false;
+		}
+		if (document.forms[0].elements['mode_'+i].value == "0" && document.forms[0].elements['bandWidth_'+i].value == "0"){
+			alert(js_bad_mbg="The Minimum Bandwidth Guarantee is a inanition value in rule!");
+			document.forms[0].elements['bandWidth_'+i].select();
+			return false;
+		}
+		if (document.forms[0].elements['mode_'+i].value == "1" && parseInt(document.forms[0].elements['bandWidth_'+i].value, 10) >= parseInt(document.forms[0].down_bandWidth.value, 10)){
+			alert(js_bad_mbl="The Maximum Bandwidth Limit is a inanition value in rule!");
+			document.forms[0].elements['bandWidth_'+i].select();
+			return false;
+		}
+		if ((document.forms[0].elements['ip_start_'+i].value == "" && document.forms[0].elements['ip_end_'+i].value == "") && document.forms[0].elements['bandWidth_'+i].value != ""){
+			alert(js_input_ip_seq="Please input IP address seqment of rule!");
+			document.forms[0].elements['ip_start_'+i].select();
+			return false;
+		}
+		if ((document.forms[0].elements['ip_start_'+i].value == "" && document.forms[0].elements['ip_end_'+i].value == "") && document.forms[0].elements['enable_'+i].checked == true){
+			alert(js_cfg_rule="please configure rule!");
+			document.forms[0].elements['ip_start_'+i].select();
+			return false;
+		}
+		if (document.forms[0].elements['bandWidth_'+i].value != ""){
+			curIP[0] = document.forms[0].elements['ip_start_'+i].value ? parseInt(document.forms[0].elements['ip_start_'+i].value, 10) : parseInt(document.forms[0].elements['ip_end_'+i].value, 10);
+			curIP[1] = document.forms[0].elements['ip_end_'+i].value ? parseInt(document.forms[0].elements['ip_end_'+i].value, 10) : parseInt(document.forms[0].elements['ip_start_'+i].value, 10);
+			j = 0;
+			while (existedIP[j][0] != -1)
+			{
+				if (!(curIP[0]>existedIP[j][1] || curIP[1]<existedIP[j][0])){
+					alert(js_ip_seq_err="IP address seqments have intersection with each other, please input again!");
+					return false;
+				}				j++;
+			}
+			existedIP[j][0] = curIP[0];
+			existedIP[j][1] = curIP[1];
+		}
+		if (document.forms[0].elements['bandWidth_'+i].value != "" && document.forms[0].elements['mode_'+i].value == "0" && document.forms[0].elements['enable_'+i].checked == true){
+			bandWidthSum += parseInt(document.forms[0].elements['bandWidth_'+i].value, 10);
+		}
+	}
+	if (bandWidthSum > parseInt(document.forms[0].down_bandWidth.value, 10)){
+		alert(js_mbg_big1="The total amount of Minimum Bandwidth Guarantee is larger than the total bandwidth, please input again!");
+		return false;
+	}
+   
+	var	h_url = "/userRpm/QoSCfgSOHORpm.htm?";
+	h_url += "QoSCtrl=";
+	if (document.forms[0].QoSCtrl.checked)
+	{
+		h_url += "1";
+	}
+		
+	document.getElementById('h_line_type').value = document.forms[0].lineType.value;
+	h_url += "&" + document.getElementById('h_line_type').name + "=" + document.getElementById('h_line_type').value;
+	document.getElementById('h_down_bw').value = document.forms[0].down_bandWidth.value;
+	h_url += "&" + document.getElementById('h_down_bw').name + "=" + document.getElementById('h_down_bw').value;
+   
+	for (i=1; i<QoSRuleListParam[2]+1; i++)
+	{
+		document.getElementById('h_ip_s_'+i).value = document.forms[0].elements['ip_start_'+i].value;
+		document.getElementById('h_ip_e_'+i).value = document.forms[0].elements['ip_end_'+i].value;
+		document.getElementById('h_md_'+i).value = document.forms[0].elements['mode_'+i].value;
+		document.getElementById('h_bw_'+i).value = document.forms[0].elements['bandWidth_'+i].value;
+		document.getElementById('h_nt_'+i).value = document.forms[0].elements['note_'+i].value;
+		document.getElementById('h_en_'+i).value = document.forms[0].elements['enable_'+i].checked?"1":"";
+        
+		h_url += "&" + document.getElementById('h_ip_s_'+i).name + "=" + document.getElementById('h_ip_s_'+i).value;
+		h_url += "&" + document.getElementById('h_ip_e_'+i).name + "=" + document.getElementById('h_ip_e_'+i).value;
+		h_url += "&" + document.getElementById('h_md_'+i).name + "=" + document.getElementById('h_md_'+i).value;
+		h_url += "&" + document.getElementById('h_bw_'+i).name + "=" + document.getElementById('h_bw_'+i).value;
+		h_url += "&" + document.getElementById('h_nt_'+i).name + "=" + document.getElementById('h_nt_'+i).value;
+		h_url += "&" + document.getElementById('h_en_'+i).name + "=" + document.getElementById('h_en_'+i).value;
+	}
+    
+	h_url += "&" + document.getElementById('sv').name + "=" + document.getElementById('sv').value;
+	location.href = h_url;
+	return false;
+}
+function doEnableOrDisable(){
+	var i;
+	if (document.forms[0].QoSCtrl.checked == true){
+		document.forms[0].lineType.disabled = false;
+		document.forms[0].lineType.style.backgroundColor='';
+		document.forms[0].down_bandWidth.disabled = false;
+		document.forms[0].down_bandWidth.style.backgroundColor='';
+		for (i=1; i<QoSRuleListParam[2]+1; i++)
+		{
+			document.forms[0].elements['ip_start_'+i].disabled = false;
+			document.forms[0].elements['ip_start_'+i].style.backgroundColor='';
+			document.forms[0].elements['ip_end_'+i].disabled = false;
+			document.forms[0].elements['ip_end_'+i].style.backgroundColor='';
+			document.forms[0].elements['mode_'+i].disabled = false;
+			document.forms[0].elements['mode_'+i].style.backgroundColor='';
+			document.forms[0].elements['bandWidth_'+i].disabled = false;
+			document.forms[0].elements['bandWidth_'+i].style.backgroundColor='';
+			document.forms[0].elements['note_'+i].disabled = false;
+			document.forms[0].elements['note_'+i].style.backgroundColor='';
+			document.forms[0].elements['enable_'+i].disabled = false;
+			//document.forms[0].elements['clear_'+i].disabled = false;
+			document.getElementById('cl_'+i).disabled = false;
+		}
+		document.forms[0].QoSClearAll.disabled = false;
+	}else{
+		document.forms[0].lineType.disabled = true;
+		document.forms[0].lineType.style.backgroundColor='#ECE9D8';
+		document.forms[0].down_bandWidth.disabled = true;
+		document.forms[0].down_bandWidth.style.backgroundColor='#ECE9D8';
+		for (i=1; i<QoSRuleListParam[2]+1; i++)
+		{
+			document.forms[0].elements['ip_start_'+i].disabled = true;
+			document.forms[0].elements['ip_start_'+i].style.backgroundColor='#ECE9D8';
+			document.forms[0].elements['ip_end_'+i].disabled = true;
+			document.forms[0].elements['ip_end_'+i].style.backgroundColor='#ECE9D8';
+			document.forms[0].elements['mode_'+i].disabled = true;
+			document.forms[0].elements['mode_'+i].style.backgroundColor='#ECE9D8';
+			document.forms[0].elements['bandWidth_'+i].disabled = true;
+			document.forms[0].elements['bandWidth_'+i].style.backgroundColor='#ECE9D8';
+			document.forms[0].elements['note_'+i].disabled = true;
+			document.forms[0].elements['note_'+i].style.backgroundColor='#ECE9D8';
+			document.forms[0].elements['enable_'+i].disabled = true;
+			//document.forms[0].elements['clear_'+i].disabled = true;
+			document.getElementById('cl_'+i).disabled = true;
+		}
+		document.forms[0].QoSClearAll.disabled = true;
+	}
+}
+function doClearRule(ruleIndex){
+	document.getElementById('ip_s_'+ruleIndex).value = "";
+	document.getElementById('ip_e_'+ruleIndex).value = "";
+	document.getElementById('nt_'+ruleIndex).value = "";
+	document.getElementById('md_'+ruleIndex).value = "0";
+	document.getElementById('bw_'+ruleIndex).value = "";
+	document.getElementById('en_'+ruleIndex).checked = false;
+}
+function doClearAllRule(){
+	for (var i=1; i<QoSRuleListParam[2]+1; i++)
+	{
+		document.getElementById('ip_s_'+i).value = "";
+		document.getElementById('ip_e_'+i).value = "";
+		document.getElementById('nt_'+i).value = "";
+		document.getElementById('md_'+i).value = "0";
+		document.getElementById('bw_'+i).value = "";
+		document.getElementById('en_'+i).checked = false;
+	}
+}
+//--></script>
+</head>
+<BODY onload="setTagStr(document,'ntw_qos_cfg_soho');LoadHelp('QoSCfgSOHOHelpRpm.htm'); resize(this);" onResize="resize(this);">
+<center><form><TABLE id="autoWidth">
+
+<TR><TD class=h1 colSpan=2 id="t_titile">IP QoS</TD></TR>
+<TR><TD class=blue colSpan=2></TD></TR>
+<!-- **************************************************************************************** -->
+<TR>
+<TD>
+<input name="QoSCtrl" type="checkbox" value="1" class=Item onClick="doEnableOrDisable()"><span id="t_enable">&nbsp;Enable IP QoS</span></TD>
+</TR>
+<script language="JavaScript"><!--
+document.forms[0].QoSCtrl.checked = QoSCfgSOHOPara[0]?true:false;
+--></script>
+<TR><TD colspan=2></TD></TR>
+<!-- **************************************************************************************** -->
+<TR>
+<TD class=Item id="t_bdwth_type">Choose BandWidth Type:</TD>
+<TD><select id="line_type" name="lineType">
+	<option value="0" id="t_adsl">ADSL</option>
+	<option value="1" id="t_other" selected>Other</option>
+    </select>
+	<input id="h_line_type" name="h_lineType" type="hidden">
+	</TD>
+</TR>
+<TR>
+<TD class=Item id="t_bdwth_apply">Bandwidth Apply:</TD>
+<TD><input name="down_bandWidth" type="text" value="" size="15" maxlength="6" class="text"><span id="t_kbps">&nbsp;Kbps</span>
+	<input id="h_down_bw" name="h_down_bandWidth" type="hidden"></TD>
+</TR>
+<script language="JavaScript"><!--
+document.forms[0].lineType.value = (QoSCfgSOHOPara[1] == QoSCfgSOHOPara[2])?"1":"0";
+document.forms[0].down_bandWidth.value = QoSCfgSOHOPara[2];
+--></script>
+<!-- **************************************************************************************** -->
+<TR><TD colspan=2></TD></TR>
+<TR><TD colspan=2>
+<table border=0>
+<TR><TD class=ListTC1>ID</TD>
+<TD class=ListTC2 id="t_ip_range">IP Range</TD>
+<TD class=ListTC2 id="t_mode">Mode</TD>
+<TD class=ListTC2 id="t_bdwth">Bandwidth</TD>
+<TD class=ListTC2 id="t_description">Description</TD>
+<TD class=ListTC2 id="t_enbale2">Enable</TD>
+<TD class=ListTC2 id="t_delete">Clear</TD>
+</TR>
+<script language="JavaScript">
+	var row;
+	var selectStatus;
+	var enableStatus;
+	var index = 1;
+	var i = 0;
+	for(i; i<QoSRuleListParam[0]; i++, index++)
+	{
+		row = i * QoSRuleListParam[1];
+		//selectStatus = QoSRuleListArray[row+3]?"selected":"";
+		enableStatus = QoSRuleListArray[row+6]?"checked":"";
+		
+		document.write('<tr valign="middle" height="30"><td class="ListC1">' + index+ '<input type="hidden" name="curID_'+index+'" value="' + QoSRuleListArray[row] + '"></td>');
+		
+		document.write('<td class="ListC2">' + QoSRuleListParam[3] + '<input id="ip_s_'+index+'" name="ip_start_'+index+'" type="text" value="' + QoSRuleListArray[row+1] + '" size="3" maxlength="3" class="text"><input id="h_ip_s_'+index+'" name="hips_'+index+'" type="hidden">&nbsp;-&nbsp;' + QoSRuleListParam[3] + '<input id="ip_e_'+index+'" name="ip_end_'+index+'" type="text" value="' + QoSRuleListArray[row+2] + '" size="3" maxlength="3" class="text"><input id="h_ip_e_'+index+'" name="hipe_'+index+'" type="hidden"></td>');//ip addr
+		
+		document.write('<td class="ListC2"><select id="md_'+index+'" name="mode_'+index+'"><option value="0" name="t_min_band0" id="t_min_band0">Minimum Bandwidth Guarantee</option><option value="1" name="t_max_band0" id="t_max_band0">Maximum Bandwidth Limit</option></select><input id="h_md_'+index+'" name="hm_'+index+'" type="hidden"></td>');
+		document.forms[0].elements['mode_'+index].value = QoSRuleListArray[row+3];
+		
+		document.write('<td class="ListC2"><input id="bw_'+index+'" name="bandWidth_'+index+'" type="text" value="' + QoSRuleListArray[row+5] + '" size="6" maxlength="6" class="text"><input id="h_bw_'+index+'" name="hbW_'+index+'" type="hidden"></td>');//bandwidth
+		
+		document.write('<td class="ListC2"><input id="nt_'+index+'" name="note_'+index+'" type="text" value="' + QoSRuleListArray[row+4] + '" size="16" maxlength="16" class="text"><input id="h_nt_'+index+'" name="hn_'+index+'" type="hidden"></td>');//note
+		
+		document.write('<td class="ListC2"><input type="checkbox" '+ enableStatus +' id="en_'+index+'" name="enable_' + index + '"><input id="h_en_'+index+'" name="hen_' + index + '" type="hidden"></td>');
+		
+		document.write('<td class="ListC2"><input type="button" class="button" id="cl_'+index+'" name="Clearone" value="Clear" onClick="doClearRule(' + index + ')"></td></tr>');
+	}
+	for(i; i<QoSRuleListParam[2]; i++, index++)
+	{
+		enableStatus = "";
+		
+		document.write('<tr valign="middle" height="30"><td class="ListC1">' + index+ '<input type="hidden" name="curID_'+index+'" value=""></td>');//id
+		
+		document.write('<td class="ListC2">' + QoSRuleListParam[3] + '<input id="ip_s_'+index+'" name="ip_start_'+index+'" type="text" value="" size="3" maxlength="3" class="text"><input id="h_ip_s_'+index+'" name="hips_'+index+'" type="hidden">&nbsp;-&nbsp;' + QoSRuleListParam[3] + '<input id="ip_e_'+index+'" name="ip_end_'+index+'" type="text" value="" size="3" maxlength="3" class="text"><input id="h_ip_e_'+index+'" name="hipe_'+index+'" type="hidden"></td>');//ip addr
+		
+		document.write('<td class="ListC2"><select id="md_'+index+'" name="mode_'+index+'"><option value="0" name="t_min_band1" id="t_min_band1">Minimum Bandwidth Guarantee</option><option value="1" name="t_max_band1" id="t_max_band1">Maximum Bandwidth Limit</option></select><input id="h_md_'+index+'" name="hm_'+index+'" type="hidden"></td>');//mode
+		
+		document.write('<td class="ListC2"><input id="bw_'+index+'" name="bandWidth_'+index+'" type="text" value="" size="6" maxlength="6" class="text"><input id="h_bw_'+index+'" name="hbW_'+index+'" type="hidden"></td>');//bandwidth
+		
+		document.write('<td class="ListC2"><input id="nt_'+index+'" name="note_'+index+'" type="text" value="" size="16" maxlength="16" class="text"><input id="h_nt_'+index+'" name="hn_'+index+'" type="hidden"></td>');//note
+		
+		document.write('<td class="ListC2"><input type="checkbox" ' + enableStatus +' id="en_'+index+'" name="enable_' + index + '"><input id="h_en_'+index+'" name="hen_' + index + '" type="hidden"></td>');
+		
+		document.write('<td class="ListC2"><input type="button" class="button" id="cl_'+index+'" name="Clearone" value="Clear" onClick="doClearRule(' + index + ')"></td></tr>');
+	}
+</script>
+</TABLE></TD></TR>
+
+<TR><TD colspan=2></TD></TR>
+<TR><TD colspan=2><input name="QoSClearAll" type="button" value="Clear All" class="buttonBig" onClick="doClearAllRule();">&nbsp;
+</TR>
+
+<script language="JavaScript">
+doEnableOrDisable();
+</script>
+
+
+<TR>
+<TD class=blue colspan=2></TD>
+</TR>
+<TR>
+<TD colspan=2 class=mbtn><input id="sv" name="sv" type="button" class="buttonBig" value="Save" onClick="return doSb();"></TD>
+</TR>
+
+</table>
+</form></center></body></html>

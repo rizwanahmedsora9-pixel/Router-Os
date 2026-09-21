@@ -1,0 +1,161 @@
+
+<script language=javascript><!--//
+var e;
+try{var chrset = parent.str_main.charset;}
+catch(e){var chrset = "text/html; charset=iso-8859-1";}
+document.write('<META http-equiv=Content-Type content="'+chrset+'">');
+var bRefreshFlag=1;
+function doFocus()
+{
+bRefreshFlag=0;
+}
+function doChange()
+{
+var nIndex;
+nIndex=document.forms[0].provider.value;
+location.href="/userRpm/DdnsAddRpm.htm?provider="+nIndex;
+}
+function ResetStatus()
+{
+window.status=" ";
+return true;
+}
+function goUrl(url)
+{
+window.open(url,'','');
+}
+function doRefresh()
+{
+var nIndex;
+if(1==bRefreshFlag)
+{
+nIndex=document.forms[0].provider.value;
+location.href="DdnsAddRpm.htm?provider="+nIndex;
+}
+}
+function doLoad()
+{
+if(serInf[5]==false)
+{
+return;
+}
+else
+{
+window.setTimeout("doRefresh()", 6000);
+}
+}
+function doHelp()
+{
+location.href ="/help/DdnsHelpRpm.htm?provider="+serInf[0];
+}
+function doWanChange()
+{
+var n = document.forms[0].wan.selectedIndex;
+var s = "wan="+n;
+location.href = "/userRpm/PeanutHullDdnsRpm.htm"+"?"+s;
+}
+//--></script></head>
+<BODY onload="setTagStr(document,'ntw_peanuthull_ddns');LoadHelp('DdnsAddHelpRpm.htm'); resize(this);" onResize="resize(this);">
+<center><form action="DdnsAddRpm.htm" enctype="multipart/form-data" method="get">
+<TABLE id="autoWidth" border = 0>
+<TR><TD class=h1 colspan=2 id="t_title">DDNS</TD></TR>
+<TR><TD class=blue colspan=2></TD></TR>
+<TR><TD class=Item id="t_srv_provider">Service Provider:</TD>
+<TD><select name="provider" onChange="doChange()" onclick="doFocus();">
+<!--<option value=0 >PeanutHull ( www.oray.net )</option>
+<option value=1 >Comexe ( www.comexe.cn )</option>
+<option value=2 selected>Dyndns ( www.dyndns.org )</option>
+<option value=3 selected>No-Ip ( www.No-Ip.org )</option>-->
+<script language=javascript><!--//
+if(ddnsType[0]) document.write("<option value=0 selected>PeanutHull ( www.oray.net )</option>");
+if(ddnsType[1]) document.write("<option value=1 >Comexe ( www.comexe.cn )</option>");
+if(ddnsType[2]) document.write("<option value=2 >Dyndns ( www.dyndns.org )</option>");
+if(ddnsType[3]) document.write("<option value=3 >No-Ip ( www.No-Ip.org )</option>");
+//--></script>
+</select>
+&nbsp;<a href="javascript:goUrl('http://www.oray.net');" OnMouseOver="return ResetStatus();" id="t_register">Go to register...</a></td></tr>
+<script language="JavaScript">
+if(serInf[19] != 1)
+{
+document.write('<TR><TD class=Item id = \"t_wan_port\">WAN Port:</TD><TD><select name=\"wan\" id=\"wan\" onChange=\"doWanChange()\">');
+for(var i=0;i<serInf[19];i++)
+{
+document.write('<option value=\"'+i+'\">WAN' + (i+1)+'</option>');
+}
+document.write('</select>');
+}
+</script>
+<TR><TD colspan=2></TD></TR>
+<TR><TD class=Item id="t_usr_name">User Name:</TD><TD><input name="username" value="" type="text" class="text" size="15" style="width:124" maxlength="63" onFocus="doFocus();"></TD></TR>
+<TR><TD class=Item id="t_pwd">Password:</TD><TD><input name="pwd" value="" type="password" class="text" style="font-size:10px;width:124" size="15" maxlength="63" onFocus="doFocus();"></TD></TR>
+<TR><TD colspan=2></TD></TR>
+<TR><TD></TD><TD ><table border =0><tr><td style="width=1"><input name="EnDdns" type="checkbox" value="2"></td><td id="t_en_ddns">&nbsp;Enable DDNS</td><td width= 100%%>&nbsp;</td></tr></table></TD></TR>
+<TR><TD class=Item id="t_cnn_status">Connection Status:</TD><TD><DIV ID="connectStatus"></DIV></TD></TR>
+<TR><TD class=Item id="t_type">Service Type:</TD><TD><DIV ID="SrvType"></DIV></TD></TR>
+<TR><TD class=Item id="t_domain_name">Domain Name:</TD><TD>
+<script language="JavaScript">
+if(serInf[6] == 0)
+{
+document.write('<span id="t_null">---</span>');
+}
+else
+{
+for(i=0;i<serInf[6];i++)
+{
+document.write('&nbsp;'+(i+1)+': '+serInf[6 + 1 +i]+'<br>');
+}
+}
+</script>
+</TD></TR>
+</TD></TR>
+<TR><TD></TD><TD><INPUT class="button" type="submit" name="Login" value="Login"> &nbsp;
+<INPUT class="button" type="submit" name="Logout" value="Logout"></TD></TR>
+<TR><TD class=blue colspan=2></TD></TR>
+<TR><TD></TD><TD><INPUT class="buttonBig" type="submit" value="Save" name="Save"></TD></TR>
+</TABLE>
+</form></center></BODY><head><meta http-equiv="pragma" content="no-cache"></head></HTML>
+<script language="JavaScript">
+if(true)
+{
+window.setTimeout("doRefresh()",10000);
+}
+if(serInf[19] != 1)
+{
+document.forms[0].wan.selectedIndex = serInf[18];
+}
+document.forms[0].username.value = serInf[1];
+document.forms[0].pwd.value = serInf[2];
+switch (serInf[4])
+{
+case 0:
+document.getElementById("connectStatus").innerHTML = "<span id = \"t_not_launch\">DDNS not launching!</span>";
+break;
+case 1:
+document.getElementById("connectStatus").innerHTML = "<span id =\"t_connecting\">Connecting...</span>";
+break;
+case 2:
+document.getElementById("connectStatus").innerHTML = "<span id = \"t_succeeded\">Succeeded!</span>";
+break;
+case 3:
+document.getElementById("connectStatus").innerHTML = "<span id = \"t_pwd_error\">User or Password error!</span>";
+break;
+case 4:
+document.getElementById("connectStatus").innerHTML = "<span id = \"t_domain_error\">Domain Name error</span>";
+break;
+default:
+document.getElementById("connectStatus").innerHTML = "---";
+break;
+}
+document.forms[0].provider.value = serInf[0];
+document.forms[0].EnDdns.checked = (serInf[3])?true:false;
+switch (serInf[17])
+{
+case 0:
+document.getElementById("SrvType").innerHTML = "<span id = \"t_profession_service\">Profession Service</span>";
+break;
+case 1:document.getElementById("SrvType").innerHTML = "<span id = \"t_standard_service\">Standard Service</span>";
+break;
+default:document.getElementById("SrvType").innerHTML = "---";
+break;
+}
+</script>

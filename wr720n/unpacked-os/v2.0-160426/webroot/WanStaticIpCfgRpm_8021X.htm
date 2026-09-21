@@ -1,0 +1,177 @@
+
+<script language="JavaScript"><!--
+var wanType = new Array(
+"<option id=\"t_dyna\">Dynamic IP</option>",  
+"<option id=\"t_stat\">Static IP</option>",  
+"<option id=\"t_pppoe\">PPPoE</option>", 
+"<option id=\"t_802dy\">802.1X + Dynamic IP</option>",  
+"<option id=\"t_802st\">802.1X + Static IP</option>", 
+"<option id=\"t_bpa\">BigPond Cable</option>",
+"<option id=\"t_l2tp\">L2TP/Russia L2TP</option>",  
+"<option id=\"t_pptp\">PPTP/Russia PPTP</option>", 
+"<option id=\"t_dualaccess\">Dual Access/Russia PPPoE</option>",		
+"<option id=\"t_dhpcplus\">DHCP+</option>",	
+""	
+);
+function doSubmit()
+{
+var val;
+val=document.forms[0].mtu.value;
+if(val<576||val>1500||val=="")
+{
+alert(js_bad_mtu="Bad MTU, please input another number!(576 ~ 1500, the default is 1500)");
+return false;
+}
+if(!is_ipaddr(document.forms[0].ip.value))
+{
+var element =document.forms[0].ip;
+if(element)
+{
+element.focus();element.select();
+}
+return false;
+}
+if(!is_maskaddr(document.forms[0].mask.value))
+{
+var element =document.forms[0].mask;
+if(element)
+{
+element.focus();element.select();
+}
+return false;
+}
+if(document.forms[0].gateway.value != "")
+{
+if(!is_gatewayaddr(document.forms[0].gateway.value))
+{
+var element =document.forms[0].gateway;
+if(element)
+{
+element.focus();element.select();
+}
+return false;
+}
+}
+if(document.forms[0].dnsserver.value != "")
+{
+if(!is_dnsaddr(document.forms[0].dnsserver.value))
+{
+var element =document.forms[0].dnsserver;
+if(element)
+{
+element.focus();
+element.select();
+}
+return false;
+}
+}
+if(document.forms[0].dnsserver2.value != "")
+{
+if(!is_dnsaddr(document.forms[0].dnsserver2.value))
+{
+var element =document.forms[0].dnsserver2;
+if(element)
+{
+element.focus();
+element.select();
+}
+return false;
+}
+}
+return true;
+}
+function doChange()
+{
+var n = 0;
+if(staticIpInf[0] > 1)
+{
+n = document.forms[0].wan.value;
+}
+s = "wan="+n;
+var t = document.forms[0].wantype.selectedIndex;
+location.href = "/userRpm/"+wantypeinfo[t*2+2]+"?"+s;
+}
+function LoadPage()
+{
+if(staticIpInf[2]&&staticIpInf[3])
+{
+if(staticIpInf[4])
+window.location.href="/userRpm/WanStaticIpCfgRpm_8021X.htm?IeeeReqFlag=2";
+else
+window.location.href="/userRpm/WanStaticIpCfgRpm_8021X.htm?IeeeReqFlag=0";
+}
+}
+if(staticIpInf[2]&&staticIpInf[3])
+{
+window.setTimeout("LoadPage()",5000);
+}
+--></script>
+<BODY onload="setTagStr(document,'ntw_wan_statis_ip_cfg_8021x');LoadHelp('WanStaticIpCfgHelpRpm_8021X.htm'); resize(this);" onResize="resize(this);">
+<center><form action="WanStaticIpCfgRpm_8021X.htm" enctype="multipart/form-data" method="get" onSubmit="return doSubmit();">
+<TABLE id="autoWidth">
+<TR><TD class=h1 colspan=2 id="t_title">WAN</TD></TR>
+<TR><TD class=blue colspan=2></TD></TR>
+<TR><TD class=Item id="t_wan_coon_type">WAN Connection Type:</TD><TD><select name="wantype" onChange="doChange()">
+<script language="JavaScript">
+//for ( var t=0; t < wantypeinfo[0]; t++)
+for ( var t=0; t < (wantypeinfo.length-3)/2; t++)
+{
+document.write(wanType[wantypeinfo[t*2+1]]);}
+</script>
+</select></TD></TR>
+<TR><TD colspan=2></TD></TR>
+<TR><TD class=Item id="t_usr_name">User Name:</TD><TD><input name="Ieee802_1xName" type="text" style="width:194" class="text" value="" size="25" maxlength="63"></TD></TR>
+<TR><TD class=Item id="t_pwd">Password:</TD><TD><input name="Ieee802_1xPwd" type="password" style="font-size:10px; width:194" class="text" value="" size="25" maxlength="63"></TD></TR>
+<TR><TD></TD><TD class=emp><input name="Login" type="submit" class="button" value="Login">&nbsp;&nbsp;
+<input name="Logout" type="submit" class="button" value="Logout">
+<script language="JavaScript">
+switch(staticIpInf[11])
+{
+case 0:
+document.write('&nbsp;&nbsp;<span id = "t_fail">Login failed!</span>');
+break;
+case 1:
+document.write('&nbsp;&nbsp;<span id = "t_not">Not log in</span>');
+break;
+case 2:
+document.write('&nbsp;&nbsp;<span id = "t_success">Login successfully</span>');
+break;
+case 3:
+document.write('&nbsp;&nbsp;<span id = "t_wait">Logging in ...</span>');
+break;
+default :
+document.write('&nbsp;&nbsp;--');
+break;
+}
+</script>
+<TR><TD colspan=2></TD></TR>
+<TR><TD class=Item id="t_ip_addr">IP Address:</TD><TD><input name="ip" type="text" class="text" value="" size="15" maxlength="15"></TD></TR>
+<TR><TD class=Item id="t_sub_mask">Subnet Mask:</TD><TD><input name="mask" type="text" class="text" value="" size="15" maxlength="15"></TD></TR>
+<TR><TD class=Item id="t_gateway">Default Gateway:</TD><TD><input name="gateway" type="text" class="text" value="" size="15" maxlength="15"><span id="t_optional">&nbsp;(Optional)</span></TD></TR>
+<TR><TD colspan=2></TD></TR>
+<TR><TD class=Item id="t_mud_size">MTU Size (in bytes):</TD><TD><input name="mtu" type="text" class="text" value="" size="5" maxlength="5"><span id="t_remaind_mtu">&nbsp;(The default is 1500. Do not change it unless necessary.)</span></TD></TR>
+<TR><TD colspan=2></TD></TR>
+<TR><TD class=Item id="t_pri_dns">Primary DNS:</TD><TD><input name="dnsserver" type="text" class="text" value="" size="15" maxlength="15"><span id="t_optional1">&nbsp;(Optional)</span></TD></TR>
+<TR><TD class=Item id="t_sec_dns">Secondary DNS:</TD><TD><input name="dnsserver2" type="text" class="text" value="" size="15" maxlength="15"><span id="t_optional2">&nbsp;(Optional)</span></TD></TR>
+<TR><TD class=blue colspan=2></TD></TR>
+<TR><TD></TD><TD>
+<input name="ieeeType" type="hidden" value="">
+<input name="IeeeReqFlag" type="hidden" value="">
+<input name="Save" type="submit" class="buttonBig" value="Save"></TD></TR>
+</TABLE>
+</form></center></BODY></HTML>
+<script language="JavaScript">
+document.forms[0].wantype.selectedIndex = staticIpInf[6];
+document.forms[0].Ieee802_1xName.value = staticIpInf[7];
+document.forms[0].Ieee802_1xPwd.value = staticIpInf[8];
+document.forms[0].Login.disabled = staticIpInf[9];
+document.forms[0].Logout.disabled = staticIpInf[10];
+document.forms[0].ip.value = staticIpInf[12];
+document.forms[0].mask.value = staticIpInf[13];
+document.forms[0].gateway.value = staticIpInf[14];
+document.forms[0].mtu.value = staticIpInf[15];
+document.forms[0].dnsserver.value = staticIpInf[16];
+document.forms[0].dnsserver2.value = staticIpInf[17];
+document.forms[0].ieeeType.value = staticIpInf[6];
+document.forms[0].IeeeReqFlag.value = (staticIpInf[4]?2:0);
+</script>

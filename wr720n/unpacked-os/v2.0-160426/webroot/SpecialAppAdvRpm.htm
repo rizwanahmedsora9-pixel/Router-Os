@@ -1,0 +1,209 @@
+
+<script language=javascript><!--//
+function doBack(nPage)
+{
+location.href="/userRpm/SpecialAppRpm.htm?Page="+nPage;
+}
+function doChange()
+{
+var n = document.forms[0].Commonapp.selectedIndex;
+if(n > 0)
+{
+document.forms[0].trPort.value = commonapplist[(n*4)+1];
+document.forms[0].inPort.value = commonapplist[(n*4)+2];
+}
+}
+function is_portcharacter(port_string,ch){
+var c;
+for (var i = 0; i < port_string.length; i++)
+{
+c = port_string.charAt(i);
+if (ch.indexOf(c) == -1)
+return false;
+}
+return true;
+}
+function is_num(port_string){
+var c;
+var ch = "0123456789";
+for (var i = 0; i < port_string.length; i++)
+{
+c = port_string.charAt(i);
+if (ch.indexOf(c) == -1)
+return false;
+}
+return true;
+}
+function is_port(port_string)
+{
+if (!portverify(port_string))
+{
+alert(js_bad_port_range="Port number must be in range (1-65534), please input another number!");
+return false;
+}
+return true;
+}
+function sub_is_port(port_string)
+{
+if (!is_portcharacter(port_string,ch=",-0123456789"))
+{
+alert(js_input_error="The input value contain illegal character, please input another one!");
+return false;
+}
+var sub_port_array;
+var re;
+re = new RegExp("-|,");
+sub_port_array = port_string.split(re);
+for (i=0;i<sub_port_array.length;i++)
+{
+if (sub_port_array[i] == "" )
+{
+alert(js_port_illegal="Illegal port, please input another one!");
+return false;
+}
+if (!is_port(sub_port_array[i]))
+{
+return false;
+}
+}
+return true;
+}
+function doSubmit()
+{
+if(document.forms[0].trPort.value=="")
+{
+alert(js_input_trigger_port="Please input the Trigger Port number!");
+return false;
+}
+if(!is_port(document.forms[0].trPort.value))
+{
+var element =document.forms[0].trPort;
+if(element)
+{
+element.focus();
+element.select();
+}
+return false;
+}
+if(document.forms[0].inPort.value=="")
+{
+alert(js_input_incoming_port="Please input the Incoming Ports number!");
+return false;
+}
+if(is_num(document.forms[0].inPort.value))
+{
+if(!is_port(document.forms[0].inPort.value))
+{
+var element =document.forms[0].inPort;
+if(element)
+{
+element.focus();
+element.select();
+}
+return false;
+}
+}
+if(!sub_is_port(document.forms[0].inPort.value))
+{
+var element =document.forms[0].inPort;
+if(element)
+{
+element.focus();
+element.select();
+}
+return false;
+}
+return true;
+}
+var protocolList = new Array(
+"",
+"ALL",
+"TCP",
+"UDP"
+);
+var commonapplist =new Array(
+0, "", "", "--Select One--",
+1, "6112", "6112", "Battle.net",
+2, "7175", "51200-51201,51210", "Dialpad",
+3, "2019", "2000-2038,3010-3030", "ICU II",
+4, "47624", "2300-2400,28800-29000", "MSN Gaming Zone",
+5, "12053", "12120,12122,24150-24220", "PC-to-Phone",
+6, "554", "6970-6999", "Quick Time 4",
+7, "47624", "2300-2400,28800-29000", "AOE II Client",
+8, "47624", "2300-2400", "Sudden Strike",
+9, "47624", "2300-2400", "Baldurs Gate II"
+);
+//--></script>
+</head>
+<BODY onload="setTagStr(document,'ntw_special_app_adv');LoadHelp('SpecialAppHelpRpm.htm'); resize(this);" onResize="resize(this);">
+<center><form action="SpecialAppRpm.htm" enctype="multipart/form-data" method="get" onSubmit="return doSubmit();">
+<TABLE id="autoWidth">
+<TR><TD class=h1 colspan=2 id="t_title">Add or Modify a Port Triggering Entry</TD></TR>
+<TR><TD class=blue colspan=2></TD></TR>
+<TR><TD class=Item id="t_trigger_port">Trigger Port:</TD><TD><input name="trPort" type="text" class="text" value="" size="6" maxlength="5"></TD></TR>
+<TR><TD class=Item id="t_trigger_protocol">Trigger Protocol:</TD>
+<TD><select name="trProtocol" >
+<script language="JavaScript"><!--
+for (i=1;i<4;i++)
+{
+	if(1==i)
+		document.write('<option value=1 id=\"t_all\">ALL</option>');
+	else
+		document.write('<option value='+i+'>'+ protocolList[i] +'</option>');
+}
+--></script>
+</select></td></tr>
+<TR><TD class=Item id="t_incomming_port">Incoming Ports:</TD><TD><input name="inPort" type="text" class="text" value="" size="24" maxlength="64"></TD></tr>
+<TR><TD class=Item id="t_incomming_protocol">Incoming Protocol:</TD>
+<TD><select name="inProtocol" >
+<script language="JavaScript"><!--
+for (i=1;i<4;i++)
+{
+	if(1==i)
+		document.write('<option value=1 id=\"t_all2\">ALL</option>');
+	else
+		document.write('<option value='+i+'>'+ protocolList[i] +'</option>');
+}
+--></script>
+</select></td></tr>
+<TR><TD class=Item id="t_status">Status:</TD>
+<TD><select size="1" name="State" >
+<script language=javascript><!--//
+document.write('<option value=\"0\" selected id = "t_disable">Disabled</option>');
+document.write('<option value=\"1\" id = "t_enable">Enabled</option>');
+//--></script>
+</select></TD>
+</TR>
+<tr><td height="20" colspan="2"></td></tr>
+<tr><td class=Item id="t_common_app">Common Applications:</td>
+<td><select name="Commonapp" onChange="doChange()">
+<script language="JavaScript"><!--//
+
+for (i=0;i<10;i++)
+{
+	if(i==0)
+		document.write('<option value=0 id=\"t_select_one\">--Select One--</option>');
+	else
+		document.write('<option value='+i+'>'+ commonapplist[(i*4)+3] +'</option>');
+}
+//--></script>
+</select></td></tr>
+<TR><TD class=blue colspan=2></TD></TR>
+<TR><TD></TD><TD>
+<input name="Changed" type="hidden" value="">
+<input name="SelIndex" type="hidden" value="">
+<input name="Page" type="hidden" value="">
+<input name="Save" type="submit" class="buttonBig" value="Save">
+&nbsp;<input type="button" value="Return" name="Return" class="buttonBig" onClick="doBack(specappEditInf[7]);"></TD></TR>
+</TABLE>
+</form></center></BODY></HTML>
+<script language="JavaScript">
+document.forms[0].trPort.value =(specappEditInf[0]==0)?"":specappEditInf[0];
+document.forms[0].trProtocol.value =(specappEditInf[1]==0)?1:specappEditInf[1];
+document.forms[0].inPort.value =specappEditInf[2];
+document.forms[0].inProtocol.value =(specappEditInf[3]==0)?1:specappEditInf[3];
+document.forms[0].State.value = specappEditInf[4];
+document.forms[0].Changed.value = specappEditInf[5];
+document.forms[0].SelIndex.value = specappEditInf[6];
+document.forms[0].Page.value = specappEditInf[7];
+</script>

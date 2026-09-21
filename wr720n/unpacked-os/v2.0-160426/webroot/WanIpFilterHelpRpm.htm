@@ -1,0 +1,92 @@
+<BODY>
+<DIV id="autoWidth">
+
+<H1>IP Address Filtering Help</H1>
+<P> The <strong>IP Address Filtering</strong> feature allows you to control Internet Access by specific users in your LAN based on their IP addresses. To disable the <strong>IP Address Filtering</strong> feature, keep the IP Address Filtering setting <strong>Disabled</strong>. </P>
+<P>To set up an <strong>IP Address Filtering</strong> entry, both <strong>Enable Firewall</strong> and <strong>Enable IP Filtering</strong> should be firstly selected on the <strong>Firewall</strong> page, and click the<strong> Add New&hellip; </strong>button, and then follow these instructions:</P>
+<ol type=1>
+<lI> <strong>Effective Time</strong> - Enter the range of time in HHMM format, which points to the range time for the entry to take effect. For example, 0803 - 1705, the entry will take effect from 08:03 to 17:05. </lI>
+<lI><strong>LAN IP Address</strong> - Enter a LAN IP address or the range of LAN IP addresses in the field, in dotted-decimal notation format. For example, 192.168.0.20 - 192.168.0.30. Keep the field blank, which means all LAN IP addresses have been put into the field. </lI>
+<li><strong>LAN Port</strong> - Enter a LAN Port or the range of LAN ports in the field. For example, 1030 - 2000. Keep the field blank, which means all LAN ports have been put into the field.</li>
+<lI> <strong>WAN IP Address</strong> - Enter a WAN IP address or the range of WAN IP addresses in the field, in dotted-decimal notation format. For example, 61.145.238.6 - 61.145.238.47. Keep the field blank, which means all WAN IP addresses have been put into the field. </lI>
+
+<lI> <strong>WAN Port</strong> - Enter a WAN port or the range of WAN ports in the field. For example, 25 - 110. Keep the field blank, which means all WAN ports have been put into the field. </lI>
+<lI> <strong>Protocol</strong> - Select which protocol is to be used, either <strong>TCP, </strong><strong>UDP</strong>, or <strong>All </strong>(all protocols supported by the Router). </lI>
+<lI> <strong>Action</strong> - Select either <strong>Allow</strong> or <strong>Deny</strong> the packets specified by the filtering rule pass through the Router. </lI>
+
+<li><strong>Status</strong> - Select <strong>Enabled</strong> or <strong>Disabled</strong> for this entry from the <strong>Status</strong> pull-down list.</li>
+<lI> Click the <strong>Save</strong> button to save this entry. </lI>
+
+</ol>
+<p>To add another entry, repeat steps 1-9.</p>
+<P><B>To modify or delete an existing entry</B>:</P>
+<ol type=1>
+<lI>Find the desired entry in the table.</lI>
+<lI>Click <B>Modify</B> or <B>Delete</B> as desired in the <B>Modify</B> column.</lI>
+
+</ol>
+<P>Click the <B>Enable All</B> button to make all entries enabled.</P>
+<P>Click the <B>Disable All</B> button to make all entries disabled.</P>
+<P>Click the <B>Delete All</B> button to delete all entries.</P>
+
+<P>Click the <B>Next</B> button to go to the next page and click the <B>Previous</B> button to return to the previous page.</P>
+<P>You can change the entry's order as desired.
+Fore entries are before hind entries. Enter the ID number in the first box you want to move and another ID number in the second box you want to move to, then click the <B>Move</B> button to change the entry's order.</P>
+
+<P>For example: If you desire to block E-mail received and sent by the IP address 192.168.0.7 on your local network from 8:00 to 21:00, and to make the PC with IP address 192.168.0.8 unable to visit the website of IP address 202.96.134.12 all the time, while other PCs have no limit. You should enable the <B>Firewall</B> and <B> IP Address Filtering</B> on the <B>Firewall</B> page, then, specify the Default IP Address Filtering Rule" <strong>Allow the packets not specified by any filtering rules to pass through the Router</strong> " on the <B>Firewall</B> page and specify the following IP address filtering table:</P>
+<table border width=65% align="center" cellspacing=1 cellpadding=1>
+<TR>
+<TH>ID</TH>
+<TH>Effective Time</TH>
+<TH>LAN IP</TH>
+
+<TH>LAN Port</TH>
+<TH>WAN IP</TH>
+<TH>WAN Port</TH>
+<TH>Protocol</TH>
+<TH>Action</TH>
+<TH>Status</TH>
+</TR>
+<TR align="center">
+<TD>1</TD>
+<TD>0800-2100</TD>
+
+<TD>192.168.0.7</TD>
+<TD><BR></TD>
+<TD><BR></TD>
+<TD>25</TD>
+<TD>TCP</TD>
+<TD>Deny</TD>
+<TD>Enabled</TD>
+</TR>
+<TR align="center">
+<TD>2</TD>
+<TD>0800-2100</TD>
+
+<TD>192.168.0.7</TD>
+<TD><BR></TD>
+<TD><BR></TD>
+<TD>110</TD>
+<TD>TCP</TD>
+<TD>Deny</TD>
+<TD>Enabled</TD>
+</TR>
+<TR align="center">
+<TD>3</TD>
+<TD>0000-2400</TD>
+
+<TD>192.168.0.8</TD>
+<TD><BR></TD>
+<TD>202.96.134.12</TD>
+<TD><BR></TD>
+<TD>All</TD>
+<TD>Deny</TD>
+<TD>Enabled</TD>
+</TR>
+</table>
+<P>&nbsp;</P>
+</ol>
+<P>&nbsp;</P>
+
+</DIV>
+</BODY></HTML>

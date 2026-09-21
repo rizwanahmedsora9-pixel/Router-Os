@@ -1,0 +1,162 @@
+
+<script language=javascript><!--//
+function doAll(val)
+{
+if(val=="DelAll")
+{
+if(!confirm(str_pages.ntw_wan_ip_filter.js_mksure_delete))
+return;
+}
+location.href="/userRpm/WanIpFilterRpm.htm?doAll="+val+"&Page="+curPage;
+}
+function doAdd(nPage)
+{
+location.href="/userRpm/WanIpFilterRpm.htm?Add=Add&Page="+nPage;
+}
+function doPage(nPage)
+{
+location.href="/userRpm/WanIpFilterRpm.htm?Page="+nPage;
+}
+function ResetStatus(strInfo)
+{
+window.status="";return true;
+}
+function doSubmit()
+{
+var entryTotal = (ipfList.length-2)/8;
+var n =0;
+var info;
+if((!is_number(document.forms[0].SrcIndex.value))||(!is_number(document.forms[0].DestIndex.value)))
+{
+return false;
+}
+if(entryTotal == 0)
+{
+alert(str_pages.ntw_wan_ip_filter.js_no_entry);
+return false;
+}
+if(document.forms[0].SrcIndex.value=="0"||document.forms[0].DestIndex.value=="0")
+{
+alert(str_pages.ntw_wan_ip_filter.js_bad_id);
+return false;
+}
+if(document.forms[0].DestIndex.value=="")
+{
+alert(str_pages.ntw_wan_ip_filter.js_input_dest_index);
+return false;
+}
+if(document.forms[0].SrcIndex.value=="")
+{
+alert(str_pages.ntw_wan_ip_filter.js_input_src_index);
+return false;
+}
+if( (document.forms[0].SrcIndex.value <= entryTotal) && (document.forms[0].DestIndex.value <= entryTotal) )
+{
+return true;
+}
+if( document.forms[0].SrcIndex.value == document.forms[0].DestIndex.value )
+{
+return false;
+}
+else
+{
+alert(str_pages.ntw_wan_ip_filter.js_bad_id_index);
+return false;
+}
+}
+var procType = new Array(
+" ",
+"<span id=\"t_all\" name=t_all>ALL<span>",
+"TCP",
+"UDP"
+);
+//--></script></head>
+<BODY onload="setTagStr(document,'ntw_wan_ip_filter');LoadHelp('WanIpFilterHelpRpm.htm'); resize(this);" onResize="resize(this);">
+<center><form action="WanIpFilterRpm.htm" enctype="multipart/form-data" method="get" onSubmit="return doSubmit();">
+<TABLE id="autoWidth">
+<TR ><TD class=h1 colspan=2 id ="t_title">IP Address Filtering</TD></TR>
+<TR><TD class=blue colspan=2></TD></TR>
+<TR><TD class=h2 colspan=2 id ="t_fw_set">Firewall Settings (You can change them on Firewall page)</TD></TR>
+<TR><TD class=Item id ="t_en_fw">Enable Firewall:</TD><TD class=emp><DIV ID="firewall"></DIV></TD></TR>
+<TR><TD class=Item id ="t_en_ip_filter">Enable IP Address Filtering:</TD><TD class=emp><DIV ID="filter"></DIV></TD></TR>
+<TR><TD class=Item id ="t_filter_rule">Default Filtering Rules:</TD><TD class=emp><DIV ID="rules"></DIV></TD></TR>
+</TD></TR>
+<TR><TD colspan=2></TD></TR>
+<TR><TD colspan=2>
+<table border=0>
+<TR><TD class=ListTC1 id = "t_id">ID</TD>
+<TD class=ListTC2 id = "t_eff_time">Effective time</TD>
+<TD class=ListTC2 id = "t_lan_ip">LAN IP Address</TD>
+<TD class=ListTC2 id = "t_lan_port">LAN Port</TD>
+<TD class=ListTC2 id = "t_wan_ip">WAN IP Address</TD>
+<TD class=ListTC2 id = "t_wan_port">WAN Port</TD>
+<TD class=ListTC2 id = "t_proto">Protocol</TD>
+<TD class=ListTC2 id = "t_action">Action</TD>
+<TD class=ListTC2 id = "t_status">Status</TD>
+<TD class=ListTC2 id = "t_modify">Modify</TD></TR>
+<script language="JavaScript">
+if ((ipfList.length-2) >= 8)
+{
+var statusStr;
+var idStart = (ipFilterInf[3]-1)*8;
+var modifyId;
+var maxRow = (ipfList.length-2)/8;
+var row = 0;
+for(var i = 0;i < maxRow;i++)
+{
+row = i*8;
+modifyId = idStart;
+idStart++;
+document.write('<TR><TD class=ListC1>' + idStart + '</TD>');
+if(ipFilterInf[5]==1)
+{
+document.write('<TD class=ListC2>' + ipfList[row] + '</TD>');
+}
+document.write('<TD class=ListC2>' + ipfList[row+1] + '</TD>');
+document.write('<TD class=ListC2>' + ipfList[row+2] + '</TD>');
+document.write('<TD class=ListC2>' + ipfList[row+3] + '</TD>');
+document.write('<TD class=ListC2>' + ipfList[row+4] + '</TD>');
+document.write('<TD class=ListC2>' + procType[ipfList[row+5]] + '</TD>');
+statusStr = (ipfList[row+6])?"<span name=\"t_allow\" id = \"t_allow\">Allow</span>":"<span name=\"t_deny\" id = \"t_deny\">Deny</span>";
+document.write('<TD class=ListC2>' + statusStr + '</TD>');
+statusStr = (ipfList[row+7])?"<span name=\"t_enable\" id = \"t_enable\">Enabled</span>":"<span name=\"t_disable\" id = \"t_disable\">Disabled</span>";
+document.write('<TD class=ListC2>' + statusStr + '</TD>');
+document.write('<TD class=ListC2><a href=\"/userRpm/WanIpFilterRpm.htm?Modify='
++ modifyId +
+'\" OnMouseOver=\"return ResetStatus(\'modify\');\" name="t_modify1" id = "t_modify1">Modify</a>&nbsp;<a href=\"/userRpm/WanIpFilterRpm.htm?Del='
++ modifyId + '\" OnMouseOver=\"return ResetStatus(\'delete\');\" name="t_delete" id = "t_delete">Delete</a></TD></TR>');
+}
+}
+</script>
+</table></TD></TR>
+<TR><TD colspan=2></TD></TR>
+<TR><TD colspan=2><input type="button" value="Add New..." name="Addnew" class="buttonBig" onClick="doAdd(curPage);">&nbsp;
+<input type="button" value="Enable All" name="Enall" class="buttonBig" onClick="doAll('EnAll');">&nbsp;
+<input type="button" value="Disable All" name="Disall" class="buttonBig" onClick="doAll('DisAll');">&nbsp;
+<input type="button" value="Delete All" name="Delall" class="buttonBig" onClick="doAll('DelAll');"></TD></TR>
+<TR><TD colspan=2><input type="submit" value="Move" name="Move" class="buttonBig">&nbsp;ID&nbsp;
+<input type="text" name="SrcIndex" size="3" maxlength="3" class="text">
+&nbsp <span id="t_toid">to ID</span>&nbsp;
+<input type="text" name="DestIndex" size="3" maxlength="3" class="text"></TD></TR>
+<TR><TD class=blue colspan=2></TD></TR>
+<TR><TD></TD><TD><input name="Previous" type="button" class="buttonBig" value="Previous" onClick="doPage(prePage);">&nbsp;
+<input name="Next" type="button" class="buttonBig" value="Next" onClick="doPage(nextPage);"></TD></TR>
+</TABLE>
+</form></center></BODY><head><meta http-equiv="pragma" content="no-cache"></head></HTML>
+<script language="JavaScript">
+var tempStr = (ipFilterInf[0])?"<a id = \"t_enable\">Enabled</a>":"<a id = \"t_disable\">Disabled</a>";
+document.getElementById("firewall").innerHTML = tempStr;
+tempStr = (ipFilterInf[1])?"<a id = \"t_enabled\">Enabled</a>":"<a id = \"t_disabled\">Disabled</a>";
+document.getElementById("filter").innerHTML = tempStr;
+tempStr = (ipFilterInf[2])?"<font color=\"#FF0000\" ><a id = \"t_allow\">Allow</a></font>&nbsp;<a id = \"t_pcks_pass_router\">&nbsp;the packets not specified by any filtering rules to pass through the device</a>"
+:"<font color=\"#FF0000\"><a id = \"t_deny\">Deny</a></font>&nbsp;<a id = \"t_pass_router\">the packets not specified by any filtering rules to pass through the device.</a>";
+document.getElementById("rules").innerHTML = tempStr;
+var curPage = ipFilterInf[3];
+var prePage = (ipFilterInf[3]==1)?1:(ipFilterInf[3]-1);
+var nextPage = ipFilterInf[3] + 1;
+document.forms[0].Enall.disabled = (ipfList.length < 10)?true: false;
+document.forms[0].Disall.disabled = (ipfList.length < 10)?true: false;
+document.forms[0].Delall.disabled = (ipfList.length < 10)?true: false;
+document.forms[0].Previous.disabled = (ipFilterInf[3] < 2)?true:false;
+document.forms[0].Next.disabled = ipFilterInf[4];
+</script>
