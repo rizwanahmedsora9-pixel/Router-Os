@@ -1,0 +1,22 @@
+file      : wr720n/official-os/v2.0-160426/wr720nv2-eu-up.bin
+size      : 1560324 bytes (0x17CF04)
+md5       : c79f88e79f2735995cd91cb2a5bd0a09
+sha256    : 0289bed287db6fa34346973957f1a4b88b902a300a530aebf3c1831f3a0542be
+
+ImgHeader(offset=20, fields={'prefix_md5ish': '00142fc00e3a8cd99ddeffae9ae3dc2399dc4bda', 'magic': 'IMG0', 'length': 1560304, 'version': 119542017, 'nparts': 1, 'load_addr': 1510216503, 'flags': 16777216, 'build': '4555000000000000', 'field_0x54': 128, 'part0_off': 1560176, 'part1_size_or_off': 0, 'part2_off': 0, 'part3_size_or_off': 0, 'part4_off': 0, 'part5_size_or_off': 0})
+
+ImgHeader(offset=262292, fields={'prefix_md5ish': '0000000000000000000000000000000000000000', 'magic': 'IMG0', 'length': 1298032, 'version': 119542017, 'nparts': 1, 'load_addr': 1510216503, 'flags': 0, 'build': '4555000000000000', 'field_0x54': 128, 'part0_off': 994899, 'part1_size_or_off': 995040, 'part2_off': 297360, 'part3_size_or_off': 1292400, 'part4_off': 5632, 'part5_size_or_off': 0})
+
+LZMA main-code streams:
+  image #1 main code   @0x0068D4  props=0x6E dict=8388608  usize=636256 compressed=187757  ends@0x034641  ratio=3.39x
+  image #2 main code   @0x040114  props=0x6E dict=8388608  usize=3660912 compressed=994899  ends@0x132F67  ratio=3.68x
+
+Wind River management filesystem @0x132F60 size 297360 (290.4 KiB)
+  records          : 195  (1 deleted, 0 stale/overwritten, 194 valid)
+  unique files     : 194
+  orphan streams   : none
+  stored bytes     : 287680
+  longest name     : 'AccessCtrlAccessRuleModifyHelpRpm.htm' (37 chars)
+  by extension     : {'.htm': 174, '.js': 6, '.gif': 6, '.jpg': 6, '.css': 2}
+
+tail part  : 0x17B8F0 .. 0x17CEF0 (5632 bytes, opaque blob)

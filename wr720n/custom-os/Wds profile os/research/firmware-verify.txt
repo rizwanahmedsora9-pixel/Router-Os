@@ -1,0 +1,1 @@
+VERIFY OK - 194 files, all LZMA streams close exactly on their record boundaries.

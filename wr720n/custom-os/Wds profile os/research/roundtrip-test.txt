@@ -1,0 +1,8 @@
+repacked -> /home/user/router-os-backups/2026-09-21-fbaa030/zero-change.bin
+  files recompressed : 0
+  unchanged files    : 194 (original bytes kept)
+  store used         : 297377 / 297360 bytes
+
+!! EXPERIMENTAL: not flashed on hardware.  The router's upgrade validation has
+   not been reverse engineered - test in QEMU before trusting this image.
+PASS: cmp stock versus zero-change repack: byte-identical

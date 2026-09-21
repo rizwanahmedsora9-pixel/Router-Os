@@ -1,0 +1,11 @@
+Label follow-up validation — 2026-09-21
+PASS: all original tracked-file SHA-256 checks (separate sha256sum -c invocation).
+PASS: pre-step archive verified against all 240 files before modifications.
+PASS: pre-step archive and bundle hashes unchanged; bundle verification passed.
+PASS: exactly four planned Markdown updates and four additions versus pre-step manifest.
+PASS: no files deleted; original architecture and research snapshot unchanged.
+PASS: all local Markdown links resolve; authored Markdown has no trailing whitespace.
+PASS: all 26 new string offsets/text match original decompressed image 2 bytes.
+PASS: stock firmware verify: 194 web records pass.
+PASS: original tracked files unchanged; git diff --check; expected session branch.
+NOT RUN: router access, live switching, power-failure, flash or recovery tests.

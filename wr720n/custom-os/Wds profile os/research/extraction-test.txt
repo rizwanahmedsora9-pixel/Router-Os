@@ -1,0 +1,1 @@
+PASS: 197 extracted payload files match repository byte-for-byte (194 web assets, 2 code images, tail).

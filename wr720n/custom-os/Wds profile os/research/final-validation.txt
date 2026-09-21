@@ -1,0 +1,7 @@
+PASS: all pre-existing tracked files retain baseline SHA-256 hashes.
+PASS: no tracked baseline files modified; all additions restricted to Wds profile os/.
+PASS: all local Markdown links resolve and authored Markdown has no trailing whitespace.
+PASS: git diff --check (tracked changes).
+PASS: archive and Git bundle SHA-256 match pre-change recorded hashes.
+PASS: every baseline tracked file in working-tree archive matches its recorded SHA-256.
+NOT RUN: physical-router, live-switch, power-loss, recovery or firmware flashing tests.
