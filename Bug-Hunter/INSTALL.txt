@@ -1,0 +1,206 @@
+Bug Hunter Installation & Usage Guide
+======================================
+
+QUICK START (No Installation Required!)
+---------------------------------------
+
+Bug Hunter is a single Python file with NO external dependencies.
+Just download and run:
+
+  1. Navigate to the Bug-Hunter folder:
+     cd Bug-Hunter
+
+  2. Run the scanner:
+     python3 bug_hunter.py
+
+  3. It auto-detects your router and scans for vulnerabilities!
+
+
+PLATFORM-SPECIFIC INSTRUCTIONS
+-------------------------------
+
+### Windows
+  - Install Python 3.8+ from python.org
+  - Open Command Prompt or PowerShell
+  - Run: python bug_hunter.py
+
+### Linux / Raspberry Pi
+  - Python 3 is usually pre-installed
+  - Run: python3 bug_hunter.py
+
+### macOS
+  - Install Python from python.org or use Homebrew: brew install python
+  - Run: python3 bug_hunter.py
+
+### Termux (Android)
+  - Install Termux from F-Droid or Play Store
+  - Install Python: pkg install python
+  - Navigate to the folder: cd /path/to/Router-Os/Bug-Hunter
+  - Run: python bug_hunter.py
+
+### FreeBSD
+  - Install Python: pkg install python3
+  - Run: python3 bug_hunter.py
+
+
+USAGE EXAMPLES
+--------------
+
+  # Auto-detect and scan your router
+  python3 bug_hunter.py
+
+  # Scan a specific IP address
+  python3 bug_hunter.py 192.168.1.1
+
+  # Save a detailed text report
+  python3 bug_hunter.py --report my_scan.txt
+
+  # Save a JSON report (for automation)
+  python3 bug_hunter.py --json my_scan.json
+
+  # Quick scan (faster, fewer checks)
+  python3 bug_hunter.py --quick
+
+  # Enable deep probes (UPnP, rom-0)
+  python3 bug_hunter.py --probe-upnp --probe-rom0
+
+  # Force vendor detection
+  python3 bug_hunter.py --vendor dlink
+
+  # Verbose output (see all HTTP requests)
+  python3 bug_hunter.py -v
+
+  # See all options
+  python3 bug_hunter.py --help
+
+
+DEMO MODE
+---------
+
+See Bug Hunter in action with a simulated vulnerable router:
+
+  python3 demo_scan.py
+
+This starts a mock D-Link router and shows how the tool detects
+vulnerabilities and generates reports.
+
+
+TESTING
+-------
+
+Run the test suite to verify everything works:
+
+  python3 test_scanner.py
+
+All tests should pass with ✓ marks.
+
+
+WHAT THE TOOL CHECKS
+--------------------
+
+✓ Auto-detects your router/gateway
+✓ Fingerprints vendor (D-Link, ZTE, TP-Link, Huawei, Netgear, etc.)
+✓ Scans for open ports (HTTP, SSH, Telnet, FTP, SNMP, UPnP, etc.)
+✓ Checks vendor-specific vulnerabilities:
+  - D-Link: webproc auth bypass, Wi-Fi key leak, file traversal
+  - ZTE: UPnP WLAN disclosure, CSRF, info leaks
+  - TP-Link: rom-0 config exposure, command injection, etc.
+✓ Runs generic security checks (all routers)
+✓ Generates detailed reports with:
+  - CVE references and source URLs
+  - Severity ratings (CRITICAL, HIGH, MEDIUM, LOW, INFO)
+  - Detailed descriptions and impact analysis
+  - Step-by-step fix/remediation methods
+
+
+SAFETY
+------
+
+✓ READ-ONLY: Only GET/HEAD requests, no POST, no config changes
+✓ LAN-ONLY: Refuses to scan public IPs
+✓ NO SECRETS: Never prints passwords or Wi-Fi keys
+✓ NO EXPLOITS: Does not run exploit code or payloads
+✓ NO INSTALLATION: Single Python file, standard library only
+
+
+TROUBLESHOOTING
+---------------
+
+Problem: "Could not auto-detect gateway"
+Solution: Specify the router IP manually:
+          python3 bug_hunter.py 192.168.1.1
+
+Problem: "does not resolve to a private/LAN address"
+Solution: Make sure you're scanning a device on YOUR network.
+          The tool only scans private IPs (192.168.x.x, 10.x.x.x, etc.)
+
+Problem: "Connection refused" or timeout
+Solution: The router's HTTP port might be different. Try:
+          python3 bug_hunter.py 192.168.1.1 --port 8080
+
+Problem: No vulnerabilities found
+Solution: This is GOOD! Your router passed the checks.
+          Still, keep firmware updated and follow security best practices.
+
+
+REPORT FORMAT
+-------------
+
+Text Report (.txt):
+  - Human-readable format
+  - Detailed descriptions with ASCII boxes
+  - Easy to read and share
+  - Includes all CVE links and fix steps
+
+JSON Report (.json):
+  - Machine-readable format
+  - For automation and integration
+  - Can be parsed by scripts
+  - Same data as text report
+
+
+EXIT CODES
+----------
+
+  0 = No vulnerabilities found (clean)
+  1 = Minor findings (LOW/INFO severity)
+  2 = High-severity findings
+  3 = Critical-severity findings
+  130 = Interrupted by user (Ctrl+C)
+
+Use exit codes in scripts:
+  python3 bug_hunter.py 192.168.1.1
+  if [ $? -eq 3 ]; then
+    echo "CRITICAL vulnerabilities found!"
+    # Take action...
+  fi
+
+
+REQUIREMENTS
+------------
+
+  - Python 3.8 or higher
+  - Network access to the target router (must be on same LAN)
+  - NO external packages or dependencies
+
+That's it! No pip install, no requirements.txt, no setup.py.
+
+
+SUPPORT & UPDATES
+-----------------
+
+For the latest version, documentation, and vulnerability database updates,
+see the main repository: Router-Os/Bug-Hunter/
+
+Report issues or contribute improvements via pull requests.
+
+
+DISCLAIMER
+----------
+
+This tool is for AUTHORIZED security auditing of your OWN network equipment.
+Scanning networks or devices you do not own or have permission to test may
+violate local laws. The authors are not responsible for misuse.
+
+All vulnerability data is sourced from public CVE databases, vendor advisories,
+and published security research. This tool does not contain or execute exploits.
