@@ -1,0 +1,34 @@
+WDOS 1.0 build report
+official : /home/user/Router-Os/wr720n/official-os/v2.0-160426/wr720nv2-eu-up.bin
+           1560324 bytes
+           md5    c79f88e79f2735995cd91cb2a5bd0a09
+           sha256 0289bed287db6fa34346973957f1a4b88b902a300a530aebf3c1831f3a0542be
+           vendor acceptance: PASS
+
+=== self-test: zero-change repack + relock ===
+    record offsets reproduced : PASS (194/194)
+    packed store 0x489A1 == official : PASS
+    rebuilt + relocked == official file, byte for byte : PASS
+
+=== self-test: vendor md5 scheme ===
+    placeholder   cc9628ee8dfb21bb3def6cb59f774c7c
+    md5(file,[4:20)=placeholder) = 0e3a8cd99ddeffae9ae3dc2399dc4bda
+    official file[4:20)          = 0e3a8cd99ddeffae9ae3dc2399dc4bda
+    match: PASS
+
+=== building wdos-1.0-160426.bin ===
+    patched WlanNetworkRpm.htm: 25507 -> 28654 bytes raw, 5798 -> 6949 bytes packed (+1151)
+    pruned char_set.js: 91595 -> 85100 bytes raw, 13924 -> 13298 bytes packed (-626)
+    bgColor.jpg: stream released, now shares empty.gif
+    arc.gif: stream released, now shares empty.gif
+    packed store : 0x488E5 (STORE_SIZE 0x48990, official image 0x489A1, spare 171 bytes)
+    vendor md5   : 0e3a8cd99ddeffae9ae3dc2399dc4bda -> 1dc6af9ee814276cdba06a218e845423
+    unchanged    : file length, container header, app header, boot partition, app code stream, tail blob, prefix [0:4)
+    changed      : nothing that must not change
+    written      : /home/user/Router-Os/wr720n/custom-os/Wds profile os/release/wdos-1.0-160426.bin
+    md5    49fbef1c5a9f2a6deb712c246f4d73bf
+    sha256 9eb112ab0c1e971bbb651e33b2ca2148d079a7c3cd4ec9319fc26bffc2e568d3
+    vendor check : PASS
+    record check : all 194 records decode to the intended bytes
+    note         : the repository tool's stock-integrity sniff (`wr720n_fw.py verify`) reports exactly one intended difference on this image - the two never-referenced assets bgColor.jpg / arc.gif carry the shared 43-byte image stream instead of their original picture. Every LZMA stream still closes exactly on its record boundary.
+

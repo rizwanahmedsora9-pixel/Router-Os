@@ -1,0 +1,52 @@
+      <TR><TD class="Item">WDS Profiles:</TD><TD>
+        <SELECT id="wpS" style="width:180px" onChange="wpLoad()"></SELECT>
+        <INPUT type="button" class="button" value="Save current" onClick="wpNew()">
+        <INPUT type="button" class="button" value="Delete" onClick="wpDel()">
+        <SPAN id="wpM"></SPAN></TD></TR>
+      <SCRIPT type="text/javascript">
+// WDOS 1.0 - named WDS peer presets kept in this browser. Selecting one fills the
+// form below; nothing is sent to the router until you press the stock Save button.
+// Only the peer fields are stored, so SSID/AP/channel settings are never touched.
+var WP="wdos.wds.v1",wF="brlssid,brlbssid,keytext,keytype,wepindex,authtype".split(",");
+function wpI(n){return document.getElementById(n)||document.forms[0].elements[n];}
+function wpM(t,c){var m=wpI("wpM");if(m){m.innerHTML=t;m.style.color=c?"#080":"#F00";}}
+function wpD(v){try{return decodeURIComponent(v)}catch(e){return""}}
+function wpL(){try{var a=window.localStorage.getItem(WP),o=[],i;if(!a)return o;
+a=a.split("\n");for(i=0;i<a.length;i++)if(a[i])o[o.length]=a[i].split("|");return o;}catch(e){return[];}}
+function wpS(o){try{var a=[],i;for(i=0;i<o.length;i++)a[i]=o[i].join("|");
+window.localStorage.setItem(WP,a.join("\n"));return 1;}catch(e){return 0;}}
+function wpDraw(){var e=wpI("wpS"),o=wpL(),i;e.options.length=0;
+e.options[0]=new Option("- no profile selected -","");
+for(i=0;i<o.length;i++)e.options[i+1]=new Option(wpD(o[i][0]),""+i);}
+function wpPeer(){var r=[],i;for(i=0;i<wF.length;i++)r[i]=encodeURIComponent(wpI(wF[i]).value);return r;}
+function wpNew(){var n=window.prompt("Name for this WDS peer profile:");
+if(!n)return;
+n=String(n).replace(/^\s+|\s+$/g,"").substr(0,32);
+if(!n){alert("Please enter a name.");return;}
+var b=String(wpI("brlbssid").value).replace(/^\s+|\s+$/g,"").toUpperCase();
+if(b&&!/^[0-9A-F]{2}(-[0-9A-F]{2}){5}$/.test(b)){alert("BSSID must look like 00-1D-0F-11-22-33, or be empty.");return;}
+wpI("brlbssid").value=b;
+var r=[encodeURIComponent(n)],o=wpL(),i,at=-1;
+r=r.concat(wpPeer());
+for(i=0;i<o.length;i++)if(wpD(o[i][0])===n){at=i;break;}
+if(at<0){o[o.length]=r;at=o.length-1;}else{o[at]=r;}
+if(!wpS(o)){alert("Could not write browser storage.");return;}
+wpDraw();wpI("wpS").value=""+at;
+wpM("Saved. Press the router's <B>Save</B> button to apply it.",1);}
+function wpLoad(){var e=wpI("wpS"),r,i;
+if(e.value===""){wpM("");return;}
+r=wpL()[e.value*1];
+if(!r){return;}
+for(i=0;i<wF.length;i++){try{wpI(wF[i]).value=decodeURIComponent(r[i+1]);}catch(x){}}
+if(!wpI("wdsbrl").checked)wpI("wdsbrl").checked=true;
+try{doBrl()}catch(x){}try{doSelKeytype()}catch(x){}
+wpM("Loaded into the form. Nothing changes until you press <B>Save</B>.",1);}
+function wpDel(){var e=wpI("wpS"),o,i;
+if(e.value===""){alert("Select a profile in the list first.");return;}
+o=wpL();i=e.value*1;
+if(!window.confirm('Delete profile "'+wpD(o[i][0])+'"? The router is not changed.'))return;
+o.splice(i,1);
+if(!wpS(o)){alert("Could not write browser storage.");return;}
+wpDraw();wpM("Deleted from this browser.",1);}
+try{wpDraw()}catch(e){}
+      </SCRIPT>

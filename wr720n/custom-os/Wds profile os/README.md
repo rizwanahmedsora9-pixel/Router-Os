@@ -1,10 +1,15 @@
 # Wds profile os
 
-**Stage: label and reported firmware version matched; safe driver apply/restore still unverified.**
+**Stage: a buildable image exists (WDOS 1.0, `release/`); safe driver apply/restore is
+still unverified, and no hardware has been touched.**
 
 A separate, minimal-change WDS profile project for the firmware already in this
-repository. No application code, driver patches, UI changes, or flashable firmware
-have been made. This is not yet a working profile manager.
+repository. WDOS 1.0 is the official 160426 image plus a browser-side WDS preset row on
+the stock Wireless page: no driver patches, no kernel/application-code changes, and no
+attempt at live switching. Only four of the 194 files in the management web filesystem
+differ, and the boot partition, application code stream and trailing blob are copied
+unchanged. See [release/README.md](release/README.md) for what that does and does not
+prove before flashing anything.
 
 ## Start here
 
@@ -18,6 +23,15 @@ have been made. This is not yet a working profile manager.
 - [BACKUP-AND-TESTS.md](BACKUP-AND-TESTS.md): pre-change backup, rollback, and test results.
 - [research/](research/): baseline hashes, firmware inspection, binary-string offsets,
   WDS web-source excerpts, and offline test results (2026-09-21).
+- [research/vendor-upgrade-acceptance.md](research/vendor-upgrade-acceptance.md): the
+  recovered length / md5 / header rules the router applies to an uploaded image, and how
+  they were reproduced offline.
+- [release/README.md](release/README.md): the built image, its hashes, exactly what it
+  changes, the evidence behind it, and its unproven parts.
+- [payload/](payload/): the HTML/JS fragment that is injected into the stock page.
+- [tools/](tools/): `wdos_build.py` (build, vendor-acceptance `check`, `layout`) and
+  `wdos_verify.py` (host-side verification harness). Both are stdlib-only except for the
+  optional `node` used for JavaScript syntax checks.
 
 ## Important findings
 
@@ -32,14 +46,25 @@ chipset/resource evidence and its limitations are recorded in the follow-up. The
 includes a conditional reboot-required warning. Runtime ioctl strings are leads,
 not proof of safe live switching.
 
-**Do not flash the existing v1 probe or a newly repacked image for this project.**
-Offline container verification does not establish upgrade acceptance, hardware
-compatibility, recovery, or runtime safety.
+**Do not flash the existing v1 probe** (`../v1/wr720nv2-eu-up-v1-probe.bin`): it was
+built before the vendor acceptance rules were recovered, its size differs from the
+official image, and nothing verifies it.
+
+The WDOS 1.0 image in `release/` is a different case: it reproduces the vendor's own
+acceptance scheme offline and changes nothing outside the management web filesystem.
+It is still **not hardware-validated** - no unit has been flashed in this project -
+so treat flashing it as an experiment you must be able to recover from. The full risk
+statement is in [release/README.md](release/README.md); read it first.
 
 ## Interface policy
 
 Keep the stock frame layout, styling, navigation, and existing management pages.
-Eventually add only a WDS Profiles entry under Wireless, a compact profile table,
-and inline switching status. No redesign or replacement of working components.
-The proposed implementation is gated on hardware, runtime, persistence, and
-recovery evidence; see the checklist.
+WDOS 1.0 follows this: it adds one `WDS Profiles` row inside the existing WDS field
+table on `WlanNetworkRpm.htm`, using the stock `Item` / `button` classes and the stock
+`doBrl()` / `doSelKeytype()` helpers, and it leaves the page's own tables, form and Save
+button alone. The row is visible exactly when the WDS fields it fills in are visible.
+
+The wider profile manager (profile table, inline switching status, live switching) is
+still gated on hardware, runtime, persistence, and recovery evidence; see the checklist.
+Nothing in this project performs a live switch, and `Run` on the Status page is not
+accepted as proof that a WDS link works.
