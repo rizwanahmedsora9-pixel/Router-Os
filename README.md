@@ -26,6 +26,7 @@ Router-Os/
 
 | I want to… | go to |
 |---|---|
+| **all the PTCL D-Link bypass URLs, and how to verify a fix** | [`bug to fix.md`](bug%20to%20fix.md) |
 | see the original TP-Link download | [`wr720n/official-os/`](wr720n/official-os/) |
 | look at the firmware's insides (kernel image, web UI, file list) | [`wr720n/unpacked-os/`](wr720n/unpacked-os/) |
 | build / test my own firmware | [`wr720n/custom-os/`](wr720n/custom-os/) |

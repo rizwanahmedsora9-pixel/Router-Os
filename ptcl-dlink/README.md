@@ -24,6 +24,9 @@ privileged session to anyone who asks for the wizard URL.
 
 ---
 
+> 📋 **Every URL on one page, with a fix-verification checklist:**
+> [`../bug to fix.md`](../bug%20to%20fix.md)
+
 ## 2. The URL
 
 The management endpoint is `/cgi-bin/webproc`. It takes its page to render from the
