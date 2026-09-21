@@ -20,9 +20,14 @@ Router-Os/
 │   ├── tools/                     LAN-only H168N checker + UPnP mock
 │   └── research/                  CVE/version evidence, limits, and mitigations
 │
-└── ptcl-tplink/                   ← PTCL-associated TP-Link research
-    ├── tools/                     LAN-only inventory/rom-0 checker + mock
-    └── research/                  model-scoped CVE evidence and source links
+├── ptcl-tplink/                   ← PTCL-associated TP-Link research
+│   ├── tools/                     LAN-only inventory/rom-0 checker + mock
+│   └── research/                  model-scoped CVE evidence and source links
+│
+└── Bug-Hunter/                    ← 🎯 Unified cross-platform vulnerability scanner
+    ├── bug_hunter.py              main app: auto-detect → scan → report
+    ├── test_scanner.py            unit tests + integration checks
+    └── demo_scan.py               mock router demo with sample findings
 ```
 
 > **Separate projects, one repository.** `wr720n/` is TP-Link (VxWorks, `IMG0`
@@ -36,6 +41,7 @@ Router-Os/
 
 | I want to… | go to |
 |---|---|
+| **🎯 scan my router for vulnerabilities (NEW)** | [`Bug-Hunter/`](Bug-Hunter/) |
 | **all the PTCL D-Link bypass URLs, and how to verify a fix** | [`bug to fix.md`](bug%20to%20fix.md) |
 | understand the PTCL-associated ZTE H168N findings | [`ptcl-zte/research/`](ptcl-zte/research/) |
 | safely check my own ZTE H168N from the LAN | [`ptcl-zte/tools/`](ptcl-zte/tools/) |
@@ -47,6 +53,39 @@ Router-Os/
 | unpack another TL-WR720N image | [`wr720n/tools/`](wr720n/tools/) |
 | **understand the PTCL D-Link "opens without login" bug** | [`ptcl-dlink/`](ptcl-dlink/) |
 | **check whether my own PTCL D-Link has it** | [`ptcl-dlink/tools/`](ptcl-dlink/tools/) |
+
+## Bug Hunter — Unified Vulnerability Scanner
+
+The [`Bug-Hunter/`](Bug-Hunter/) tool consolidates all research from this repository into a
+single cross-platform Python application that runs on **Windows, Linux, macOS, Termux (Android),
+FreeBSD — anywhere Python 3.8+ exists**.
+
+```bash
+# Auto-detect your router and scan for vulnerabilities
+python Bug-Hunter/bug_hunter.py
+
+# Scan a specific IP and save a detailed report
+python Bug-Hunter/bug_hunter.py 192.168.10.1 --report scan_report.txt
+
+# Demo mode — see it in action against a simulated vulnerable router
+python Bug-Hunter/demo_scan.py
+```
+
+**What it does:**
+- Auto-detects your gateway/router on WiFi or LAN
+- Fingerprints the vendor (D-Link, ZTE, TP-Link, Huawei, Netgear, etc.)
+- Scans for open ports and services
+- Checks vendor-specific vulnerabilities (CVE-matched)
+- Runs generic security checks (Telnet, UPnP, SNMP, etc.)
+- Generates a detailed `.txt` or `.json` report with:
+  - Vulnerability descriptions and severity ratings
+  - CVE references and source URLs
+  - Impact analysis
+  - Step-by-step fix/remediation methods
+
+**Safety:** Read-only (GET/HEAD only), LAN addresses only, never prints secrets, no exploits.
+
+See [`Bug-Hunter/README.md`](Bug-Hunter/README.md) for full documentation.
 
 ## Research status
 
