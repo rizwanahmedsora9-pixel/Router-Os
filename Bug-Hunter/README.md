@@ -13,7 +13,7 @@ and step-by-step fix/remediation methods.
 | **Auto-detect gateway** | Finds your router automatically — works on Windows, Linux, macOS, Termux |
 | **Vendor fingerprinting** | Identifies D-Link, ZTE, TP-Link, Huawei, Netgear, Linksys, FiberHome |
 | **Port scanning** | Checks common router services (HTTP, SSH, Telnet, FTP, SNMP, UPnP, TR-069, ADB) |
-| **D-Link checks** | webproc auth bypass, Wi-Fi key leak, file traversal, persistent session |
+| **D-Link checks** | webproc auth bypass, Wi-Fi key leak, file traversal, persistent session, ACME httpd banner (CVE-2014-4927) |
 | **ZTE checks** | UPnP WLAN key disclosure (CVE-2018-7357/7358), CSRF, info leaks |
 | **TP-Link checks** | rom-0 config disclosure, command injection, credential disclosure, RomPager |
 | **Generic checks** | Telnet, FTP, SNMP, UPnP, TR-069, ADB, missing HTTPS, info leakage |
@@ -72,7 +72,13 @@ python bug_hunter.py -v
 | Wi-Fi Key Leak | CVE-2019-1010156 | **CRITICAL** | SSID + WPA key in page source |
 | File Traversal | CVE-2025-34048 | **CRITICAL** | Read any file on the router |
 | Persistent Session | CVE-2019-1010155 | **HIGH** | Bypass session never expires |
-| micro-httpd | N/A | **MEDIUM** | Legacy insecure web server |
+| ACME httpd front door | CVE-2014-4927 | **HIGH** | `micro_httpd` banner → long-URI DoS, never patched (flagged, not probed) |
+
+> **Detection note:** the ACME banner on real units uses the underscore spelling
+> (`micro_httpd`), and these units often answer `/` with a bare `401` and no
+> vendor strings. Bug Hunter matches the banner (both spellings) and probes
+> `/cgi-bin/webproc` with a neutral page, so the PTCL DSL class is detected
+> from the field-scan shape, not only from a full login page.
 
 ### ZTE (PTCL H168N)
 
@@ -219,6 +225,7 @@ Router-Os repository:
 | Source project | Checks incorporated |
 |---|---|
 | `ptcl-dlink/tools/ptcl_check.py` | webproc auth bypass, Wi-Fi leak, file traversal |
+| `ptcl-dlink/tools/micro_httpd_probe.py` | ACME httpd banner → CVE-2014-4927 flag (the live `--dos` probe stays in that tool, deliberately not in the scanner) |
 | `ptcl-zte/tools/ptcl_zte_check.py` | UPnP WLAN disclosure, version matching |
 | `ptcl-tplink/tools/ptcl_tplink_check.py` | rom-0 check, model/firmware matching |
 | All research docs | CVE references, fix methods, source URLs |

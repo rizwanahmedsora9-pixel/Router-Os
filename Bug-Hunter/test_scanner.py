@@ -43,12 +43,6 @@ def test_vendor_detection():
     """Test vendor detection with sample responses."""
     print("\n=== Test 3: Vendor Detection ===")
 
-    # Mock D-Link response
-    class MockResponse:
-        def __init__(self, text):
-            self.text = text
-            self.status = 200
-
     dlink_html = """
     <html>
     <title>D-Link DSL-2750U</title>
@@ -79,28 +73,76 @@ def test_vendor_detection():
     </html>
     """
 
-    # Test D-Link
-    vendor = detect_vendor(MockResponse(dlink_html), "micro-httpd")
+    # Test D-Link (body + banner)
+    vendor = detect_vendor(dlink_html, "micro_httpd")
     print(f"D-Link HTML → Vendor: {vendor}")
     assert vendor == "dlink", f"Expected dlink, got {vendor}"
     info = extract_info(dlink_html, vendor)
     print(f"  Model: {info.get('model')}, Firmware: {info.get('firmware')}")
 
     # Test ZTE
-    vendor = detect_vendor(MockResponse(zte_html), None)
+    vendor = detect_vendor(zte_html, None)
     print(f"ZTE HTML → Vendor: {vendor}")
     assert vendor == "zte", f"Expected zte, got {vendor}"
     info = extract_info(zte_html, vendor)
     print(f"  Model: {info.get('model')}, Firmware: {info.get('firmware')}")
 
     # Test TP-Link
-    vendor = detect_vendor(MockResponse(tplink_html), "RomPager")
+    vendor = detect_vendor(tplink_html, "RomPager")
     print(f"TP-Link HTML → Vendor: {vendor}")
     assert vendor == "tplink", f"Expected tplink, got {vendor}"
     info = extract_info(tplink_html, vendor)
     print(f"  Model: {info.get('model')}, Firmware: {info.get('firmware')}")
 
+    # --- Real-world case from a PTCL field scan (2026-09-22):
+    # GET / answers a bare 401 (no vendor strings in the body), but the
+    # Server banner is the ACME underscore spelling and webproc answers.
+    vendor = detect_vendor("", "micro_httpd", webproc_reachable=True)
+    print(f"401 root + 'micro_httpd' banner → Vendor: {vendor}")
+    assert vendor == "dlink", f"Expected dlink, got {vendor}"
+
+    vendor = detect_vendor("", "Conexant/1.0", webproc_reachable=True)
+    print(f"401 root + 'Conexant/1.0' banner → Vendor: {vendor}")
+    assert vendor == "dlink", f"Expected dlink, got {vendor}"
+
+    # webproc reachable but NO corroborating banner: a router that returns
+    # 401 for every unknown path must NOT be classified as D-Link.
+    vendor = detect_vendor("", None, webproc_reachable=True)
+    print(f"webproc reachable, no banner → Vendor: {vendor}")
+    assert vendor == "generic", f"Expected generic, got {vendor}"
+
+    # hyphenated spelling (as it appears in some writeups) still matches
+    vendor = detect_vendor("", "micro-httpd")
+    print(f"'micro-httpd' (hyphen) banner → Vendor: {vendor}")
+    assert vendor == "dlink", f"Expected dlink, got {vendor}"
+
+    # nothing at all
+    vendor = detect_vendor("", None)
+    print(f"No text, no banner → Vendor: {vendor}")
+    assert vendor == "generic", f"Expected generic, got {vendor}"
+
     print("✓ Vendor detection works")
+
+
+def test_dlink_micro_httpd_finding():
+    """Test that a micro_httpd banner raises the CVE-2014-4927 finding."""
+    print("\n=== Test 5: D-Link ACME banner finding (DLINK-006) ===")
+
+    from bug_hunter import check_dlink_vulns
+
+    class StubClient:
+        """No network: every GET returns None; only the banner is set."""
+        server_header = "micro_httpd"
+
+        def get(self, path, **kwargs):
+            return None
+
+    findings = check_dlink_vulns(StubClient(), "192.168.10.1", {})
+    ids = [f["id"] for f in findings]
+    print(f"  findings with all-None probes + banner: {ids}")
+    assert ids == ["DLINK-006"], f"Expected only DLINK-006, got {ids}"
+    assert "CVE-2014-4927" in findings[0]["cve"]
+    print("✓ ACME banner → CVE-2014-4927 finding works")
 
 
 def test_report_generation():
@@ -179,6 +221,7 @@ def main():
         test_network_info()
         test_vendor_detection()
         test_report_generation()
+        test_dlink_micro_httpd_finding()
 
         print("\n" + "=" * 70)
         print("  ✓ ALL TESTS PASSED")
