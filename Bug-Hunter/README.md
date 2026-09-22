@@ -1,9 +1,11 @@
 # Bug Hunter — Cross-Platform Router Vulnerability Scanner
 
-A **read-only** Python tool that hunts the **physical router on your LAN** and
-runs a **live security audit** of it: gateway detection, vendor fingerprinting,
-port/service probing, and CVE-matched vulnerability checks against the unit in
-front of you — not a simulation.
+A Python tool that hunts the **physical router on your LAN** and runs a **live
+security audit** of it: WiFi-aware auto-discovery, vendor fingerprinting,
+port/service probing, CVE-matched vulnerability checks, **credentialed deep
+audit** (HTTP login + read-only shell + MTD firmware dump with *your own*
+admin password), and **offline firmware analysis** — against the unit in front
+of you, not a simulation.
 
 Generates a detailed report with vulnerability details, CVE references, severity ratings,
 and step-by-step fix/remediation methods.
@@ -12,6 +14,15 @@ and step-by-step fix/remediation methods.
 > `bug_hunter.py` is the real thing: every probe goes to the physical device.
 > `demo_scan.py` / `test_scanner.py` are the playground — mock routers on
 > localhost for learning and testing only. Nothing in them touches hardware.
+>
+> **v2.0 — the "real auditing app" release.** v1 only probed from the outside
+> (and only really knew D-Link/ZTE/TP-Link). v2 adds: `--auto` WiFi/subnet
+> discovery across **18 vendors**, credentialed HTTP audit
+> (`--username/--password`), read-only **root-shell audit** (`--shell`),
+> low-level **MTD firmware dump** (`--dump-mtd`), config-backup pull
+> (`--dump-config`), offline **firmware analysis** (`--analyze-firmware`),
+> SNMP/DNS low-level probes (`--probe-udp`), and CONFIRMED/LIKELY confidence
+> labels so live proof is never confused with version-string guessing.
 
 ## Physical Device Audit (v1.2 — the primary use)
 
@@ -48,9 +59,14 @@ becomes the baseline for the unit being audited.
 |---|---|
 | **Physical-device audit** | `--audit` hunts the live unit, saves model-stamped artifacts, diffs runs over time |
 | **Sticker identity cross-check** | `--model/--firmware/--hw/--serial/--mac` vs. the unit's self-report; mismatches flagged |
-| **Auto-detect gateway** | Finds your router automatically — works on Windows, Linux, macOS, Termux |
-| **Vendor fingerprinting** | Identifies D-Link, ZTE, TP-Link, Huawei, Netgear, Linksys, FiberHome |
-| **Port scanning** | Checks common router services (HTTP, HTTPS, SSH, Telnet, FTP, SNMP, UPnP, TR-069, TCP 5555) |
+| **WiFi-aware auto-discovery** | `--auto` / `--discover`: SSID context, subnet sweep (TCP+ARP), router-candidate ranking, auto-fallback when the gateway guess is wrong |
+| **Vendor fingerprinting** | 18 vendors: D-Link, ZTE, TP-Link, Huawei, Netgear, Linksys, FiberHome, Asus, Tenda, Totolink, Cisco, MikroTik, Ubiquiti, DrayTek, Belkin, TRENDnet, Xiaomi, Mercusys, OpenWrt |
+| **Port scanning** | Checks common router services (HTTP, HTTPS, SSH, Telnet, FTP, SNMP, UPnP, TR-069, TCP 5555, Winbox 8291, PPTP, alt-HTTP) |
+| **Credentialed HTTP audit** | `-u/--password`: Basic/Digest/form login with YOUR creds, then real firmware/WAN/DNS/WPS/remote-mgmt state |
+| **Credentialed shell audit** | `--shell telnet\|ssh`: read-only enumeration (uid, kernel, SoC, MTD layout) over your own login |
+| **MTD firmware dump** | `--dump-mtd all`: low-level partition dump over the shell, decoded + SHA-256'd locally |
+| **Firmware analysis** | `--analyze-firmware FILE`: magic scan, entropy profile, redacted secret scan — offline |
+| **Confidence labels** | Every v2 finding says CONFIRMED (live proof) or LIKELY (banner/version match) |
 | **D-Link checks** | webproc auth bypass, Wi-Fi key leak, file traversal, persistent session, ACME httpd banner (CVE-2014-4927), `dnscfg.cgi` exposure (CVE-2026-0625) |
 | **ZTE checks** | UPnP WLAN key disclosure (CVE-2018-7357/7358), CSRF, info leaks |
 | **TP-Link checks** | rom-0 config disclosure, command injection, credential disclosure, RomPager |
@@ -75,6 +91,14 @@ becomes the baseline for the unit being audited.
 ## Quick Start
 
 ```bash
+# SMOOTH AUTO FLOW — WiFi context + subnet sweep + audit the best candidate
+python bug_hunter.py --auto
+python bug_hunter.py --auto --audit --model DSL-226 --firmware PT_1.10_J2 --hw J2
+
+# DISCOVER every router/ONT on the LAN, audit each (up to --max-targets)
+python bug_hunter.py --discover
+python bug_hunter.py --discover --audit --max-targets 6
+
 # PHYSICAL HUNT — audit the live router on your LAN
 python bug_hunter.py                          # auto-detect your gateway and hunt it
 python bug_hunter.py 192.168.10.1 --audit     # hunt + save audit + drift diff
@@ -83,6 +107,17 @@ python bug_hunter.py 192.168.10.1 --audit     # hunt + save audit + drift diff
 python bug_hunter.py 192.168.10.1 --audit \
     --model DSL-226 --firmware PT_1.10_J2 --hw J2
 
+# CREDENTIALED DEEP AUDIT — your own router, your own password (prompted, hidden)
+python bug_hunter.py 192.168.1.1 -u admin --audit
+python bug_hunter.py 192.168.1.1 -u admin --shell auto --dump-config --audit
+python bug_hunter.py 192.168.1.1 --check-defaults          # well-known defaults only
+
+# LOW-LEVEL MTD DUMP over the credentialed shell (asks to confirm w/o --yes)
+python bug_hunter.py 192.168.1.1 -u admin --shell telnet --dump-mtd all --yes
+
+# OFFLINE FIRMWARE ANALYSIS (local file, nothing uploaded)
+python bug_hunter.py --analyze-firmware audits/mtd_192.168.1.1_mtd5_*.bin
+
 # Save a text report / JSON report anywhere you like
 python bug_hunter.py 192.168.1.1 --report scan_report.txt --json scan_report.json
 
@@ -90,14 +125,61 @@ python bug_hunter.py 192.168.1.1 --report scan_report.txt --json scan_report.jso
 python bug_hunter.py --quick
 
 # Enable optional deep probes
-python bug_hunter.py --probe-upnp --probe-rom0
+python bug_hunter.py --probe-upnp --probe-rom0 --probe-udp
 
 # Force vendor detection
-python bug_hunter.py --vendor dlink
+python bug_hunter.py --vendor mikrotik
 
 # Verbose output (shows every HTTP request)
 python bug_hunter.py -v
 ```
+
+## Auto-Discovery (`--auto` / `--discover`)
+
+v1 guessed one gateway IP and stopped. v2 reads the WiFi context (SSID/BSSID/
+signal on Windows, Linux, macOS and Termux), derives the subnet, sweeps it
+(TCP ping + ARP-table merge — no root, no raw sockets), fingerprints every
+web host and ranks router candidates by banner/title/OUI/TR-069 signals. If
+the gateway has no web port at all, the audit automatically falls over to the
+best candidate instead of failing. `--discover` audits every candidate (up to
+`--max-targets`, default 4) and prints a combined summary.
+
+## Credentialed HTTP Audit (`-u` / `-p` / `--check-defaults`)
+
+Version-string guessing ends where your admin password begins. With the
+owner's credentials (prompted via `getpass`, never echoed, never stored, never
+sent off-LAN) Bug Hunter tries HTTP Basic → Digest → common form logins, then
+reads the unit's *real* post-login state: firmware/model, WAN IP, DNS servers,
+uptime, WPS state, remote-management state, weak WiFi encryption — each
+reported with a CONFIRMED/LIKELY confidence label. `--check-defaults` tries
+only the short well-known-default list, one attempt per second, and stops at
+the first hit (reported as AUTH-001 CRITICAL). There is no brute-forcing,
+no session hijacking, no unauthenticated escalation — root is only ever
+reached with credentials you supplied.
+
+## Shell Audit + MTD Dump (`--shell` / `--dump-mtd` / `--dump-config`)
+
+`--shell telnet` (raw-socket client, works on Termux) or `--shell ssh`
+(system `ssh` binary) opens a shell with your credentials and runs a fixed
+**read-only** command list: `id`, `/proc/version`, `/proc/cpuinfo`,
+`/proc/mtd`, mounts, `ps`, and friends — no writes, no reboot, no kill. The
+transcript is secret-redacted before display or save. `--dump-mtd all` (or
+`mtd5`, `mtd0,mtd5`) then reads each MTD partition over the same shell
+(base64, hexdump fallback), decodes and SHA-256-hashes it locally into
+`audits/` (mode 0600). `--dump-config` pulls the config backup over the
+authenticated HTTP session instead. Point `--analyze-firmware` at any of
+these files for the offline workup.
+
+## Firmware Analysis (`--analyze-firmware`)
+
+A binwalk-lite with zero dependencies: container/filesystem magic scan
+(uImage, TRX, SquashFS, JFFS2, LZMA, gzip, ELF, UBI, TP-Link IMG0 incl. the
+WR720N web-store magic, SEAMA, CFE, …), a sliding-window entropy profile that
+flags encrypted/compressed spans, printable-string extraction, and an
+indicator scan for hardcoded passwords, default pairs, telnet backdoors,
+private keys and hardcoded URLs/IPs. Secret *values* are never printed —
+only type, offset and a redacted preview, plus the exact `dd|xxd` command to
+inspect your own dump.
 
 ## What Gets Checked
 
@@ -170,6 +252,25 @@ python bug_hunter.py -v
 | Boa/0.94.13–0.94.14 banner | **HIGH** | Abandoned httpd; CVE-2022-45956 named, not probed |
 | HTTP Basic on cleartext | **MEDIUM** | Admin password is only Base64 on the LAN |
 | No login prompt | **HIGH** | Possible unauthenticated admin access |
+| MikroTik Winbox/API exposed | **HIGH** | Ports 8291/8728; CVE-2018-14847 class named, not probed |
+| SNMP `public` answers | **MEDIUM** | `--probe-udp`: read-only sysDescr GET answered (sysDescr shown) |
+| DNS version.bind leak | **INFO** | `--probe-udp`: CHAOS/TXT version string disclosed |
+| Embedded httpd banner | **INFO** | GoAhead/uhttpd/lighttpd/Allegro version note for CVE matching |
+
+### Credentialed (owner password required — v2)
+
+| Check | Severity | What it finds |
+|---|---|---|
+| Default HTTP creds (AUTH-001) | **CRITICAL** | `--check-defaults`: a factory login works (password never shown) |
+| Backup downloadable post-login (AUTH-002) | **INFO** | Authenticated config endpoint confirmed, ready for `--dump-config` |
+| Remote management enabled (AUTH-003) | **HIGH** | Settings page says WAN-side admin is on |
+| WPS enabled (AUTH-004) | **MEDIUM** | WPS state read from the real settings page |
+| Weak WiFi encryption (AUTH-005) | **HIGH/MEDIUM** | WEP or WPA-TKIP-only as the active mode |
+| Config backup saved (AUTH-006) | **INFO** | Local 0600 audit artifact written |
+| Credentialed root shell (SHELL-001) | **INFO / HIGH** | `uid=0` over your login (HIGH only if it took defaults) |
+| MTD dump saved (SHELL-002) | **INFO** | Partition bytes + SHA-256 on local disk |
+| Ancient live kernel (SHELL-003) | **HIGH/MEDIUM** | `/proc/version` predates 3.10 / 4.4 |
+| telnetd running (SHELL-004) | **MEDIUM** | Plaintext shell confirmed in `ps` |
 
 ## Report Format
 
@@ -212,7 +313,7 @@ python bug_hunter.py -v
 ```json
 {
   "tool": "Bug Hunter",
-  "version": "1.2.0",
+  "version": "2.0.0",
   "timestamp": "2026-09-21T14:30:00+00:00",
   "network": { "gateway": "192.168.10.1", ... },
   "device": { "vendor": "dlink", "model": "DSL-2750U", ... },
@@ -245,23 +346,46 @@ python bug_hunter.py -v
 
 This tool is designed to be **safe by construction**:
 
-1. **GET/HEAD only** — No POST requests, no credential submission, no config changes
-2. **LAN addresses only** — Refuses to probe public IPs; only scans your own network
-3. **Never prints secrets** — Wi-Fi keys, passwords, and sensitive data are detected
-   but never displayed, decoded, or saved in reports
-4. **No exploitation** — Does not run exploit code, brute-force, or send payloads;
+1. **Unauthenticated phases are read-only** — GET/HEAD only, plus one SNMP GET
+   and one DNS TXT with the explicit `--probe-udp`. No config changes, ever
+2. **Credentialed phases only READ, with YOUR password** — `-u/--password`,
+   `--check-defaults` (short well-known list, 1 attempt/sec), `--shell`
+   (fixed read-only command list), `--dump-config`/`--dump-mtd` (local 0600
+   files). No brute-forcing beyond the default list, no cracking, no
+   hijacking, no unauthenticated escalation
+3. **LAN addresses only** — Refuses to probe public IPs; only scans your own network
+4. **Never prints secrets** — Wi-Fi keys, passwords, shell transcripts and
+   firmware-indicator values are detected but redacted (`[REDACTED]`) in all
+   output; dumps live as local 0600 files, never inside reports
+5. **No exploitation** — Does not run exploit code or send payloads;
    the `dnscfg.cgi` CVE-2026-0625 probe is a bare reachability GET with no
    injection parameters. A Boa banner is recorded only — no HEAD auth-bypass
-   and no path traversal. TCP 5555 is read passively; no ADB handshake is sent
-5. **Audit data stays local** — `audits/` is git-ignored; device reports are never
-   committed to the repository
-6. **No installation** — Single Python file, standard library only, no pip packages
+   and no path traversal. TCP 5555 is read passively; no ADB handshake is sent.
+   Winbox/CVE-2018-14847 is exposure-flagged, never probed with the traversal
+6. **Audit data stays local** — `audits/` is git-ignored; device reports, shell
+   transcripts and MTD dumps are never committed to the repository
+7. **No installation** — Python standard library only, no pip packages
 
 ## Requirements
 
 - **Python 3.8+** (any platform)
 - **Network access** to the target router (must be on the same LAN)
 - **No external packages** — everything uses Python's standard library
+- **Optional:** system `ssh` binary for `--shell ssh` (Termux: `pkg install
+  openssh`; Windows: OpenSSH Client); `sshpass` only if you insist on
+  password-over-SSH instead of key auth
+
+## File layout (v2)
+
+| File | Role |
+|---|---|
+| `bug_hunter.py` | Main app: scan engine, reports, CLI (still runs standalone) |
+| `discovery.py` | WiFi context, subnet sweep, router-candidate ranking |
+| `auth_audit.py` | Basic/Digest/form login, post-login enum, config-backup pull |
+| `shell_audit.py` | Telnet/SSH read-only shell audit, MTD dump, redaction |
+| `firmware.py` | Offline firmware/MTD analysis (magic, entropy, indicators) |
+| `test_scanner.py` | Test suite — 14 groups incl. live localhost mocks for v2 |
+| `demo_scan.py` | Mock router demo (play only — no hardware involved) |
 
 ## Installation
 
@@ -298,9 +422,12 @@ Bug Hunter adds:
 - **Sticker identity cross-check** — label model/FW/HW/serial/MAC vs. the
   unit's self-report (incl. `J2`-style hardware revisions and `PT_*` ISP builds)
 - `dnscfg.cgi` CVE-2026-0625 reachability probe (read-only)
-- Automatic gateway detection
-- Automatic vendor identification
-- Generic port and service scanning
+- **WiFi-aware LAN discovery** (`--auto`/`--discover`) with router ranking
+- **Credentialed HTTP + shell audit** with the owner's password, read-only
+- **MTD firmware dump** and **offline firmware analysis**
+- Automatic gateway detection with smart fallback
+- 18-vendor identification + confidence-labelled findings
+- Generic port and service scanning (incl. Winbox, SNMP/DNS UDP probes)
 - Unified report format
 - Cross-platform support (Termux, Windows, macOS, Linux)
 

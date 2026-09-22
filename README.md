@@ -55,16 +55,22 @@ Router-Os/
 | **understand the PTCL D-Link "opens without login" bug** | [`ptcl-dlink/`](ptcl-dlink/) |
 | **check whether my own PTCL D-Link has it** | [`ptcl-dlink/tools/`](ptcl-dlink/tools/) |
 
-## Bug Hunter — Unified Vulnerability Scanner (v1.1, physical-device audit)
+## Bug Hunter — Unified Vulnerability Scanner (v2.0, physical-device audit)
 
 The [`Bug-Hunter/`](Bug-Hunter/) tool consolidates all research from this repository into a
-single cross-platform Python application that runs on **Windows, Linux, macOS, Termux (Android),
-FreeBSD — anywhere Python 3.8+ exists**.
+cross-platform Python application that runs on **Windows, Linux, macOS, Termux (Android),
+FreeBSD — anywhere Python 3.8+ exists** (standard library only, no pip packages).
 
 It hunts the **physical router on your LAN** and runs a **live security audit** of it —
 the mock/demo scripts are only the playground; `bug_hunter.py` is the real hunt.
 
 ```bash
+# Smooth auto flow: WiFi context + LAN sweep + audit the best candidate
+python Bug-Hunter/bug_hunter.py --auto
+
+# Discover + audit every router/ONT on the LAN
+python Bug-Hunter/bug_hunter.py --discover --audit
+
 # Hunt your physical router: auto-detect the gateway and audit it live
 python Bug-Hunter/bug_hunter.py
 
@@ -75,17 +81,33 @@ python Bug-Hunter/bug_hunter.py 192.168.10.1 --audit
 python Bug-Hunter/bug_hunter.py 192.168.10.1 --audit \
     --model DSL-226 --firmware PT_1.10_J2 --hw J2 --serial <sticker> --mac <sticker>
 
+# Credentialed deep audit (your own router, your own password — prompted, hidden)
+python Bug-Hunter/bug_hunter.py 192.168.1.1 -u admin --shell auto --dump-config --audit
+
+# Low-level MTD dump over the credentialed shell
+python Bug-Hunter/bug_hunter.py 192.168.1.1 -u admin --shell telnet --dump-mtd all --yes
+
+# Offline firmware analysis (local file, nothing uploaded)
+python Bug-Hunter/bug_hunter.py --analyze-firmware Bug-Hunter/audits/mtd_*.bin
+
 # Demo mode (play only) — same engine against a simulated vulnerable router
 python Bug-Hunter/demo_scan.py
 ```
 
 **What it does:**
-- Auto-detects your gateway/router on WiFi or LAN and probes the live unit
-- Fingerprints the vendor (D-Link, ZTE, TP-Link, Huawei, Netgear, etc.)
+- Auto-discovers your gateway/router on WiFi or LAN (`--auto`: SSID context,
+  subnet sweep, router-candidate ranking, smart fallback) and probes the live unit
+- Fingerprints the vendor (18 vendors: D-Link, ZTE, TP-Link, Huawei, Netgear,
+  Asus, Tenda, MikroTik, Ubiquiti, OpenWrt, …)
 - Supplies missing identity fields from the unit's sticker and flags contradictions
-- Scans for open ports and services
+- Scans for open ports and services (incl. Winbox, SNMP/DNS UDP probes)
 - Checks vendor-specific vulnerabilities (CVE-matched, incl. CVE-2026-0625 dnscfg.cgi reachability)
 - Runs generic security checks (Telnet, UPnP, SNMP, etc.)
+- Runs a **credentialed deep audit** with your own password: HTTP login +
+  post-login state (real firmware/WAN/DNS/WPS/remote-mgmt), read-only shell
+  audit (uid/kernel/MTD), config-backup pull and low-level MTD dump
+- Analyses firmware/MTD dumps offline (magic scan, entropy profile, redacted
+  secret scan) and labels every v2 finding CONFIRMED vs LIKELY
 - Saves model-stamped audit reports (TXT+JSON, git-ignored) and diffs each new hunt
   against the previous one (NEW / RESOLVED / STILL PRESENT findings)
 - Generates a detailed `.txt` or `.json` report with:
@@ -94,7 +116,9 @@ python Bug-Hunter/demo_scan.py
   - Impact analysis
   - Step-by-step fix/remediation methods
 
-**Safety:** Read-only (GET/HEAD only), LAN addresses only, never prints secrets, no exploit
+**Safety:** Unauthenticated phases are read-only; credentialed phases (`-u`,
+`--check-defaults`, `--shell`, `--dump-*`) only READ with credentials you supply,
+LAN-only. Never prints secrets (redacted transcripts/indicators), no exploit
 payloads (the dnscfg.cgi probe sends no injection parameters), audit data stays local.
 
 See [`Bug-Hunter/README.md`](Bug-Hunter/README.md) for full documentation.

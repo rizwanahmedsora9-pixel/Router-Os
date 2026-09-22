@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Bug Hunter v1.2 — Cross-Platform Router Vulnerability Scanner
+Bug Hunter v2.0 — Cross-Platform Router Vulnerability Scanner
 =============================================================
 
 Detects connected router/gateway on WiFi/LAN and scans for known vulnerabilities,
@@ -9,6 +9,20 @@ security misconfigurations, and exposures.  Generates a detailed report with:
   - CVE references and source URLs
   - Detailed descriptions of each finding
   - Step-by-step fix/remediation methods
+
+v2.0 adds the real-audit layers on top of the v1 read-only hunt:
+  * WiFi/LAN auto-discovery  (--auto, --discover): SSID context, subnet sweep,
+    router-candidate ranking, automatic fallback when the gateway guess is wrong
+  * Credentialed HTTP audit  (--username/--password): Basic/Digest/form login
+    with the OWNER's creds, then post-login enumeration (real firmware, WAN,
+    DNS, WPS, remote-mgmt state) — no guessing, no brute force
+  * Credentialed shell audit (--shell telnet|ssh): read-only enumeration over
+    an owner-credentialed shell (uid/kernel/MTD), optional low-level MTD dump
+    (--dump-mtd) decoded + hashed locally
+  * Offline firmware analysis (--analyze-firmware FILE): magic scan, entropy
+    profile, redacted secret/indicator scan of a local .bin/MTD dump
+  * 18-vendor fingerprinting, confidence labels (CONFIRMED/LIKELY), SNMP/DNS
+    UDP probes, Winbox exposure check
 
 PHYSICAL AUDIT MODE (the real hunt — this is the primary use):
   The scanner always probes the live, physical device on your LAN.
@@ -57,6 +71,7 @@ USAGE:
 from __future__ import annotations
 
 import argparse
+import getpass
 import http.client
 import ipaddress
 import json
@@ -77,7 +92,7 @@ from typing import Any, Dict, List, Optional, Tuple
 # Version & Banner
 # --------------------------------------------------------------------------- #
 
-VERSION = "1.2.0"
+VERSION = "2.0.0"
 BANNER = r"""
  ____              _   _       _   _             _
 | __ )  ___  __ _ | | | |_   _| |__ | |_ ___  _ __| |_
@@ -86,8 +101,28 @@ BANNER = r"""
 |____/ \___|\__, ||_| |_|\__,_|_.__/ \__\___/|_|   \__|
             |___/
  Router Vulnerability Scanner v{version}
- Physical-Device Audit | Read-Only | No Exploits
+ Physical-Device Audit | Auto-Discovery | Credentialed Deep Audit
 """.format(version=VERSION)
+
+# v2 companion modules (same directory). The core scanner still runs
+# standalone if they are missing; deep-audit flags then print guidance.
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+try:
+    import discovery as _discovery_mod  # noqa: F401
+except ImportError:
+    _discovery_mod = None  # type: ignore
+try:
+    import auth_audit as _auth_mod  # noqa: F401
+except ImportError:
+    _auth_mod = None  # type: ignore
+try:
+    import shell_audit as _shell_mod  # noqa: F401
+except ImportError:
+    _shell_mod = None  # type: ignore
+try:
+    import firmware as _fw_mod  # noqa: F401
+except ImportError:
+    _fw_mod = None  # type: ignore
 
 # --------------------------------------------------------------------------- #
 # Constants
@@ -129,6 +164,13 @@ COMMON_PORTS = [
     # 5555 is ADB on some Android boxes and an unrelated debug/management
     # port on many DSL CPEs. The label stays neutral; the finding decides.
     (5555, "TCP 5555"),
+    # v2: extra management planes seen across vendors.
+    (8000, "HTTP-Alt2"),
+    (8081, "HTTP-Alt3"),
+    (1723, "PPTP-VPN"),
+    (8291, "MikroTik-Winbox"),
+    (8728, "MikroTik-API"),
+    (8089, "HTTP-Alt4"),
 ]
 
 # Severity levels
@@ -1017,6 +1059,96 @@ VENDOR_PATTERNS = {
             re.compile(r"fiberhome", re.I),
         ],
     },
+    # --- v2: broadened vendor coverage (body patterns + banner match) ---
+    "asus": {
+        "patterns": [
+            re.compile(r"ASUS", re.I),
+            re.compile(r"RT-[AN][CD]\d+", re.I),
+            re.compile(r"RT-AX\d+", re.I),
+            re.compile(r"ZenWiFi", re.I),
+        ],
+        "server": [re.compile(r"asus", re.I)],
+    },
+    "tenda": {
+        "patterns": [
+            re.compile(r"Tenda", re.I),
+            re.compile(r"tendawifi", re.I),
+            re.compile(r"\bAC\d{3,4}\b|\bF\d{1,2}\b|\bFH\d{3,4}\b", re.I),
+        ],
+        "server": [re.compile(r"tendawifi|tenda", re.I)],
+    },
+    "totolink": {
+        "patterns": [
+            re.compile(r"TOTOLINK", re.I),
+            re.compile(r"\b[NA]\d{3,4}[RV]?\b"),
+        ],
+        "server": [re.compile(r"totolink", re.I)],
+    },
+    "cisco": {
+        "patterns": [
+            re.compile(r"Cisco", re.I),
+            re.compile(r"\bRV\d{3}\b", re.I),
+            re.compile(r"Small Business", re.I),
+        ],
+        "server": [re.compile(r"cisco", re.I)],
+    },
+    "mikrotik": {
+        "patterns": [
+            re.compile(r"MikroTik", re.I),
+            re.compile(r"RouterOS", re.I),
+            re.compile(r"RouterBOARD", re.I),
+        ],
+        "server": [re.compile(r"mikrotik", re.I)],
+    },
+    "ubiquiti": {
+        "patterns": [
+            re.compile(r"Ubiquiti", re.I),
+            re.compile(r"UniFi", re.I),
+            re.compile(r"EdgeRouter", re.I),
+            re.compile(r"airOS", re.I),
+        ],
+        "server": [re.compile(r"ubnt|ubiquiti|aircontrol", re.I)],
+    },
+    "draytek": {
+        "patterns": [
+            re.compile(r"DrayTek", re.I),
+            re.compile(r"Vigor\d+", re.I),
+        ],
+        "server": [re.compile(r"vigor|draytek", re.I)],
+    },
+    "belkin": {
+        "patterns": [re.compile(r"Belkin", re.I)],
+        "server": [re.compile(r"belkin", re.I)],
+    },
+    "trendnet": {
+        "patterns": [
+            re.compile(r"TRENDnet", re.I),
+            re.compile(r"TEW-\d+", re.I),
+        ],
+        "server": [re.compile(r"trendnet", re.I)],
+    },
+    "xiaomi": {
+        "patterns": [
+            re.compile(r"Xiaomi", re.I),
+            re.compile(r"MiWiFi", re.I),
+            re.compile(r"Redmi", re.I),
+        ],
+        "server": [re.compile(r"miwifi|xiaomi", re.I)],
+    },
+    "mercusys": {
+        "patterns": [
+            re.compile(r"MERCUSYS", re.I),
+            re.compile(r"\bMW\d{3}[A-Z]*\b", re.I),
+        ],
+        "server": [re.compile(r"mercusys", re.I)],
+    },
+    "openwrt": {
+        "patterns": [
+            re.compile(r"OpenWrt", re.I),
+            re.compile(r"LuCI", re.I),
+        ],
+        "server": [re.compile(r"uhttpd|openwrt", re.I)],
+    },
 }
 
 # Model/Firmware extraction patterns
@@ -1038,6 +1170,17 @@ MODEL_RES = {
                    r"([A-Za-z][A-Za-z0-9-]{2,31})", re.I),
         re.compile(r"((?:TL|TD|Archer)-[A-Za-z0-9]+)", re.I),
     ],
+    # v2: light model matchers for the broadened vendors (generic REs apply too).
+    "asus": [re.compile(r"(RT-[A-Z]+\d+[A-Z]*)", re.I)],
+    "tenda": [re.compile(r"\b((?:AC|F|FH)\d{1,4}[A-Z]*)", re.I)],
+    "totolink": [re.compile(r"\b([NA]\d{3,4}[RV]?)", re.I)],
+    "cisco": [re.compile(r"\b(RV\d{3}[A-Z]*)", re.I)],
+    "mikrotik": [re.compile(r"(RouterBOARD\s+\S+|RB\S+)", re.I)],
+    "ubiquiti": [re.compile(r"(UniFi\s+\S+|EdgeRouter\s+\S+)", re.I)],
+    "draytek": [re.compile(r"(Vigor\s?\d+[A-Za-z]*)", re.I)],
+    "xiaomi": [re.compile(r"(Mi\s*Router\s*[^<\n]{0,24}|RA\d{2}[A-Z]*)", re.I)],
+    "mercusys": [re.compile(r"\b(MW\d{3}[A-Z]*)", re.I)],
+    "openwrt": [re.compile(r"(OpenWrt\s+[0-9][0-9A-Za-z._-]*)", re.I)],
     "generic": [
         re.compile(r"(?:Model|Device)\s*[:=]\s*"
                    r"([A-Za-z0-9][A-Za-z0-9\-_/\.]{1,63})", re.I),
@@ -1896,12 +2039,118 @@ def check_tplink_vulns(client: HttpClient, host: str, info: Dict,
 
 
 # --------------------------------------------------------------------------- #
+# v2 low-level UDP probes (read-only, LAN-only, stdlib sockets)
+# --------------------------------------------------------------------------- #
+
+def _snmp_get_request(community: str = "public") -> bytes:
+    """Minimal SNMPv1 GET for sysDescr.0 (1.3.6.1.2.1.1.1.0)."""
+    # OID 1.3.6.1.2.1.1.1.0 -> 2B 06 01 02 01 01 01 00
+    oid = bytes([0x2B, 0x06, 0x01, 0x02, 0x01, 0x01, 0x01, 0x00])
+    varbind = (b"\x30\x0e" b"\x30\x0c" b"\x06\x08" + oid + b"\x05\x00")
+    pdu = (b"\xa0\x13" b"\x02\x01\x00" b"\x02\x01\x00" b"\x02\x01\x00" + varbind)
+    community_b = community.encode("ascii", "replace")
+    body = (b"\x02\x01\x00" b"\x04" + bytes([len(community_b)]) + community_b + pdu)
+    return b"\x30" + bytes([len(body)]) + body
+
+
+def snmp_sysdescr_probe(host: str, community: str = "public",
+                        timeout: float = 2.5) -> Optional[str]:
+    """Ask the router's SNMP agent for sysDescr. Returns the string or None.
+
+    Read-only GET with the `public` community — the standard audit for
+    "SNMP answers the world with defaults". Returns None on timeout/refusal.
+    """
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.settimeout(timeout)
+        sock.sendto(_snmp_get_request(community), (host, 161))
+        data, _ = sock.recvfrom(4096)
+        sock.close()
+    except (OSError, socket.timeout):
+        return None
+    if not data or data[0] != 0x30:
+        return None
+    # Walk to the first OCTET STRING after the OID — sysDescr value.
+    try:
+        idx = data.find(bytes([0x2B, 0x06, 0x01, 0x02, 0x01, 0x01, 0x01, 0x00]))
+        if idx < 0:
+            return None
+        seg = data[idx:]
+        s_idx = seg.find(b"\x04")
+        if s_idx < 0 or s_idx + 2 > len(seg):
+            return None
+        length = seg[s_idx + 1]
+        if length & 0x80:  # long form
+            nbytes = length & 0x7F
+            length = int.from_bytes(seg[s_idx + 2:s_idx + 2 + nbytes], "big")
+            start = s_idx + 2 + nbytes
+        else:
+            start = s_idx + 2
+        raw = seg[start:start + length]
+        text = raw.decode("utf-8", "replace").strip()
+        return text[:256] if text else None
+    except (IndexError, ValueError):
+        return None
+
+
+def dns_version_probe(host: str, timeout: float = 2.5) -> Optional[str]:
+    """Query version.bind (CHAOS/TXT). Returns the version string or None."""
+    try:
+        import struct as _struct
+        # Header: id, flags=RD, 1 question. Q: version.bind CHAOS TXT.
+        pkt = _struct.pack(">HHHHHH", 0xBEEF, 0x0100, 1, 0, 0, 0)
+        for label in (b"version", b"bind"):
+            pkt += bytes([len(label)]) + label
+        pkt += b"\x00" + _struct.pack(">HH", 16, 3)
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.settimeout(timeout)
+        sock.sendto(pkt, (host, 53))
+        data, _ = sock.recvfrom(2048)
+        sock.close()
+    except (OSError, socket.timeout):
+        return None
+    if len(data) < 12 or data[2] & 0x0F != 0:
+        return None  # RCODE != NOERROR
+    try:
+        # Skip question section, read first TXT answer.
+        pos = 12
+        while pos < len(data) and data[pos] != 0:
+            if data[pos] & 0xC0 == 0xC0:
+                pos += 2
+                break
+            pos += 1 + data[pos]
+        else:
+            pos += 1
+        pos += 4  # QTYPE+QCLASS
+        # Answer: name (maybe pointer) + type/class/ttl/rdlen + rdata
+        if pos + 10 > len(data):
+            return None
+        if data[pos] & 0xC0 == 0xC0:
+            pos += 2
+        else:
+            while pos < len(data) and data[pos] != 0:
+                pos += 1 + data[pos]
+            pos += 1
+        if pos + 10 > len(data):
+            return None
+        rdlen = int.from_bytes(data[pos + 8:pos + 10], "big")
+        rdata = data[pos + 10:pos + 10 + rdlen]
+        if rdata and rdata[0] + 1 <= len(rdata):
+            text = rdata[1:1 + rdata[0]].decode("utf-8", "replace").strip()
+            return text[:160] if text else None
+    except (IndexError, ValueError):
+        return None
+    return None
+
+
+# --------------------------------------------------------------------------- #
 # Generic Vulnerability Checks (all routers)
 # --------------------------------------------------------------------------- #
 
 def check_generic_vulns(client: HttpClient, host: str, info: Dict,
                          open_ports: List[Dict],
-                         probe_rom0: bool = False) -> List[Dict]:
+                         probe_rom0: bool = False,
+                         probe_udp: bool = False) -> List[Dict]:
     """Run generic vulnerability checks applicable to all routers."""
     findings: List[Dict] = []
     server = client.server_header or ""
@@ -2270,6 +2519,115 @@ def check_generic_vulns(client: HttpClient, host: str, info: Dict,
             "urls": [],
         })
 
+    # --- Check 13 (v2): MikroTik Winbox / API exposed ---
+    if any(p["port"] in (8291, 8728) for p in open_ports):
+        which = ", ".join(str(p["port"]) for p in open_ports
+                          if p["port"] in (8291, 8728))
+        findings.append({
+            "id": "GEN-014",
+            "title": "MikroTik Winbox/API port exposed on LAN",
+            "severity": SEV_HIGH,
+            "cve": "CVE-2018-14847 (class — unpatched RouterOS leaks admin creds)",
+            "description": (
+                f"Port(s) {which} answer — the MikroTik Winbox/API management "
+                "plane. Unpatched RouterOS (< 6.42.1) discloses the admin "
+                "password file to an unauthenticated peer (CVE-2018-14847, "
+                "actively exploited by VPNFilter-era campaigns). This scanner "
+                "does not send the exploit directory-traversal; the finding "
+                "is the exposure plus the patch question."
+            ),
+            "url": f"http://{host}:8291/",
+            "impact": (
+                "If RouterOS predates the 2018 fix: unauthenticated admin "
+                "credential disclosure, then full takeover."
+            ),
+            "fix": (
+                "1. Upgrade RouterOS past 6.42.1 immediately (check /system package)\n"
+                "2. Restrict Winbox to a management IP list (/ip service)\n"
+                "3. Never expose 8291/8728 to the WAN"
+            ),
+            "urls": [
+                "https://nvd.nist.gov/vuln/detail/CVE-2018-14847",
+                "https://blog.mikrotik.com/security/",
+            ],
+        })
+
+    # --- Check 14 (v2): SNMP answers with the `public` community (UDP) ---
+    # Opt-in via --probe-udp: it sends one read-only GET per host.
+    if probe_udp:
+        sysdescr = snmp_sysdescr_probe(host)
+        if sysdescr:
+            findings.append({
+                "id": "GEN-015",
+                "title": "SNMP answers with default `public` community",
+                "severity": SEV_MEDIUM,
+                "cve": "N/A (default-credential class)",
+                "description": (
+                    "A read-only SNMPv1 GET for sysDescr.0 with community "
+                    f"`public` was answered: '{sysdescr}'. Any LAN host can "
+                    "enumerate interfaces, ARP, routes and often the WLAN "
+                    "table without any credential."
+                ),
+                "url": f"snmp://{host}:161/",
+                "impact": (
+                    "LAN-wide network/configuration disclosure; often the "
+                    "first step toward targeted attacks on the gateway."
+                ),
+                "fix": (
+                    "1. Change the SNMP community from `public` to a long random string\n"
+                    "2. Prefer SNMPv3 with authPriv, or disable SNMP entirely\n"
+                    "3. Restrict SNMP to a management host"
+                ),
+                "urls": [],
+            })
+
+    # --- Check 15 (v2): DNS version.bind disclosure (UDP) ---
+    if probe_udp:
+        dnsver = dns_version_probe(host)
+        if dnsver:
+            findings.append({
+                "id": "GEN-016",
+                "title": "DNS server discloses its version (version.bind)",
+                "severity": SEV_INFO,
+                "cve": "N/A (reconnaissance)",
+                "description": (
+                    f"CHAOS/TXT version.bind answered: '{dnsver}'. Minor on "
+                    "its own — it tells an attacker exactly which dnsmasq/"
+                    "BIND build to look up CVEs for."
+                ),
+                "url": f"dns://{host}/",
+                "impact": "Aids targeted CVE lookup; no direct exploit.",
+                "fix": (
+                    "If the firmware allows it, set `version.bind` to refused "
+                    "(`bind-interfaces` + no version string in dnsmasq)."
+                ),
+                "urls": [],
+            })
+
+    # --- Check 16 (v2): modern-HTTPD banner note (GoAhead/uhttpd/lighttpd) ---
+    for _banner in (server, (info or {}).get("https_server") or ""):
+        _match = re.search(r"(GoAhead|uhttpd|lighttpd|Allegro)[-/ ]?([0-9.]*)?",
+                           _banner or "", re.I)
+        if _match:
+            findings.append({
+                "id": "GEN-017",
+                "title": f"Embedded httpd banner: {_match.group(0)}",
+                "severity": SEV_INFO,
+                "cve": "N/A (reconnaissance)",
+                "description": (
+                    f"Server banner '{_banner}' identifies the embedded "
+                    "httpd. Version-specific CVEs (e.g. the GoAhead LD_PRELOAD "
+                    "class on old builds) can only be matched once the exact "
+                    "model/firmware is known — pass --model/--firmware from "
+                    "the sticker."
+                ),
+                "url": f"http://{host}/",
+                "impact": "Reconnaissance value only at this stage.",
+                "fix": "Anchor the audit with sticker --model/--firmware and re-run.",
+                "urls": [],
+            })
+            break
+
     return findings
 
 
@@ -2282,7 +2640,8 @@ def generate_text_report(network_info: Dict, fingerprint: Dict,
                           vendor: str,
                           identity: Optional[Dict] = None,
                           drift: Optional[Dict] = None,
-                          prev_audit: Optional[Dict] = None) -> str:
+                          prev_audit: Optional[Dict] = None,
+                          extra: Optional[Dict] = None) -> str:
     """Generate a comprehensive text report."""
     lines: List[str] = []
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -2369,6 +2728,94 @@ def generate_text_report(network_info: Dict, fingerprint: Dict,
         lines.append("    No common router ports detected as open.")
     lines.append("")
 
+    # v2 deep-audit sections (only when those phases ran)
+    extra = extra or {}
+    wifi = extra.get("wifi") or {}
+    if wifi.get("available"):
+        lines.append("-" * 78)
+        lines.append("  WIFI CONTEXT (this machine's uplink)")
+        lines.append("-" * 78)
+        if wifi.get("ssid"):
+            lines.append(f"    SSID     : {wifi['ssid']}")
+        if wifi.get("bssid"):
+            lines.append(f"    BSSID    : {wifi['bssid']}")
+        if wifi.get("signal"):
+            lines.append(f"    Signal   : {wifi['signal']}")
+        lines.append("")
+    discovery = extra.get("discovery") or []
+    if discovery:
+        lines.append("-" * 78)
+        lines.append("  LAN DISCOVERY (router candidates this run)")
+        lines.append("-" * 78)
+        for entry in discovery[:8]:
+            marker = " <-- audited" if entry.get("audited") else ""
+            title = (entry.get("title") or entry.get("server") or
+                     entry.get("oui_vendor") or "no web banner")
+            lines.append(f"    {entry['ip']:15} score={entry.get('router_score', 0)}  "
+                         f"{str(title)[:52]}{marker}")
+        lines.append("")
+    auth = extra.get("auth") or {}
+    if auth:
+        lines.append("-" * 78)
+        lines.append("  CREDENTIALED HTTP AUDIT (owner credentials)")
+        lines.append("-" * 78)
+        if auth.get("ok"):
+            lines.append(f"    Login    : OK as '{auth.get('username')}' "
+                         f"(source: {auth.get('source')}, via {auth.get('method')})")
+            facts = auth.get("facts") or {}
+            if facts.get("model"):
+                lines.append(f"    Model (auth)   : {facts['model']}")
+            if facts.get("firmware"):
+                lines.append(f"    Firmware (auth): {facts['firmware']}")
+            if facts.get("wan_ip"):
+                lines.append(f"    WAN IP         : {facts['wan_ip']}")
+            if facts.get("dns_servers"):
+                lines.append(f"    DNS            : {', '.join(facts['dns_servers'])}")
+            if facts.get("uptime"):
+                lines.append(f"    Uptime         : {facts['uptime']}")
+            lines.append(f"    Pages read     : {facts.get('pages_fetched', 0)}")
+            if auth.get("config_backup"):
+                lines.append(f"    Config backup  : {auth['config_backup']}")
+        else:
+            lines.append(f"    Login    : FAILED ({auth.get('evidence', '?')})")
+        lines.append("")
+    shell = extra.get("shell") or {}
+    if shell:
+        lines.append("-" * 78)
+        lines.append("  CREDENTIALED SHELL AUDIT (read-only commands)")
+        lines.append("-" * 78)
+        if shell.get("ok"):
+            facts = shell.get("facts") or {}
+            lines.append(f"    Transport  : {shell.get('transport')} "
+                         f"(uid={facts.get('uid')}, user={facts.get('shell_user')})")
+            if facts.get("kernel"):
+                lines.append(f"    Kernel     : {facts['kernel']}")
+            if facts.get("cpu"):
+                lines.append(f"    CPU        : {facts['cpu']}")
+            if facts.get("uptime"):
+                lines.append(f"    Uptime     : {facts['uptime']}")
+            for part in (facts.get("mtd_partitions") or [])[:16]:
+                lines.append(f"    MTD {part['dev']:8} {part['size']:>10} bytes  "
+                             f"{part['name']}")
+            if shell.get("transcript_path"):
+                lines.append(f"    Transcript : {shell['transcript_path']} (redacted)")
+        else:
+            lines.append(f"    Shell    : FAILED ({shell.get('error', '?')})")
+        lines.append("")
+    dumps = extra.get("dumps") or []
+    if dumps:
+        lines.append("-" * 78)
+        lines.append("  LOCAL DUMPS (mode 0600 — treat as secret)")
+        lines.append("-" * 78)
+        for dump in dumps:
+            if dump.get("kind") == "mtd":
+                lines.append(f"    MTD {dump.get('partition')}: {dump.get('bytes')} bytes, "
+                             f"sha256 {(dump.get('sha256') or '?')[:32]}…")
+                lines.append(f"        {dump.get('path')}")
+            else:
+                lines.append(f"    {dump.get('kind')}: {dump.get('path')}")
+        lines.append("")
+
     # Findings summary
     sev_counts = {}
     for f in findings:
@@ -2436,6 +2883,8 @@ def generate_text_report(network_info: Dict, fingerprint: Dict,
             lines.append(f"  │  CVE/Reference : {f.get('cve', 'N/A')}")
             if f.get('cvss'):
                 lines.append(f"  │  CVSS Score    : {f['cvss']}")
+            if f.get('confidence'):
+                lines.append(f"  │  Confidence    : {f['confidence']}")
             lines.append(f"  │  Severity      : {f['severity']}")
             lines.append(f"  │  Target URL    : {f.get('url', 'N/A')}")
             lines.append(f"  │")
@@ -2508,9 +2957,11 @@ def generate_text_report(network_info: Dict, fingerprint: Dict,
 
     lines.append("=" * 78)
     lines.append(f"  END OF REPORT — Generated by Bug Hunter v{VERSION}")
-    lines.append(f"  DISCLAIMER: This tool performs READ-ONLY checks only.")
-    lines.append(f"  It does not exploit or modify the router in any way.")
-    lines.append(f"  Results are based on publicly known vulnerabilities.")
+    lines.append(f"  DISCLAIMER: unauthenticated phases are READ-ONLY; credentialed")
+    lines.append(f"  phases (--username/--check-defaults/--shell/--dump-*) only READ,")
+    lines.append(f"  using credentials you supplied, and never modify the router.")
+    lines.append(f"  Secrets are redacted; dumps are local 0600 files. Audit only")
+    lines.append(f"  equipment you own or are authorised to test.")
     lines.append("=" * 78)
 
     return "\n".join(lines)
@@ -2521,7 +2972,8 @@ def generate_json_report(network_info: Dict, fingerprint: Dict,
                           vendor: str,
                           identity: Optional[Dict] = None,
                           drift: Optional[Dict] = None,
-                          prev_audit: Optional[Dict] = None) -> Dict:
+                          prev_audit: Optional[Dict] = None,
+                          extra: Optional[Dict] = None) -> Dict:
     """Generate a JSON-serializable report."""
     report = {
         "tool": "Bug Hunter",
@@ -2568,6 +3020,11 @@ def generate_json_report(network_info: Dict, fingerprint: Dict,
         },
         "findings": findings,
     }
+    if extra:
+        # v2 deep-audit artefacts (passwords are never present in `extra`).
+        for key in ("wifi", "discovery", "auth", "shell", "dumps"):
+            if extra.get(key):
+                report[key] = extra[key]
     if drift is not None:
         report["drift"] = {
             "previous_audit": (prev_audit or {}).get("timestamp"),
@@ -2656,7 +3113,12 @@ def run_scan(target_host: str, target_port: int = 80,
              probe_upnp: bool = False, probe_rom0: bool = False,
              quick: bool = False, force_vendor: str = "",
              verbose: bool = False, timeout: float = 8.0,
-             identity: Optional[Dict[str, str]] = None) -> Dict:
+             identity: Optional[Dict[str, str]] = None,
+             username: str = "", password: str = "",
+             check_defaults: bool = False, shell: str = "",
+             dump_config: bool = False, dump_mtd: str = "",
+             probe_udp: bool = False, audit_dir: str = "",
+             confirm: bool = False) -> Dict:
     """Execute the full vulnerability scan against the live, physical device.
 
     `identity` (optional) is the sticker/label identity of the unit — model,
@@ -2664,6 +3126,14 @@ def run_scan(target_host: str, target_port: int = 80,
     anchors the audit to the physical box: fields the device does not report
     are filled from the label, and contradictions between label and unit are
     flagged as mismatches in the report.
+
+    v2 credentialed phases (all LAN-only, all explicit):
+      * `username`/`password` — owner creds for the HTTP deep audit
+      * `check_defaults` — try the short well-known-default list (slow)
+      * `shell` — "telnet"|"ssh"|"auto": read-only shell audit with creds
+      * `dump_config` — download config backup over the authed session
+      * `dump_mtd` — "all"|"mtdN": low-level MTD dump over the shell
+    Passwords are used for login only — never printed, never stored in `result`.
     """
 
     result: Dict[str, Any] = {
@@ -2680,6 +3150,9 @@ def run_scan(target_host: str, target_port: int = 80,
         "open_ports": [],
         "vendor": "",
         "findings": [],
+        "auth": {},
+        "shell": {},
+        "dumps": [],
         "error": None,
     }
 
@@ -2834,10 +3307,275 @@ def run_scan(target_host: str, target_port: int = 80,
     print(f"\n[*] Running generic security checks...")
     gen_findings = check_generic_vulns(
         client, target_host, fingerprint,
-        result["open_ports"], probe_rom0=probe_rom0
+        result["open_ports"], probe_rom0=probe_rom0,
+        probe_udp=probe_udp,
     )
     findings.extend(gen_findings)
     print(f"    Found {len(gen_findings)} generic issue(s)")
+
+    # --- v2 Step 5: credentialed HTTP audit (owner creds and/or defaults) ---
+    creds: Optional[Tuple[str, str]] = None
+    creds_source = ""
+    auth_client = None
+    auth_method = ""
+    if username and password:
+        creds = (username, password)
+        creds_source = "operator"
+    if check_defaults:
+        print(f"\n[*] Checking well-known default HTTP credentials (slow, explicit)...")
+        if _auth_mod is None:
+            print("    auth_audit.py not found next to bug_hunter.py — skipping.")
+        else:
+            hit = None
+            for default_u, default_p in _auth_mod.DEFAULT_CREDS:
+                attempt = _auth_mod.attempt_http_login(
+                    resolved, default_u, default_p, port=target_port,
+                    tls=(target_port == 443), timeout=timeout, verbose=verbose)
+                if attempt["ok"]:
+                    hit = (default_u, attempt)
+                    break
+                time.sleep(1.0)
+            if hit:
+                default_u, attempt = hit
+                auth_client = attempt["client"]
+                auth_method = attempt["method"]
+                print(f"    [!] DEFAULT CREDENTIALS WORK: user '{default_u}' "
+                      f"via {auth_method}")
+                findings.append({
+                    "id": "AUTH-001",
+                    "title": f"Default HTTP credentials active (user '{default_u}')",
+                    "severity": SEV_CRITICAL,
+                    "confidence": "CONFIRMED",
+                    "cve": "N/A (default-credential class)",
+                    "description": (
+                        f"Login as '{default_u}' with a factory-default password "
+                        f"was accepted via {auth_method}. Anyone on the LAN gets "
+                        "the same admin session. (The password itself is not "
+                        "shown here by design.)"
+                    ),
+                    "url": f"http://{target_host}/",
+                    "impact": ("Full admin UI access for any LAN client; the "
+                               "deep-audit phases below ran with these defaults."),
+                    "fix": ("1. Change the admin password NOW (long, unique)\n"
+                            "2. Disable any default/guest accounts\n"
+                            "3. Re-run with --username/--password to verify"),
+                    "urls": [],
+                })
+                if creds is None:
+                    for du, dp in _auth_mod.DEFAULT_CREDS:
+                        if du == default_u:
+                            # Re-verify this exact pair to bind user->password.
+                            verify = _auth_mod.attempt_http_login(
+                                resolved, du, dp, port=target_port,
+                                tls=(target_port == 443), timeout=timeout)
+                            if verify["ok"]:
+                                creds = (du, dp)
+                                creds_source = "default"
+                                auth_client = verify["client"]
+                                auth_method = verify["method"]
+                                break
+            else:
+                print("    No well-known default credential worked.")
+    if creds is not None and _auth_mod is not None:
+        if auth_client is None:
+            print(f"\n[*] Logging in with operator credentials (user '{creds[0]}')...")
+            login = _auth_mod.attempt_http_login(
+                resolved, creds[0], creds[1], port=target_port,
+                tls=(target_port == 443), timeout=timeout, verbose=verbose)
+            if login["ok"]:
+                auth_client = login["client"]
+                auth_method = login["method"]
+                print(f"    Login OK via {auth_method}.")
+            else:
+                print(f"    Login failed: {login['evidence']}")
+                result["auth"] = {"ok": False, "username": creds[0],
+                                  "source": creds_source,
+                                  "evidence": login["evidence"]}
+        else:
+            print(f"\n[*] Authenticated session ready (user '{creds[0]}', "
+                  f"source: {creds_source}, via {auth_method}).")
+        if auth_client is not None:
+            print(f"[*] Running post-login enumeration...")
+            try:
+                auth_facts, auth_findings = _auth_mod.authenticated_enum(
+                    auth_client, resolved, verbose=verbose)
+            except Exception as exc:  # noqa: BLE001 — keep the audit going
+                auth_facts, auth_findings = {"error": str(exc)}, []
+            findings.extend(auth_findings)
+            print(f"    Post-login: {len(auth_findings)} finding(s), "
+                  f"{auth_facts.get('pages_fetched', 0)} page(s) read")
+            result["auth"] = {"ok": True, "username": creds[0],
+                              "source": creds_source, "method": auth_method,
+                              "facts": auth_facts}
+            if dump_config:
+                print(f"[*] Downloading config backup (local file, mode 0600)...")
+                try:
+                    cfg_path = _auth_mod.download_config_backup(
+                        auth_client, resolved,
+                        audit_dir or AUDIT_DIR)
+                except Exception as exc:  # noqa: BLE001
+                    cfg_path = None
+                    print(f"    Config download error: {exc}")
+                if cfg_path:
+                    print(f"    [+] Config backup saved: {cfg_path}")
+                    result["auth"]["config_backup"] = cfg_path
+                    result["dumps"].append({"kind": "config-backup",
+                                            "path": cfg_path})
+                    findings.append({
+                        "id": "AUTH-006",
+                        "title": "Config backup saved locally for offline review",
+                        "severity": SEV_INFO,
+                        "confidence": "CONFIRMED",
+                        "cve": "N/A (audit artifact)",
+                        "description": (
+                            "The authenticated backup endpoint was downloaded "
+                            "to the local audits/ directory (mode 0600). "
+                            "Treat it as SECRET — it contains credentials."),
+                        "url": cfg_path,
+                        "impact": "None — local audit artifact.",
+                        "fix": "Review offline, store encrypted, delete when done.",
+                        "urls": [],
+                    })
+                else:
+                    print("    No backup endpoint answered with binary content.")
+    elif (username or password) and not (username and password):
+        print("\n[!] --username needs --password too (or use --check-defaults). "
+              "Credentialed phases skipped.")
+    elif dump_config and creds is None:
+        print("\n[!] --dump-config needs --username/--password (or --check-defaults).")
+
+    # --- v2 Step 6: credentialed shell audit + low-level MTD dump ---
+    want_shell = shell.strip().lower() if shell else ""
+    if dump_mtd and not want_shell:
+        want_shell = "auto"  # dump implies a shell session for the MTD layout
+    if want_shell:
+        if _shell_mod is None:
+            print("\n[!] shell_audit.py not found next to bug_hunter.py — skipping.")
+        elif creds is None:
+            print("\n[!] --shell needs --username/--password (or --check-defaults).")
+        else:
+            transport = want_shell
+            if transport == "auto":
+                telnet_open = any(p["port"] == 23 for p in result["open_ports"])
+                ssh_open = any(p["port"] == 22 for p in result["open_ports"])
+                transport = ("telnet" if telnet_open else
+                             "ssh" if ssh_open else "telnet")
+            print(f"\n[*] Opening {transport} shell as '{creds[0]}' "
+                  f"(read-only commands)...")
+            via_defaults = (creds_source == "default")
+            shell_res: Dict[str, Any] = {}
+            try:
+                if transport == "ssh":
+                    shell_res = _shell_mod.run_ssh_audit(
+                        resolved, creds[0], password=creds[1],
+                        timeout=int(timeout), verbose=verbose,
+                        via_defaults=via_defaults)
+                else:
+                    shell_res = _shell_mod.run_telnet_audit(
+                        resolved, creds[0], creds[1],
+                        timeout=timeout, verbose=verbose,
+                        via_defaults=via_defaults)
+            except Exception as exc:  # noqa: BLE001
+                shell_res = {"ok": False, "transport": transport,
+                             "error": str(exc), "facts": {}, "findings": []}
+            if shell_res.get("ok"):
+                print(f"    Shell OK: uid={shell_res['facts'].get('uid')} "
+                      f"({shell_res['facts'].get('shell_user')})")
+                if shell_res["facts"].get("mtd_partitions"):
+                    print(f"    MTD: {len(shell_res['facts']['mtd_partitions'])} "
+                          f"partitions, "
+                          f"{shell_res['facts'].get('mtd_total_bytes', 0)} bytes total")
+                try:
+                    tpath = _shell_mod.save_shell_transcript(
+                        audit_dir or AUDIT_DIR, resolved, transport,
+                        shell_res.get("transcript", ""))
+                    shell_res["transcript_path"] = tpath
+                    print(f"    Transcript (redacted): {tpath}")
+                except OSError as exc:
+                    print(f"    Could not save transcript: {exc}")
+                findings.extend(shell_res.get("findings", []))
+            else:
+                print(f"    Shell failed: {shell_res.get('error')}")
+            shell_res.pop("transcript", None)  # file holds it; keep JSON lean
+            result["shell"] = shell_res
+
+            # --- v2 Step 7: MTD dump (explicit + confirmed) ---
+            if dump_mtd and shell_res.get("ok"):
+                parts = shell_res.get("facts", {}).get("mtd_partitions", [])
+                if dump_mtd.strip().lower() == "all":
+                    wanted = [p["dev"] for p in parts]
+                else:
+                    wanted = [d.strip() for d in dump_mtd.split(",") if d.strip()]
+                if not wanted:
+                    print("    No MTD partitions known — dump skipped.")
+                else:
+                    total = sum(next((p["size"] for p in parts
+                                      if p["dev"] == w), 0) for w in wanted)
+                    ok_to_dump = confirm
+                    if not ok_to_dump:
+                        try:
+                            import sys as _sys
+                            if _sys.stdin.isatty():
+                                ans = input(
+                                    f"    Dump {len(wanted)} partition(s) "
+                                    f"(~{total // 1024} KiB) to audits/? [y/N] "
+                                ).strip().lower()
+                                ok_to_dump = ans in ("y", "yes")
+                            else:
+                                print("    Non-interactive: pass --yes to confirm --dump-mtd.")
+                        except (EOFError, KeyboardInterrupt):
+                            ok_to_dump = False
+                    if not ok_to_dump:
+                        print("    MTD dump not confirmed — skipped.")
+                    else:
+                        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+                        outdir = audit_dir or AUDIT_DIR
+                        os.makedirs(outdir, exist_ok=True)
+                        for dev in wanted:
+                            outpath = os.path.join(
+                                outdir,
+                                f"mtd_{resolved.replace(':', '_')}_{dev}_{stamp}.bin")
+                            print(f"    [*] dumping /dev/{dev} -> {outpath} ...")
+                            try:
+                                if transport == "ssh":
+                                    dres = _shell_mod.dump_mtd_via_ssh(
+                                        resolved, creds[0], dev, outpath,
+                                        password=creds[1], verbose=verbose)
+                                else:
+                                    dres = _shell_mod.dump_mtd_via_telnet(
+                                        resolved, creds[0], creds[1], dev, outpath,
+                                        verbose=verbose)
+                            except Exception as exc:  # noqa: BLE001
+                                dres = {"ok": False, "error": str(exc)}
+                            if dres.get("ok"):
+                                print(f"    [+] {dev}: {dres['bytes']} bytes, "
+                                      f"sha256 {dres['sha256'][:16]}…")
+                                result["dumps"].append(
+                                    {"kind": "mtd", "partition": dev,
+                                     "path": outpath, "bytes": dres["bytes"],
+                                     "sha256": dres["sha256"]})
+                            else:
+                                print(f"    [!] {dev} failed: {dres.get('error')}")
+                        if any(d.get("kind") == "mtd" for d in result["dumps"]):
+                            findings.append({
+                                "id": "SHELL-002",
+                                "title": "Low-level MTD dump saved locally",
+                                "severity": SEV_INFO,
+                                "confidence": "CONFIRMED",
+                                "cve": "N/A (audit artifact)",
+                                "description": (
+                                    "MTD partition(s) were read over the "
+                                    "owner-credentialed shell and saved under "
+                                    "audits/ (mode 0600, SHA-256 recorded). "
+                                    "Analyse offline with: python3 bug_hunter.py "
+                                    "--analyze-firmware <file>"),
+                                "url": outdir,
+                                "impact": "None — local audit artifact.",
+                                "fix": "Store encrypted; delete when done.",
+                                "urls": [],
+                            })
+            elif dump_mtd and not shell_res.get("ok"):
+                print("    MTD dump needs a working shell — skipped.")
 
     result["findings"] = findings
 
@@ -2865,6 +3603,22 @@ PHYSICAL HUNT (the real thing — audit the unit in front of you):
   python bug_hunter.py 192.168.10.1 --audit --model DSL-226 \\
       --firmware PT_1.10_J2 --hw J2 --serial <sticker> --mac <sticker>
 
+AUTO-DISCOVERY (v2 — smooth WiFi flow, many routers at once):
+  python bug_hunter.py --auto              # WiFi context + subnet sweep + audit best
+  python bug_hunter.py --discover          # list every router candidate on the LAN
+  python bug_hunter.py --discover --audit  # audit each candidate, save all
+
+CREDENTIALED DEEP AUDIT (v2 — your OWN router, your OWN password):
+  python bug_hunter.py 192.168.1.1 -u admin            # prompt for password, deep audit
+  python bug_hunter.py --auto -u admin --shell auto    # + read-only root shell audit
+  python bug_hunter.py 192.168.1.1 --check-defaults    # well-known defaults only, slow
+  python bug_hunter.py 192.168.1.1 -u admin --dump-config
+  python bug_hunter.py 192.168.1.1 -u admin --shell telnet --dump-mtd all --yes
+
+OFFLINE FIRMWARE ANALYSIS (v2 — local file, nothing uploaded):
+  python bug_hunter.py --analyze-firmware mtd_mtd5_*.bin
+  python bug_hunter.py --analyze-firmware vendor-firmware.bin
+
 OTHER EXAMPLES:
   python bug_hunter.py 192.168.1.1         # scan specific router IP
   python bug_hunter.py --report out.txt    # save text report to file
@@ -2872,12 +3626,18 @@ OTHER EXAMPLES:
   python bug_hunter.py --quick             # fast scan (skip slow probes)
   python bug_hunter.py --probe-upnp        # enable UPnP WLAN key probe (ZTE)
   python bug_hunter.py --probe-rom0        # enable rom-0 backup download (TP-Link)
+  python bug_hunter.py --probe-udp         # enable SNMP/DNS UDP probes (read-only)
   python bug_hunter.py --vendor dlink      # force vendor detection
   python bug_hunter.py -v                  # verbose output
 
 SAFETY:
-  This tool performs READ-ONLY checks. It never sends passwords, modifies
-  configuration, or runs exploits. Only your own LAN devices should be scanned.
+  Unauthenticated phases are READ-ONLY (GET/HEAD, one SNMP GET / DNS TXT with
+  --probe-udp). Credentialed phases (--username, --check-defaults, --shell,
+  --dump-*) use passwords YOU supply (or well-known defaults with the explicit
+  flag), only against LAN addresses, only to READ (enumerate / dump to local
+  0600 files). Nothing here brute-forces beyond the short default list,
+  cracks, hijacks, or escalates without credentials. Audit only equipment
+  you own or are authorised to test.
         """
     )
 
@@ -2910,7 +3670,11 @@ SAFETY:
     parser.add_argument("--probe-rom0", action="store_true",
                         help="Enable rom-0 config backup check (TP-Link)")
     parser.add_argument("--vendor", choices=["dlink", "zte", "tplink", "huawei",
-                                              "netgear", "linksys", "generic"],
+                                              "netgear", "linksys", "fiberhome",
+                                              "asus", "tenda", "totolink", "cisco",
+                                              "mikrotik", "ubiquiti", "draytek",
+                                              "belkin", "trendnet", "xiaomi",
+                                              "mercusys", "openwrt", "generic"],
                         help="Force vendor (skip auto-detection)")
     parser.add_argument("--timeout", type=float, default=8.0,
                         help="HTTP timeout in seconds (default: 8)")
@@ -2918,6 +3682,43 @@ SAFETY:
                         help="Verbose output")
     parser.add_argument("--no-banner", action="store_true",
                         help="Suppress startup banner")
+    # --- v2: discovery / credentialed / dump / firmware flags ---
+    parser.add_argument("--auto", action="store_true",
+                        help="Smooth flow: WiFi context + subnet sweep + audit "
+                             "the best router candidate (falls back from gateway)")
+    parser.add_argument("--discover", action="store_true",
+                        help="Sweep the LAN, rank router candidates, audit each "
+                             "(up to --max-targets)")
+    parser.add_argument("--subnet", metavar="CIDR",
+                        help="Subnet to sweep (default: derived from interface)")
+    parser.add_argument("--max-targets", type=int, default=4,
+                        help="Max candidates to audit with --discover (default: 4)")
+    parser.add_argument("-u", "--username", metavar="USER",
+                        help="Owner's router username for the credentialed audit")
+    parser.add_argument("-p", "--password", metavar="PASS",
+                        help="Owner's router password (prompted if -u without -p; "
+                             "never printed or stored)")
+    parser.add_argument("--check-defaults", action="store_true",
+                        help="Try the short well-known-default credential list "
+                             "(slow, LAN-only, explicit opt-in)")
+    parser.add_argument("--shell", choices=["telnet", "ssh", "auto"],
+                        default="",
+                        help="Credentialed read-only shell audit (needs -u/-p "
+                             "or --check-defaults)")
+    parser.add_argument("--dump-config", action="store_true",
+                        help="Download config backup over the authed session "
+                             "(local 0600 file)")
+    parser.add_argument("--dump-mtd", nargs="?", const="all", default="",
+                        metavar="all|mtdN[,mtdM]",
+                        help="Low-level MTD dump over the credentialed shell "
+                             "(needs --yes unless interactive)")
+    parser.add_argument("--probe-udp", action="store_true",
+                        help="Enable read-only SNMP/DNS UDP probes")
+    parser.add_argument("--analyze-firmware", metavar="FILE",
+                        help="Offline analysis of a local firmware/MTD dump "
+                             "(no network use)")
+    parser.add_argument("--yes", action="store_true",
+                        help="Confirm --dump-mtd without prompting")
 
     args = parser.parse_args(argv)
 
@@ -2926,27 +3727,184 @@ SAFETY:
 
     print(f"  Platform: {detect_platform()}")
 
+    # --- v2: offline firmware analysis needs no network at all ---
+    if args.analyze_firmware:
+        if _fw_mod is None:
+            print("[!] firmware.py not found next to bug_hunter.py.")
+            return 2
+        print(f"\n[*] Analyzing local firmware file: {args.analyze_firmware}")
+        fw_report = _fw_mod.analyze_firmware(args.analyze_firmware,
+                                             outdir=AUDIT_DIR, verbose=True)
+        if fw_report.get("error"):
+            print(f"[!] {fw_report['error']}")
+            return 2
+        print("\n" + _fw_mod.render_firmware_text(fw_report))
+        print(f"\n[+] Saved: {fw_report.get('saved_txt')}")
+        print(f"[+] Saved: {fw_report.get('saved_json')}")
+        return 0
+
+    # --- v2: WiFi context (which network are we auditing from?) ---
+    wifi_info: Dict[str, Any] = {}
+    if _discovery_mod is not None:
+        try:
+            wifi_info = _discovery_mod.get_wifi_info()
+        except Exception:
+            wifi_info = {}
+    if wifi_info.get("available"):
+        print(f"  WiFi SSID : {wifi_info.get('ssid', '?')} "
+              f"(BSSID {wifi_info.get('bssid', '?')}, "
+              f"signal {wifi_info.get('signal', '?')})")
+    else:
+        print("  WiFi SSID : (not on WiFi or SSID unreadable — wired LAN is fine)")
+
+    # --- v2: credential handling (prompted, never echoed, never logged) ---
+    op_user = args.username or ""
+    op_pass = args.password or ""
+    if op_user and not op_pass:
+        try:
+            op_pass = getpass.getpass(f"  Password for '{op_user}': ")
+        except (EOFError, KeyboardInterrupt):
+            print("\n[!] No password entered — credentialed phases skipped.")
+            op_user = ""
+    if op_pass and not op_user:
+        print("[!] A password without --username is ignored.")
+        op_pass = ""
+    if op_user and op_pass:
+        print(f"  Auth      : credentialed phases armed as '{op_user}' "
+              f"(password hidden, LAN-only)")
+    elif args.check_defaults:
+        print("  Auth      : well-known-default check armed (slow, explicit)")
+
     # Sticker/label identity of the physical unit under audit (all optional)
     identity = build_identity(
         model=args.model, firmware=args.firmware, hardware=args.hw,
         serial=args.serial, mac=args.mac,
     )
 
-    # Determine target
-    target = args.target
-    if not target:
+    # Determine target(s) — single IP, gateway auto-detect, or LAN sweep.
+    discovery_table: List[Dict[str, Any]] = []
+    gateway_ip: Optional[str] = None
+    targets: List[str] = []
+    local_ip_now = get_local_ip()
+
+    if args.target:
+        targets = [args.target]
+        gateway_ip = args.target
+    else:
         print("\n[*] Detecting default gateway...")
         net_info = get_network_info()
-        target = net_info.get("gateway")
+        gateway_ip = net_info.get("gateway")
+        if gateway_ip:
+            print(f"    Gateway found: {gateway_ip}")
 
-        if target:
-            print(f"    Gateway found: {target}")
+        if args.discover or args.auto:
+            if _discovery_mod is None:
+                print("    [!] discovery.py missing — cannot sweep; gateway only.")
+                if not gateway_ip:
+                    print("    Could not auto-detect gateway.")
+                    print("    Please specify the router IP as an argument.")
+                    return 1
+                targets = [gateway_ip]
+            else:
+                cidr = args.subnet or _discovery_mod.get_interface_cidr(local_ip_now)
+                print(f"    Subnet: {cidr or '(unknown — pass --subnet a.b.c.d/24)'}")
+                if not cidr:
+                    if not gateway_ip:
+                        print("    No subnet and no gateway — specify a target IP.")
+                        return 1
+                    targets = [gateway_ip]
+                else:
+                    print("    Sweeping LAN for router candidates (TCP + ARP)...")
+                    hosts = _discovery_mod.discover_lan_hosts(
+                        cidr=cidr, local_ip=local_ip_now, gateway=gateway_ip,
+                        verbose=args.verbose)
+                    print(f"    Live hosts: {len(hosts)}")
+                    discovery_table = _discovery_mod.rank_router_candidates(
+                        hosts, gateway=gateway_ip, verbose=args.verbose)
+                    if not discovery_table:
+                        print("    No web hosts found.")
+                        if not gateway_ip:
+                            return 1
+                        targets = [gateway_ip]
+                    else:
+                        print("    Candidates (best first):")
+                        for entry in discovery_table[:8]:
+                            print(f"      {entry['ip']:15} score={entry['router_score']}  "
+                                  f"{(entry.get('title') or entry.get('server') or entry.get('oui_vendor') or 'no banner')[:52]}")
+                        if args.auto and not args.discover:
+                            targets = [discovery_table[0]["ip"]]
+                            if gateway_ip and targets[0] != gateway_ip:
+                                print(f"    Gateway web seems wrong/dead; auditing best "
+                                      f"candidate {targets[0]} instead.")
+                        else:
+                            shortlist = [e for e in discovery_table
+                                         if e.get("router_score", 0) > 0]
+                            shortlist = shortlist or discovery_table[:1]
+                            targets = [e["ip"] for e in
+                                       shortlist[:max(1, args.max_targets)]]
+                            print(f"    Auditing {len(targets)} target(s).")
         else:
-            print("    Could not auto-detect gateway.")
-            print("    Please specify the router IP as an argument.")
-            print("    Common IPs: 192.168.1.1, 192.168.0.1, 192.168.10.1")
-            return 1
+            if not gateway_ip:
+                print("    Could not auto-detect gateway.")
+                print("    Please specify the router IP as an argument, or try --auto.")
+                print("    Common IPs: 192.168.1.1, 192.168.0.1, 192.168.10.1")
+                return 1
+            targets = [gateway_ip]
+            # v2 smooth fallback: gateway has no web at all? sweep once and
+            # switch to the best candidate instead of failing the audit.
+            if _discovery_mod is not None and not (
+                    is_port_open(gateway_ip, 80, timeout=2)
+                    or is_port_open(gateway_ip, 443, timeout=2)
+                    or is_port_open(gateway_ip, 8080, timeout=2)):
+                print(f"    Gateway {gateway_ip} has no web port — sweeping once "
+                      f"for the real router...")
+                try:
+                    cidr = _discovery_mod.get_interface_cidr(local_ip_now)
+                    hosts = _discovery_mod.discover_lan_hosts(
+                        cidr=cidr, local_ip=local_ip_now, gateway=gateway_ip)
+                    ranked = _discovery_mod.rank_router_candidates(
+                        hosts, gateway=gateway_ip)
+                except Exception:
+                    ranked = []
+                if ranked and ranked[0].get("router_score", 0) >= 4 \
+                        and ranked[0]["ip"] != gateway_ip:
+                    discovery_table = ranked
+                    targets = [ranked[0]["ip"]]
+                    print(f"    Switching to {ranked[0]['ip']} "
+                          f"({(ranked[0].get('title') or ranked[0].get('server') or 'router-like')[:48]}).")
+                else:
+                    print("    No better candidate — auditing the gateway anyway.")
 
+    for entry in discovery_table:
+        entry["audited"] = entry["ip"] in targets
+
+    # Audit every target (usually exactly one) and keep the worst exit code.
+    worst_code = 0
+    multi = len(targets) > 1
+    for index, target in enumerate(targets):
+        if multi:
+            print("\n" + "#" * 78)
+            print(f"# TARGET {index + 1}/{len(targets)}: {target}")
+            print("#" * 78)
+        code = _audit_single_target(
+            target, args, identity, wifi_info, discovery_table,
+            op_user, op_pass)
+        worst_code = max(worst_code, code)
+
+    if multi:
+        print("\n" + "=" * 78)
+        print(f"  MULTI-TARGET SUMMARY: {len(targets)} unit(s) audited "
+              f"({', '.join(targets)})")
+        print("  See the per-target reports above (and audits/ if --audit).")
+        print("=" * 78)
+    return worst_code
+
+
+def _audit_single_target(target: str, args, identity: Dict[str, str],
+                         wifi_info: Dict[str, Any],
+                         discovery_table: List[Dict[str, Any]],
+                         op_user: str, op_pass: str) -> int:
+    """Audit one unit: scan, drift, report, save. Returns the exit code."""
     if args.audit:
         print(f"\n[*] PHYSICAL AUDIT MODE — hunting the unit at {target}")
         if identity:
@@ -2967,6 +3925,14 @@ SAFETY:
         verbose=args.verbose,
         timeout=args.timeout,
         identity=identity,
+        username=op_user,
+        password=op_pass,
+        check_defaults=args.check_defaults,
+        shell=args.shell or "",
+        dump_config=args.dump_config,
+        dump_mtd=args.dump_mtd or "",
+        probe_udp=args.probe_udp,
+        confirm=args.yes,
     )
 
     if result.get("error"):
@@ -2989,6 +3955,15 @@ SAFETY:
             print("\n[*] No previous audit for this unit — this run becomes "
                   "the baseline.")
 
+    # v2 deep-audit artefacts ride along into both report formats.
+    extra = {
+        "wifi": wifi_info,
+        "discovery": discovery_table,
+        "auth": result.get("auth") or {},
+        "shell": result.get("shell") or {},
+        "dumps": result.get("dumps") or [],
+    }
+
     # Generate and display report
     report_text = generate_text_report(
         result["network_info"],
@@ -2999,6 +3974,7 @@ SAFETY:
         identity=identity,
         drift=drift,
         prev_audit=prev_audit,
+        extra=extra,
     )
     print("\n" + report_text)
 
@@ -3011,6 +3987,7 @@ SAFETY:
         identity=identity,
         drift=drift,
         prev_audit=prev_audit,
+        extra=extra,
     )
 
     # Audit mode: save model-stamped artifacts under audits/

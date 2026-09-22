@@ -1,19 +1,22 @@
-Bug Hunter Installation & Usage Guide
-======================================
+Bug Hunter Installation & Usage Guide (v2.0)
+============================================
 
 QUICK START (No Installation Required!)
 ---------------------------------------
 
-Bug Hunter is a single Python file with NO external dependencies.
+Bug Hunter is pure Python with NO external dependencies (no pip packages).
 Just download and run:
 
   1. Navigate to the Bug-Hunter folder:
      cd Bug-Hunter
 
-  2. Run the scanner:
-     python3 bug_hunter.py
+  2. Run the smooth auto flow:
+     python3 bug_hunter.py --auto
 
-  3. It auto-detects your router and scans for vulnerabilities!
+  3. It reads your WiFi context, sweeps the LAN for routers, and audits
+     the best candidate — all with live probes against the real unit.
+
+  (The classic single-target flow still works: python3 bug_hunter.py)
 
 
 PLATFORM-SPECIFIC INSTRUCTIONS
@@ -46,6 +49,13 @@ PLATFORM-SPECIFIC INSTRUCTIONS
 USAGE EXAMPLES
 --------------
 
+  SMOOTH AUTO FLOW (recommended — finds the router for you):
+  # WiFi context + LAN sweep + audit the best router candidate
+  python3 bug_hunter.py --auto
+
+  # List every router/ONT on the LAN, then audit each (max 6)
+  python3 bug_hunter.py --discover --audit --max-targets 6
+
   PHYSICAL HUNT (audit the real router on your LAN):
   # Auto-detect your gateway and audit the live unit
   python3 bug_hunter.py
@@ -62,6 +72,22 @@ USAGE EXAMPLES
   The sticker values are cross-checked against what the unit reports
   about itself; contradictions are flagged as MISMATCH in the report.
 
+  CREDENTIALED DEEP AUDIT (your own router, your own password):
+  # Password is prompted (hidden) when you pass -u without -p
+  python3 bug_hunter.py 192.168.1.1 -u admin --audit
+
+  # ...plus read-only shell audit and config-backup download
+  python3 bug_hunter.py 192.168.1.1 -u admin --shell auto --dump-config --audit
+
+  # Well-known-default check only (slow, explicit, stops at first hit)
+  python3 bug_hunter.py 192.168.1.1 --check-defaults
+
+  LOW-LEVEL MTD DUMP (over the credentialed shell; confirms first):
+  python3 bug_hunter.py 192.168.1.1 -u admin --shell telnet --dump-mtd all --yes
+
+  OFFLINE FIRMWARE ANALYSIS (local file, nothing uploaded):
+  python3 bug_hunter.py --analyze-firmware audits/mtd_192.168.1.1_mtd5_*.bin
+
   # Scan a specific IP address without saving
   python3 bug_hunter.py 192.168.1.1
 
@@ -74,11 +100,11 @@ USAGE EXAMPLES
   # Quick scan (faster, fewer checks)
   python3 bug_hunter.py --quick
 
-  # Enable deep probes (UPnP, rom-0)
-  python3 bug_hunter.py --probe-upnp --probe-rom0
+  # Enable deep probes (UPnP, rom-0, SNMP/DNS UDP)
+  python3 bug_hunter.py --probe-upnp --probe-rom0 --probe-udp
 
-  # Force vendor detection
-  python3 bug_hunter.py --vendor dlink
+  # Force vendor detection (18 vendors supported)
+  python3 bug_hunter.py --vendor mikrotik
 
   # Verbose output (see all HTTP requests)
   python3 bug_hunter.py -v
@@ -130,15 +156,21 @@ WHAT THE TOOL CHECKS
 SAFETY
 ------
 
-✓ READ-ONLY: Only GET/HEAD requests, no POST, no config changes
+✓ READ-ONLY BY DEFAULT: Unauthenticated phases use GET/HEAD only (plus one
+  SNMP GET / DNS TXT with the explicit --probe-udp). No config changes, ever
+✓ CREDENTIALED PHASES ONLY READ: -u/--check-defaults/--shell/--dump-* use
+  passwords YOU supply, LAN-only, to enumerate and dump to local 0600 files.
+  No brute force beyond the short default list, no cracking, no escalation
+  without credentials
 ✓ LAN-ONLY: Refuses to scan public IPs
-✓ NO SECRETS: Never prints passwords or Wi-Fi keys
+✓ NO SECRETS: Never prints passwords or Wi-Fi keys — shell transcripts and
+  firmware findings are redacted ([REDACTED])
 ✓ NO EXPLOITS: Does not run exploit code or payloads — the dnscfg.cgi
   probe (CVE-2026-0625) is a bare reachability GET with no injection
   parameters, same class as every other check
 ✓ AUDIT DATA STAYS LOCAL: audits/ is git-ignored, device reports are never
   committed to the repository
-✓ NO INSTALLATION: Single Python file, standard library only
+✓ NO INSTALLATION: Pure Python, standard library only (optional: system ssh)
 
 
 TROUBLESHOOTING
