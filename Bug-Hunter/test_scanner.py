@@ -145,6 +145,133 @@ def test_dlink_micro_httpd_finding():
     print("✓ ACME banner → CVE-2014-4927 finding works")
 
 
+def test_dsl226_label_fields():
+    """DSL-226 / PT_1.10_J2 / J2 sticker values must be parsed end-to-end."""
+    print("\n=== Test 6: DSL-226 sticker-field extraction ===")
+
+    from bug_hunter import extract_info, classify_firmware_build
+
+    # The device-info page of a DSL-226 class unit
+    page = """
+    <html><body>
+    <table>
+    <tr><td>Model Name</td><td>DSL-226</td></tr>
+    <tr><td>Firmware Version</td><td>PT_1.10_J2</td></tr>
+    <tr><td>Hardware Version</td><td>J2</td></tr>
+    <tr><td>Serial Number</td><td>UL0E156046674</td></tr>
+    <tr><td>MAC Address</td><td>88:76:B9:17:34:61</td></tr>
+    </table>
+    </body></html>
+    """
+
+    info = extract_info(page, "dlink")
+    print(f"  model={info['model']} fw={info['firmware']} hw={info['hardware_version']}")
+    print(f"  serial={info['serial']} macs={info['mac_addresses']}")
+    assert info["model"] == "DSL-226", f"model: {info['model']}"
+    assert info["firmware"] == "PT_1.10_J2", f"firmware: {info['firmware']}"
+    assert info["hardware_version"] == "J2", f"hw: {info['hardware_version']}"
+    assert info["serial"] == "UL0E156046674", f"serial: {info['serial']}"
+    assert "88:76:B9:17:34:61" in info["mac_addresses"], info["mac_addresses"]
+
+    note = classify_firmware_build("PT_1.10_J2")
+    assert note and "PTCL" in note, f"firmware note missing: {note}"
+    assert classify_firmware_build("SEA_1.07") is None
+    print(f"  PT_1.10_J2 -> {note}")
+    print("✓ DSL-226 sticker extraction + PTCL build note work")
+
+
+def test_dnscfg_probe():
+    """dnscfg.cgi check: 200 unauth -> HIGH, login-gated -> INFO, 404 -> none."""
+    print("\n=== Test 7: dnscfg.cgi exposure probe (DLINK-007, read-only) ===")
+
+    from bug_hunter import check_dlink_vulns, HttpResponse
+
+    def client_answering(status, body=b"", location=None):
+        class StubClient:
+            server_header = "micro_httpd"
+
+            def get(self, path, **kwargs):
+                if path == "/dnscfg.cgi":
+                    headers = [("Location", location)] if location else []
+                    return HttpResponse(status, headers, body)
+                return None  # the webproc checks all miss, keeping output focused
+
+        return StubClient()
+
+    # exposed without auth
+    findings = check_dlink_vulns(client_answering(200), "192.168.10.1", {})
+    dns = [f for f in findings if f["id"] == "DLINK-007"]
+    assert dns and dns[0]["severity"] == "HIGH", [f["severity"] for f in dns]
+    print("  200 without auth      -> HIGH finding")
+
+    # CGI that dies on the bare GET still executed without a session: HIGH shape
+    findings = check_dlink_vulns(client_answering(500), "192.168.10.1", {})
+    dns = [f for f in findings if f["id"] == "DLINK-007"]
+    assert dns and dns[0]["severity"] == "HIGH"
+    print("  500 on bare GET       -> HIGH finding (CGI ran unauthenticated)")
+
+    # gated by 401
+    findings = check_dlink_vulns(client_answering(401), "192.168.10.1", {})
+    dns = [f for f in findings if f["id"] == "DLINK-007"]
+    assert dns and dns[0]["severity"] == "INFO"
+    print("  401 gated             -> INFO finding")
+
+    # gated by a login form in the body
+    login_body = b'<form><input type="password" name=":password"></form>'
+    findings = check_dlink_vulns(client_answering(200, login_body), "192.168.10.1", {})
+    dns = [f for f in findings if f["id"] == "DLINK-007"]
+    assert dns and dns[0]["severity"] == "INFO"
+    print("  200 + login form      -> INFO finding")
+
+    # absent endpoint: no finding at all
+    findings = check_dlink_vulns(client_answering(404), "192.168.10.1", {})
+    assert not [f for f in findings if f["id"] == "DLINK-007"]
+    print("  404 absent            -> no DLINK-007 finding")
+    print("✓ dnscfg.cgi reachability-only probe works")
+
+
+def test_identity_merge_and_drift():
+    """Sticker merge: fills gaps, flags mismatches, verifies MAC; drift diffing."""
+    print("\n=== Test 8: sticker identity merge + audit drift ===")
+
+    from bug_hunter import build_identity, merge_identity, diff_findings
+
+    identity = build_identity(
+        model="DSL-226", firmware="PT_1.10_J2", hardware="J2",
+        serial="UL0E156046674", mac="88-76-b9-17-34-61",  # hyphens/lowercase on purpose
+    )
+    assert identity["mac"] == "88:76:B9:17:34:61", identity["mac"]
+    print(f"  normalized identity mac: {identity['mac']}")
+
+    # Case 1: device UI silent -> label fills the gap, MAC confirmed
+    fp = {"model": None, "firmware": None, "hardware_version": None,
+          "serial": None, "mac_addresses": ["88:76:B9:17:34:61", "AA:BB:CC:DD:EE:FF"]}
+    merge_identity(fp, identity)
+    assert fp["model"] == "DSL-226" and fp["firmware"] == "PT_1.10_J2"
+    assert not fp.get("label_mismatches")
+    assert fp["mac_label_match"] is True
+    print("  silent UI -> label fills, MAC confirmed")
+
+    # Case 2: device disagrees with the sticker -> mismatch flagged
+    fp2 = {"model": "DSL-2750U", "firmware": "PT_2.00", "hardware_version": "D1",
+           "serial": "OTHER123", "mac_addresses": ["11:22:33:44:55:66"]}
+    merge_identity(fp2, identity)
+    fields = {m["field"] for m in fp2["label_mismatches"]}
+    assert fields == {"model", "firmware", "hardware_version", "serial"}, fields
+    assert fp2["mac_label_match"] is False
+    print(f"  contradictory UI -> {len(fields)} mismatches flagged, MAC not found")
+
+    # Drift
+    prev = [{"id": "DLINK-006"}, {"id": "GEN-005"}, {"id": "GEN-010"}]
+    now = [{"id": "DLINK-006"}, {"id": "DLINK-007"}]
+    d = diff_findings(prev, now)
+    assert d["new"] == ["DLINK-007"], d
+    assert d["resolved"] == ["GEN-005", "GEN-010"], d
+    assert d["persistent"] == ["DLINK-006"], d
+    print(f"  drift new={d['new']} resolved={d['resolved']} persistent={d['persistent']}")
+    print("✓ identity merge + drift diff work")
+
+
 def test_report_generation():
     """Test report generation."""
     print("\n=== Test 4: Report Generation ===")
@@ -222,6 +349,9 @@ def main():
         test_vendor_detection()
         test_report_generation()
         test_dlink_micro_httpd_finding()
+        test_dsl226_label_fields()
+        test_dnscfg_probe()
+        test_identity_merge_and_drift()
 
         print("\n" + "=" * 70)
         print("  ✓ ALL TESTS PASSED")

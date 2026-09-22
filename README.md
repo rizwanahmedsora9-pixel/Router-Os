@@ -24,10 +24,11 @@ Router-Os/
 │   ├── tools/                     LAN-only inventory/rom-0 checker + mock
 │   └── research/                  model-scoped CVE evidence and source links
 │
-└── Bug-Hunter/                    ← 🎯 Unified cross-platform vulnerability scanner
-    ├── bug_hunter.py              main app: auto-detect → scan → report
+└── Bug-Hunter/                    ← 🎯 Unified cross-platform vulnerability scanner (physical audit)
+    ├── bug_hunter.py              main app: hunt the live unit → audit → report (+ drift)
     ├── test_scanner.py            unit tests + integration checks
-    └── demo_scan.py               mock router demo with sample findings
+    ├── demo_scan.py               mock router demo (play only — no hardware involved)
+    └── audits/                    local audit artifacts, git-ignored (created on first --audit)
 ```
 
 > **Separate projects, one repository.** `wr720n/` is TP-Link (VxWorks, `IMG0`
@@ -54,36 +55,47 @@ Router-Os/
 | **understand the PTCL D-Link "opens without login" bug** | [`ptcl-dlink/`](ptcl-dlink/) |
 | **check whether my own PTCL D-Link has it** | [`ptcl-dlink/tools/`](ptcl-dlink/tools/) |
 
-## Bug Hunter — Unified Vulnerability Scanner
+## Bug Hunter — Unified Vulnerability Scanner (v1.1, physical-device audit)
 
 The [`Bug-Hunter/`](Bug-Hunter/) tool consolidates all research from this repository into a
 single cross-platform Python application that runs on **Windows, Linux, macOS, Termux (Android),
 FreeBSD — anywhere Python 3.8+ exists**.
 
+It hunts the **physical router on your LAN** and runs a **live security audit** of it —
+the mock/demo scripts are only the playground; `bug_hunter.py` is the real hunt.
+
 ```bash
-# Auto-detect your router and scan for vulnerabilities
+# Hunt your physical router: auto-detect the gateway and audit it live
 python Bug-Hunter/bug_hunter.py
 
-# Scan a specific IP and save a detailed report
-python Bug-Hunter/bug_hunter.py 192.168.10.1 --report scan_report.txt
+# Physical audit with saved artifacts + drift tracking vs the previous hunt
+python Bug-Hunter/bug_hunter.py 192.168.10.1 --audit
 
-# Demo mode — see it in action against a simulated vulnerable router
+# ...anchored to the sticker on the unit (e.g. a PTCL D-Link DSL-226):
+python Bug-Hunter/bug_hunter.py 192.168.10.1 --audit \
+    --model DSL-226 --firmware PT_1.10_J2 --hw J2 --serial <sticker> --mac <sticker>
+
+# Demo mode (play only) — same engine against a simulated vulnerable router
 python Bug-Hunter/demo_scan.py
 ```
 
 **What it does:**
-- Auto-detects your gateway/router on WiFi or LAN
+- Auto-detects your gateway/router on WiFi or LAN and probes the live unit
 - Fingerprints the vendor (D-Link, ZTE, TP-Link, Huawei, Netgear, etc.)
+- Supplies missing identity fields from the unit's sticker and flags contradictions
 - Scans for open ports and services
-- Checks vendor-specific vulnerabilities (CVE-matched)
+- Checks vendor-specific vulnerabilities (CVE-matched, incl. CVE-2026-0625 dnscfg.cgi reachability)
 - Runs generic security checks (Telnet, UPnP, SNMP, etc.)
+- Saves model-stamped audit reports (TXT+JSON, git-ignored) and diffs each new hunt
+  against the previous one (NEW / RESOLVED / STILL PRESENT findings)
 - Generates a detailed `.txt` or `.json` report with:
   - Vulnerability descriptions and severity ratings
   - CVE references and source URLs
   - Impact analysis
   - Step-by-step fix/remediation methods
 
-**Safety:** Read-only (GET/HEAD only), LAN addresses only, never prints secrets, no exploits.
+**Safety:** Read-only (GET/HEAD only), LAN addresses only, never prints secrets, no exploit
+payloads (the dnscfg.cgi probe sends no injection parameters), audit data stays local.
 
 See [`Bug-Hunter/README.md`](Bug-Hunter/README.md) for full documentation.
 

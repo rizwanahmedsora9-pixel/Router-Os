@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Bug Hunter v1.0 — Cross-Platform Router Vulnerability Scanner
+Bug Hunter v1.1 — Cross-Platform Router Vulnerability Scanner
 =============================================================
 
 Detects connected router/gateway on WiFi/LAN and scans for known vulnerabilities,
@@ -9,6 +9,21 @@ security misconfigurations, and exposures.  Generates a detailed report with:
   - CVE references and source URLs
   - Detailed descriptions of each finding
   - Step-by-step fix/remediation methods
+
+PHYSICAL AUDIT MODE (the real hunt — this is the primary use):
+  The scanner always probes the live, physical device on your LAN.
+  `--audit` runs the full hunt and files it like an audit: the report is
+  saved to `audits/` stamped with the unit's model and the UTC time, and
+  the next run automatically diffs against the previous audit (new /
+  resolved / persistent findings).  Feed it the sticker off the bottom of
+  the unit so the audit is anchored to the physical box:
+
+    python3 bug_hunter.py 192.168.10.1 --audit \\
+        --model DSL-226 --firmware PT_1.10_J2 --hw J2 \\
+        --serial <serial on sticker> --mac <mac on sticker>
+
+  The label identity is cross-checked against what the device reports about
+  itself; mismatches are flagged in the report.  Secrets are never printed.
 
 PLATFORMS:  Windows, Linux, macOS, Termux (Android), FreeBSD — any device
             with Python 3.8+ and a network connection.
@@ -20,10 +35,13 @@ SAFETY PROPERTIES:
   * Private/LAN addresses only — refuses public IPs
   * Never prints recovered secrets (WiFi keys, passwords)
   * Read-only fingerprinting — does not brute-force or exploit
+  * dnscfg.cgi probe (CVE-2026-0625) is reachability-only: a bare GET,
+    no DNS parameters, no injection payload is ever sent
 
 USAGE:
   python bug_hunter.py                    # auto-detect gateway, scan, report
   python bug_hunter.py 192.168.1.1        # scan specific IP
+  python bug_hunter.py --audit            # physical audit, saved + drift diff
   python bug_hunter.py --report out.txt   # save report to file
   python bug_hunter.py --quick            # fast scan (skip slow probes)
   python bug_hunter.py --probe-upnp       # enable UPnP probes
@@ -54,7 +72,7 @@ from typing import Any, Dict, List, Optional, Tuple
 # Version & Banner
 # --------------------------------------------------------------------------- #
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 BANNER = r"""
  ____              _   _       _   _             _
 | __ )  ___  __ _ | | | |_   _| |__ | |_ ___  _ __| |_
@@ -63,7 +81,7 @@ BANNER = r"""
 |____/ \___|\__, ||_| |_|\__,_|_.__/ \__\___/|_|   \__|
             |___/
  Router Vulnerability Scanner v{version}
- Cross-Platform | Read-Only | No Exploits
+ Physical-Device Audit | Read-Only | No Exploits
 """.format(version=VERSION)
 
 # --------------------------------------------------------------------------- #
@@ -599,9 +617,19 @@ FIRMWARE_RES = {
 }
 
 HARDWARE_RES = [
-    re.compile(r"(?:hardware|h\.?w\.?)\s*(?:version)?\s*[:=]?\s*"
-               r"(v?\s*[0-9]+(?:\.[0-9]+)?)", re.I),
+    # PTCL/D-Link revisions are often letter+digit ("J2", "D1", "T3"), so the
+    # value shape must not require a leading digit. Also matches "v2", "V4.0".
+    re.compile(r"(?:hardware|h\.?w\.?)\s*(?:version|ver\.?)?\s*[:=]?\s*"
+               r"([A-Za-z]{0,2}\s*\d+(?:\.\d+)?[A-Za-z]?)", re.I),
 ]
+
+SERIAL_RES = [
+    re.compile(r"serial\s*(?:number|no\.?|num)?\s*[:=]?\s*"
+               r"([A-Za-z0-9][A-Za-z0-9\-]{5,31})", re.I),
+]
+
+# LAN/WLAN/WAN MACs — the device-info page can show several; collect them all.
+MAC_RE = re.compile(r"\b(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}\b")
 
 
 def detect_vendor(text: str, server_header: Optional[str],
@@ -633,12 +661,14 @@ def detect_vendor(text: str, server_header: Optional[str],
     return "generic"
 
 
-def extract_info(text: str, vendor: str) -> Dict[str, Optional[str]]:
-    """Extract model, firmware, and hardware version from page text."""
-    info: Dict[str, Optional[str]] = {
+def extract_info(text: str, vendor: str) -> Dict[str, Any]:
+    """Extract model, firmware, hardware version, serial, and MACs from page text."""
+    info: Dict[str, Any] = {
         "model": None,
         "firmware": None,
         "hardware_version": None,
+        "serial": None,
+        "mac_addresses": [],
     }
 
     clean = strip_tags(text)
@@ -666,7 +696,102 @@ def extract_info(text: str, vendor: str) -> Dict[str, Optional[str]]:
             info["hardware_version"] = m.group(1).strip()
             break
 
+    # Serial number (used to tie the audit to the physical unit)
+    for pat in SERIAL_RES:
+        m = pat.search(clean)
+        if m:
+            info["serial"] = m.group(1).strip()
+            break
+
+    # Every MAC shown on the page (LAN/WLAN/WAN may differ) — matched against
+    # the sticker MAC by merge_identity(). Raw text is searched so MACs sitting
+    # in JavaScript are found too; results are normalized to upper-case colons.
+    info["mac_addresses"] = sorted(
+        {m.upper().replace("-", ":") for m in MAC_RE.findall(text)}
+    )
+
     return info
+
+
+# --------------------------------------------------------------------------- #
+# Physical-unit identity (sticker/label) & firmware-build classification
+# --------------------------------------------------------------------------- #
+
+def classify_firmware_build(firmware: str) -> Optional[str]:
+    """Return a caution note when the firmware is an ISP-custom build that no
+    public CVE affected-version list covers.
+
+    PTCL builds are named ``PT_*`` or carry the ISP name (``PT_1.10_J2``,
+    ``PT_2.00``, ``K92_PTCL_R2005_20170510``). Public CVE lists name retail
+    builds only (``IN_*``/``SEA_*``/``ME_*``), so these are untested, not clean.
+    """
+    f = (firmware or "").strip().lower()
+    if not f:
+        return None
+    if f.startswith("pt_") or "ptcl" in f:
+        return ("PTCL ISP build - public CVE affected-version lists name retail "
+                "builds only (IN_*/SEA_*/ME_*); this build is untested by them, "
+                "which is not the same as clean. Only live probing decides.")
+    return None
+
+
+def normalize_mac(mac: str) -> str:
+    return mac.strip().upper().replace("-", ":")
+
+
+def build_identity(model=None, firmware=None, hardware=None,
+                   serial=None, mac=None) -> Dict[str, str]:
+    """Physical-unit identity as printed on the sticker/label of the unit."""
+    ident: Dict[str, str] = {}
+    if model:
+        ident["model"] = model.strip()
+    if firmware:
+        ident["firmware"] = firmware.strip()
+    if hardware:
+        ident["hardware_version"] = hardware.strip()
+    if serial:
+        ident["serial"] = serial.strip()
+    if mac:
+        ident["mac"] = normalize_mac(mac)
+    return ident
+
+
+def merge_identity(fingerprint: Dict, identity: Dict[str, str]) -> None:
+    """Merge sticker identity into the device fingerprint, in place.
+
+    * Fields the device did not report are filled from the label
+      (recorded in ``fingerprint["label_fields"]``).
+    * Fields where the device reports something DIFFERENT from the label are
+      recorded in ``fingerprint["label_mismatches"]`` — scanning the wrong
+      box, a mis-labelled unit, or a page that lies.
+    * The label MAC is checked against every MAC the device displayed.
+    """
+    if not identity:
+        return
+    filled: List[str] = []
+    mismatches: List[Dict[str, str]] = []
+    for key in ("model", "firmware", "hardware_version", "serial"):
+        label = identity.get(key)
+        if not label:
+            continue
+        detected = fingerprint.get(key)
+        if not detected:
+            fingerprint[key] = label
+            filled.append(key)
+        elif detected.strip().lower() != label.strip().lower():
+            mismatches.append({"field": key, "label": label, "detected": detected})
+    if filled:
+        fingerprint["label_fields"] = sorted(
+            set(fingerprint.get("label_fields", []) + filled))
+    if mismatches:
+        fingerprint["label_mismatches"] = mismatches
+
+    label_mac = identity.get("mac")
+    if label_mac:
+        seen = {normalize_mac(m) for m in fingerprint.get("mac_addresses") or []}
+        # True = the device itself showed the sticker MAC; False = it showed
+        # MACs but not the sticker one; None = it showed none (no evidence).
+        fingerprint["mac_label_match"] = (label_mac in seen) if seen else None
 
 
 # --------------------------------------------------------------------------- #
@@ -882,6 +1007,98 @@ def check_dlink_vulns(client: HttpClient, host: str, info: Dict) -> List[Dict]:
                 "https://github.com/advisories/GHSA-rfw9-259h-m9m6",
             ],
         })
+
+    # --- Check 7: dnscfg.cgi exposure probe (CVE-2026-0625) ---
+    # Actively-exploited unauthenticated command injection in dnscfg.cgi on
+    # legacy D-Link DSL gateways: Shadowserver observed exploitation on
+    # 2025-11-27, and D-Link advisories SAP10068 / SAP10118 / SAP10488 document
+    # the CGI's DNSChanger history. Confirmed-affected models are DSL-2740R,
+    # DSL-2640B, DSL-2780B and DSL-526B (all EOL ~2020) - DSL-226 / PT_*
+    # builds are NOT on the confirmed list, so this probe states exposure,
+    # not exploitability.
+    #
+    # READ-ONLY BY DESIGN: this sends a bare GET of the endpoint only. No
+    # ?hostName=/?dnsPrimary= parameters, no shell metacharacters, no
+    # injection payload - those code paths are never exercised by Bug Hunter.
+    dns_resp = client.get("/dnscfg.cgi")
+    if dns_resp is not None and dns_resp.status != 404:
+        loc = dns_resp.header("Location") or ""
+        gated = (dns_resp.status in (401, 403)
+                 or looks_like_login(dns_resp.text)
+                 or "login" in loc.lower())
+        if gated:
+            findings.append({
+                "id": "DLINK-007",
+                "title": "dnscfg.cgi present (auth-gated) — CVE-2026-0625 endpoint family",
+                "severity": SEV_INFO,
+                "cve": "CVE-2026-0625 (family exposure)",
+                "description": (
+                    "The router serves the dnscfg.cgi endpoint (HTTP "
+                    f"{dns_resp.status}) but demanded authentication in this probe. "
+                    "This is the same CGI family behind CVE-2026-0625, the actively "
+                    "exploited unauthenticated DNSChanger command injection on legacy "
+                    "D-Link DSL gateways. This unit did not expose it without a login "
+                    "in this test - exposure is currently gated, but the endpoint "
+                    "is on the box."
+                ),
+                "url": f"http://{host}/dnscfg.cgi",
+                "impact": (
+                    "Low while it stays auth-gated on the LAN side. The risk model "
+                    "changes completely if the management UI is ever reachable from "
+                    "the WAN: the exploit needs no credentials at all on affected "
+                    "builds."
+                ),
+                "fix": (
+                    "1. Keep remote/WAN management DISABLED - this is the control\n"
+                    "2. Re-test after any firmware change\n"
+                    "3. Track D-Link's CVE-2026-0625 model list - D-Link is still "
+                    "reviewing firmware builds for the same CGI library\n"
+                    "4. Planning assumption for EOL DSL hardware: replace or bridge"
+                ),
+                "urls": [
+                    "https://nvd.nist.gov/vuln/detail/CVE-2026-0625",
+                    "https://thehackernews.com/2026/01/active-exploitation-hits-legacy-d-link.html",
+                ],
+            })
+        else:
+            findings.append({
+                "id": "DLINK-007",
+                "title": "dnscfg.cgi reachable WITHOUT authentication — CVE-2026-0625 exposure",
+                "severity": SEV_HIGH,
+                "cve": "CVE-2026-0625",
+                "cvss": "9.3 (confirmed models: DSL-2740R/2640B/2780B/526B)",
+                "description": (
+                    "The router answered a bare, unauthenticated GET of /dnscfg.cgi "
+                    f"with HTTP {dns_resp.status} (a 404 would mean absent). The CGI "
+                    "executed or served content without any login session. This is "
+                    "the endpoint exploited by CVE-2026-0625 - unauthenticated OS "
+                    "command injection used for DNS hijacking, observed in the wild "
+                    "since 2025-11-27. NOTE: Bug Hunter is read-only and sent NO "
+                    "injection payload, so exploitability itself is unconfirmed; what "
+                    "is confirmed is that the endpoint does not demand a session."
+                ),
+                "url": f"http://{host}/dnscfg.cgi",
+                "impact": (
+                    "On confirmed-affected builds this endpoint gives unauthenticated "
+                    "remote code execution and silent DNS hijack of every device "
+                    "behind the router. Your model is not on D-Link's confirmed list, "
+                    "but the endpoint being reachable without auth is the pre-condition "
+                    "the exploit needs."
+                ),
+                "fix": (
+                    "1. DISABLE remote/WAN management immediately if enabled\n"
+                    "2. Verify DNS settings on the router and downstream clients now\n"
+                    "3. Assume the worst for EOL DSL hardware: D-Link's guidance for "
+                    "confirmed models is retire/replace - no patch exists\n"
+                    "4. Bridge the unit and route through hardware you control\n"
+                    "5. Re-run this audit after any firmware change"
+                ),
+                "urls": [
+                    "https://nvd.nist.gov/vuln/detail/CVE-2026-0625",
+                    "https://thehackernews.com/2026/01/active-exploitation-hits-legacy-d-link.html",
+                    "https://supportannouncement.us.dlink.com/",
+                ],
+            })
 
     return findings
 
@@ -1544,7 +1761,10 @@ def check_generic_vulns(client: HttpClient, host: str, info: Dict,
 
 def generate_text_report(network_info: Dict, fingerprint: Dict,
                           open_ports: List[Dict], findings: List[Dict],
-                          vendor: str) -> str:
+                          vendor: str,
+                          identity: Optional[Dict] = None,
+                          drift: Optional[Dict] = None,
+                          prev_audit: Optional[Dict] = None) -> str:
     """Generate a comprehensive text report."""
     lines: List[str] = []
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
@@ -1555,6 +1775,7 @@ def generate_text_report(network_info: Dict, fingerprint: Dict,
     lines.append("=" * 78)
     lines.append("")
     lines.append(f"  Scan Date     : {now}")
+    lines.append(f"  Scan Type     : {'PHYSICAL DEVICE AUDIT (live unit)' if identity else 'live LAN scan'}")
     lines.append(f"  Platform      : {network_info.get('platform', 'unknown')}")
     lines.append(f"  Hostname      : {network_info.get('hostname', 'unknown')}")
     lines.append(f"  Local IP      : {network_info.get('local_ip', 'unknown')}")
@@ -1563,17 +1784,51 @@ def generate_text_report(network_info: Dict, fingerprint: Dict,
 
     # Device fingerprint
     lines.append("-" * 78)
-    lines.append("  DEVICE FINGERPRINT")
+    lines.append("  DEVICE FINGERPRINT (what the unit says about itself)")
     lines.append("-" * 78)
     lines.append(f"  Detected Vendor    : {vendor.upper()}")
     lines.append(f"  Model              : {fingerprint.get('model', 'Unknown')}")
     if fingerprint.get("model_note"):
         lines.append(f"  Model (note)       : {fingerprint['model_note']}")
+    if fingerprint.get("vendor_hint"):
+        lines.append(f"  Vendor (note)      : {fingerprint['vendor_hint']}")
     lines.append(f"  Firmware           : {fingerprint.get('firmware', 'Unknown')}")
+    if fingerprint.get("firmware_note"):
+        lines.append(f"  Firmware (note)    : {fingerprint['firmware_note']}")
     lines.append(f"  Hardware Version   : {fingerprint.get('hardware_version', 'Unknown')}")
+    if fingerprint.get("serial"):
+        lines.append(f"  Serial (unit)      : {fingerprint['serial']}")
+    if fingerprint.get("mac_addresses"):
+        lines.append(f"  MACs seen          : {', '.join(fingerprint['mac_addresses'])}")
     lines.append(f"  HTTP Server        : {fingerprint.get('server_header', 'Unknown')}")
     lines.append(f"  HTTP Status        : {fingerprint.get('http_status', 'Unknown')}")
     lines.append("")
+
+    # Label / sticker identity of the physical unit
+    if identity:
+        lines.append("-" * 78)
+        lines.append("  LABEL / STICKER IDENTITY (physical unit under audit)")
+        lines.append("-" * 78)
+        for key, label in (("model", "Model"), ("firmware", "Firmware"),
+                            ("hardware_version", "Hardware rev"),
+                            ("serial", "Serial"), ("mac", "MAC")):
+            if identity.get(key):
+                lines.append(f"    {label:12} : {identity[key]}")
+        filled = fingerprint.get("label_fields")
+        if filled:
+            lines.append(f"    (label filled device fields the UI did not show: "
+                         f"{', '.join(filled)})")
+        for mm in fingerprint.get("label_mismatches", []):
+            lines.append(f"    ! MISMATCH {mm['field']}: sticker says "
+                         f"'{mm['label']}' but the unit reports '{mm['detected']}'")
+        mac_match = fingerprint.get("mac_label_match")
+        if mac_match is True:
+            lines.append("    MAC check    : unit displayed the sticker MAC — "
+                         "identity confirmed")
+        elif mac_match is False:
+            lines.append("    ! MAC check  : sticker MAC was NOT among the MACs the "
+                         "unit displayed — verify you scanned the right box")
+        lines.append("")
 
     # Open ports
     lines.append("-" * 78)
@@ -1615,6 +1870,25 @@ def generate_text_report(network_info: Dict, fingerprint: Dict,
         risk = "CLEAN — No known vulnerabilities detected"
     lines.append(f"  Overall Risk     : {risk}")
     lines.append("")
+
+    # Drift against the previous physical audit of the same unit
+    if drift is not None:
+        prev_ts = (prev_audit or {}).get("timestamp", "unknown time")
+        lines.append("-" * 78)
+        lines.append("  AUDIT DRIFT — vs previous hunt of this same unit")
+        lines.append("-" * 78)
+        lines.append(f"  Previous audit : {prev_ts}")
+        if drift["new"]:
+            lines.append(f"  NEW findings since then      : {', '.join(drift['new'])}")
+        else:
+            lines.append("  NEW findings since then      : none")
+        if drift["resolved"]:
+            lines.append(f"  RESOLVED since then          : {', '.join(drift['resolved'])}")
+        else:
+            lines.append("  RESOLVED since then          : none")
+        lines.append(f"  STILL PRESENT                : "
+                     f"{', '.join(drift['persistent']) or 'none'}")
+        lines.append("")
 
     # Detailed findings
     lines.append("=" * 78)
@@ -1716,12 +1990,16 @@ def generate_text_report(network_info: Dict, fingerprint: Dict,
 
 def generate_json_report(network_info: Dict, fingerprint: Dict,
                           open_ports: List[Dict], findings: List[Dict],
-                          vendor: str) -> Dict:
+                          vendor: str,
+                          identity: Optional[Dict] = None,
+                          drift: Optional[Dict] = None,
+                          prev_audit: Optional[Dict] = None) -> Dict:
     """Generate a JSON-serializable report."""
-    return {
+    report = {
         "tool": "Bug Hunter",
         "version": VERSION,
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "scan_type": "physical_device_audit" if identity else "live_lan_scan",
         "network": {
             "platform": network_info.get("platform"),
             "hostname": network_info.get("hostname"),
@@ -1732,8 +2010,17 @@ def generate_json_report(network_info: Dict, fingerprint: Dict,
             "vendor": vendor,
             "model": fingerprint.get("model"),
             "firmware": fingerprint.get("firmware"),
+            "firmware_note": fingerprint.get("firmware_note"),
             "hardware_version": fingerprint.get("hardware_version"),
+            "serial": fingerprint.get("serial"),
+            "mac_addresses": fingerprint.get("mac_addresses") or [],
             "server_header": fingerprint.get("server_header"),
+        },
+        "label_identity": identity or {},
+        "label_check": {
+            "filled_fields": fingerprint.get("label_fields", []),
+            "mismatches": fingerprint.get("label_mismatches", []),
+            "mac_label_match": fingerprint.get("mac_label_match"),
         },
         "open_ports": open_ports,
         "summary": {
@@ -1745,6 +2032,84 @@ def generate_json_report(network_info: Dict, fingerprint: Dict,
         },
         "findings": findings,
     }
+    if drift is not None:
+        report["drift"] = {
+            "previous_audit": (prev_audit or {}).get("timestamp"),
+            **drift,
+        }
+    return report
+
+
+# --------------------------------------------------------------------------- #
+# Audit persistence & drift (physical hunt mode)
+# --------------------------------------------------------------------------- #
+
+AUDIT_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "audits")
+
+_AUDIT_NAME_RE = re.compile(
+    r"^.+_(?P<host>[0-9A-Fa-f.:]+)_(?P<stamp>\d{8}T\d{6}Z)\.json$")
+
+
+def audit_slug(text: str) -> str:
+    """Filesystem-safe slug for the unit's model string."""
+    s = re.sub(r"[^A-Za-z0-9._-]+", "_", (text or "router")).strip("_")
+    return s or "router"
+
+
+def save_audit(result: Dict, report_text: str, json_report: Dict) -> Tuple[str, str]:
+    """Save the hunt as an audit artifact under audits/. Returns (txt, json)."""
+    os.makedirs(AUDIT_DIR, exist_ok=True)
+    model = ((result.get("fingerprint") or {}).get("model")
+             or (result.get("identity") or {}).get("model")
+             or "router")
+    stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    base = f"{audit_slug(model)}_{result['target'].replace(':', '_')}_{stamp}"
+    txt_path = os.path.join(AUDIT_DIR, base + ".txt")
+    json_path = os.path.join(AUDIT_DIR, base + ".json")
+    with open(txt_path, "w", encoding="utf-8") as fh:
+        fh.write(report_text)
+    with open(json_path, "w", encoding="utf-8") as fh:
+        json.dump(json_report, fh, indent=2, ensure_ascii=False)
+    return txt_path, json_path
+
+
+def load_previous_audit(target_host: str, exclude_path: str = "") -> Optional[Dict]:
+    """Load the newest saved audit JSON for the same target host, if any."""
+    if not os.path.isdir(AUDIT_DIR):
+        return None
+    host_slug = target_host.replace(":", "_")
+    candidates = []
+    try:
+        names = os.listdir(AUDIT_DIR)
+    except OSError:
+        return None
+    for name in names:
+        m = _AUDIT_NAME_RE.match(name)
+        if not m or m.group("host") != host_slug:
+            continue
+        full = os.path.join(AUDIT_DIR, name)
+        if exclude_path and os.path.abspath(full) == os.path.abspath(exclude_path):
+            continue
+        candidates.append((m.group("stamp"), full))
+    if not candidates:
+        return None
+    candidates.sort()
+    try:
+        with open(candidates[-1][1], "r", encoding="utf-8") as fh:
+            return json.load(fh)
+    except (OSError, json.JSONDecodeError):
+        return None
+
+
+def diff_findings(previous: List[Dict], current: List[Dict]) -> Dict[str, List[str]]:
+    """Compare two finding lists by id: what is new / resolved / persistent."""
+    prev_ids = {f.get("id", "?") for f in previous or []}
+    now_ids = {f.get("id", "?") for f in current or []}
+    return {
+        "new": sorted(now_ids - prev_ids),
+        "resolved": sorted(prev_ids - now_ids),
+        "persistent": sorted(prev_ids & now_ids),
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -1754,8 +2119,16 @@ def generate_json_report(network_info: Dict, fingerprint: Dict,
 def run_scan(target_host: str, target_port: int = 80,
              probe_upnp: bool = False, probe_rom0: bool = False,
              quick: bool = False, force_vendor: str = "",
-             verbose: bool = False, timeout: float = 8.0) -> Dict:
-    """Execute the full vulnerability scan."""
+             verbose: bool = False, timeout: float = 8.0,
+             identity: Optional[Dict[str, str]] = None) -> Dict:
+    """Execute the full vulnerability scan against the live, physical device.
+
+    `identity` (optional) is the sticker/label identity of the unit — model,
+    firmware, HW revision, serial, MAC. It never changes what is probed; it
+    anchors the audit to the physical box: fields the device does not report
+    are filled from the label, and contradictions between label and unit are
+    flagged as mismatches in the report.
+    """
 
     result: Dict[str, Any] = {
         "target": target_host,
@@ -1766,6 +2139,7 @@ def run_scan(target_host: str, target_port: int = 80,
             "local_ip": None,
             "gateway": target_host,
         },
+        "identity": identity or {},
         "fingerprint": {},
         "open_ports": [],
         "vendor": "",
@@ -1823,15 +2197,33 @@ def run_scan(target_host: str, target_port: int = 80,
     text = base_text + "\n" + wp_text
     vendor = detect_vendor(text, client.server_header,
                            webproc_reachable=wp_reachable)
+
+    # Sticker-implied vendor: if the UI did not self-identify but the label on
+    # the physical unit says D-Link DSL/DIR/DVA, run the D-Link checks anyway.
+    if vendor == "generic" and identity and re.match(
+            r"(?i)^(?:DSL|DIR|DVA)-\d+", identity.get("model", "")):
+        fingerprint["vendor_hint"] = (
+            f"UI did not self-identify; vendor taken from the sticker model "
+            f"'{identity['model']}'")
+        vendor = "dlink"
+
     fingerprint.update(extract_info(text, vendor))
 
+    # Firmware-build classification (PTCL PT_* builds: untested by CVE lists)
+    fingerprint["firmware_note"] = classify_firmware_build(
+        fingerprint.get("firmware") or (identity or {}).get("firmware") or "")
+
+    # Cross-check the sticker/label identity against the unit's self-report
+    if identity:
+        merge_identity(fingerprint, identity)
+
     if vendor == "dlink" and not fingerprint.get("model"):
-        fingerprint["model"] = "DSL-27xxU class (inferred)"
+        fingerprint["model"] = "D-Link DSL-series (inferred)"
         fingerprint["model_note"] = (
             "no model string visible in the UI; inferred from the "
             "/cgi-bin/webproc CGI + ACME httpd banner (the Conexant DSL "
-            "stack PTCL ships). Confirm the exact model/HW rev on the unit's "
-            "label."
+            "stack PTCL D-Link units ship with). Pass --model/--firmware/--hw "
+            "from the sticker on the unit to anchor the audit to the box."
         )
 
     if force_vendor:
@@ -1843,6 +2235,14 @@ def run_scan(target_host: str, target_port: int = 80,
     print(f"    Model: {fingerprint.get('model', 'Unknown')}")
     print(f"    Firmware: {fingerprint.get('firmware', 'Unknown')}")
     print(f"    Server: {fingerprint.get('server_header', 'Unknown')}")
+    if identity:
+        mm = fingerprint.get("label_mismatches", [])
+        match_note = fingerprint.get("mac_label_match")
+        print(f"    Sticker: {identity.get('model', '?')} / "
+              f"{identity.get('firmware', '?')} / "
+              f"HW {identity.get('hardware_version', '?')}"
+              + (f"  [! {len(mm)} mismatch(es)]" if mm else "")
+              + ("  [MAC confirmed]" if match_note is True else ""))
 
     # Step 3: Vendor-specific checks
     print(f"\n[*] Running {vendor.upper()} vulnerability checks...")
@@ -1889,8 +2289,13 @@ def main(argv=None) -> int:
         description="Bug Hunter — Cross-Platform Router Vulnerability Scanner",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
-EXAMPLES:
-  python bug_hunter.py                     # auto-detect gateway, full scan
+PHYSICAL HUNT (the real thing — audit the unit in front of you):
+  python bug_hunter.py                      # auto-detect your gateway, audit it
+  python bug_hunter.py 192.168.10.1 --audit # audit a PTCL unit, save + drift
+  python bug_hunter.py 192.168.10.1 --audit --model DSL-226 \\
+      --firmware PT_1.10_J2 --hw J2 --serial <sticker> --mac <sticker>
+
+OTHER EXAMPLES:
   python bug_hunter.py 192.168.1.1         # scan specific router IP
   python bug_hunter.py --report out.txt    # save text report to file
   python bug_hunter.py --json out.json     # save JSON report
@@ -1908,6 +2313,20 @@ SAFETY:
 
     parser.add_argument("target", nargs="?", default=None,
                         help="Router/gateway IP (auto-detect if omitted)")
+    parser.add_argument("--audit", action="store_true",
+                        help="PHYSICAL AUDIT MODE — save the hunt to audits/ "
+                             "model-stamped, and diff against the previous "
+                             "audit of the same unit (new/resolved/persistent)")
+    parser.add_argument("--model",
+                        help="model from the unit's sticker (e.g. DSL-226)")
+    parser.add_argument("--firmware",
+                        help="firmware string from the sticker/UI (e.g. PT_1.10_J2)")
+    parser.add_argument("--hw",
+                        help="hardware revision from the sticker (e.g. J2)")
+    parser.add_argument("--serial",
+                        help="serial number from the sticker")
+    parser.add_argument("--mac",
+                        help="MAC address from the sticker")
     parser.add_argument("--port", type=int, default=80,
                         help="HTTP port (default: 80)")
     parser.add_argument("--report", "-o", metavar="FILE",
@@ -1937,6 +2356,12 @@ SAFETY:
 
     print(f"  Platform: {detect_platform()}")
 
+    # Sticker/label identity of the physical unit under audit (all optional)
+    identity = build_identity(
+        model=args.model, firmware=args.firmware, hardware=args.hw,
+        serial=args.serial, mac=args.mac,
+    )
+
     # Determine target
     target = args.target
     if not target:
@@ -1952,7 +2377,16 @@ SAFETY:
             print("    Common IPs: 192.168.1.1, 192.168.0.1, 192.168.10.1")
             return 1
 
-    # Run the scan
+    if args.audit:
+        print(f"\n[*] PHYSICAL AUDIT MODE — hunting the unit at {target}")
+        if identity:
+            print("    Sticker identity loaded; it will be cross-checked "
+                  "against the unit.")
+        else:
+            print("    Tip: pass --model/--firmware/--hw/--serial/--mac from "
+                  "the sticker to anchor the audit to the physical unit.")
+
+    # Run the scan against the live, physical device
     result = run_scan(
         target_host=target,
         target_port=args.port,
@@ -1962,11 +2396,28 @@ SAFETY:
         force_vendor=args.vendor or "",
         verbose=args.verbose,
         timeout=args.timeout,
+        identity=identity,
     )
 
     if result.get("error"):
         print(f"\n[!] Error: {result['error']}")
         return 2
+
+    # In audit mode, diff against the previous hunt of this same unit FIRST so
+    # the drift lands inside the report that is about to be saved.
+    drift = None
+    prev_audit = None
+    if args.audit:
+        prev_audit = load_previous_audit(target)
+        if prev_audit:
+            drift = diff_findings(prev_audit.get("findings", []),
+                                  result["findings"])
+            print(f"\n[*] Previous audit found ({prev_audit.get('timestamp', '?')}) — "
+                  f"new: {len(drift['new'])}, resolved: {len(drift['resolved'])}, "
+                  f"persistent: {len(drift['persistent'])}")
+        else:
+            print("\n[*] No previous audit for this unit — this run becomes "
+                  "the baseline.")
 
     # Generate and display report
     report_text = generate_text_report(
@@ -1975,8 +2426,33 @@ SAFETY:
         result["open_ports"],
         result["findings"],
         result["vendor"],
+        identity=identity,
+        drift=drift,
+        prev_audit=prev_audit,
     )
     print("\n" + report_text)
+
+    json_report = generate_json_report(
+        result["network_info"],
+        result["fingerprint"],
+        result["open_ports"],
+        result["findings"],
+        result["vendor"],
+        identity=identity,
+        drift=drift,
+        prev_audit=prev_audit,
+    )
+
+    # Audit mode: save model-stamped artifacts under audits/
+    if args.audit:
+        try:
+            txt_path, json_path = save_audit(result, report_text, json_report)
+            print(f"\n[+] Audit text report saved: {txt_path}")
+            print(f"[+] Audit JSON saved:        {json_path}")
+            print(f"    (next --audit run of {target} will diff against this one)")
+        except OSError as exc:
+            print(f"\n[!] Could not save audit artifacts ({exc}). The report above "
+                  "is still valid — use --report/--json to save a copy elsewhere.")
 
     # Save text report
     if args.report:
@@ -1986,13 +2462,6 @@ SAFETY:
 
     # Save JSON report
     if args.json:
-        json_report = generate_json_report(
-            result["network_info"],
-            result["fingerprint"],
-            result["open_ports"],
-            result["findings"],
-            result["vendor"],
-        )
         with open(args.json, "w", encoding="utf-8") as f:
             json.dump(json_report, f, indent=2, ensure_ascii=False)
         print(f"[+] JSON report saved to: {args.json}")
