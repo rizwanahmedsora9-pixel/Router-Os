@@ -272,6 +272,160 @@ def test_identity_merge_and_drift():
     print("✓ identity merge + drift diff work")
 
 
+def test_boa_401_field_shape():
+    """2026-09-22 field scan: Boa/0.94.13, HTTP 401, open 5555, no model.
+
+    A 401 body that only echoes the probe URL is not D-Link evidence.
+    Port 5555 with no ADB banner is not a shell. Boa 0.94.13 is named
+    as CVE-2022-45956 from the banner only.
+    """
+    print("\n=== Test 9: Boa/401 field-scan shape ===")
+    import ssl
+    from bug_hunter import (
+        HttpResponse, classify_http_identity, annotate_missing_model,
+        check_generic_vulns, check_dlink_vulns, classify_tcp_5555,
+        describe_platform, boa_version_in_cve_range, NEUTRAL_WEBPROC,
+        HttpClient, router_ssl_context, extract_info,
+    )
+
+    assert describe_platform("Android", "aarch64") == "Termux/Android (aarch64)"
+    assert describe_platform("Linux", "x86_64") == "Linux (x86_64)"
+    assert describe_platform("Linux", "aarch64", env={"TERMUX_VERSION": "0.118"}) \
+        == "Termux/Android (aarch64)"
+    print("  Android platform label -> Termux/Android")
+
+    echo = (
+        "<html><title>401 Unauthorized</title><body>"
+        "401 Unauthorized "
+        + NEUTRAL_WEBPROC
+        + "</body></html>"
+    )
+    # The old detector treated the echoed probe path as the CGI.
+    from bug_hunter import detect_vendor
+    assert detect_vendor(echo, "Boa/0.94.13") == "dlink"
+    resp = HttpResponse(
+        401,
+        [("Server", "Boa/0.94.13"), ("WWW-Authenticate", 'Basic realm="admin"')],
+        echo.encode(),
+    )
+    ident = classify_http_identity(resp, resp, NEUTRAL_WEBPROC, "Boa/0.94.13")
+    assert ident["vendor"] == "generic", ident["vendor"]
+    assert ident["webproc_evidence"] is False
+    assert ident["auth_scheme"] == "Basic"
+    assert ident["auth_realm"] == "admin"
+    fp = {
+        "server_header": "Boa/0.94.13",
+        "webproc_evidence": False,
+        "model": None,
+    }
+    annotate_missing_model(fp, ident["vendor"])
+    assert fp["model"] == "unidentified Boa-fronted CPE", fp
+    assert "ACME" not in fp["model_note"] or "not the Conexant/ACME" in fp["model_note"]
+    assert "micro_httpd" not in fp.get("model", "")
+    print("  401 echo of webproc + Boa -> generic, not inferred D-Link/ACME")
+
+    # Realm can still name a model without inventing an ACME stack.
+    realm_resp = HttpResponse(
+        401,
+        [("Server", "Boa/0.94.13"),
+         ("WWW-Authenticate", 'Basic realm="DSL-2640B"')],
+        echo.encode(),
+    )
+    realm_ident = classify_http_identity(
+        realm_resp, realm_resp, NEUTRAL_WEBPROC, "Boa/0.94.13")
+    assert realm_ident["vendor"] == "dlink", realm_ident["vendor"]
+    model = extract_info(realm_ident["auth_realm"], "dlink")["model"]
+    assert model and "DSL-2640B" in model, model
+    fp_realm = {"server_header": "Boa/0.94.13", "model": model,
+                "webproc_evidence": False}
+    annotate_missing_model(fp_realm, "dlink")
+    assert "model_note" not in fp_realm or "ACME httpd" not in fp_realm.get("model_note", "")
+    print(f"  realm DSL-2640B -> model {model}, no ACME invention")
+
+    assert boa_version_in_cve_range("0.94.13")
+    assert boa_version_in_cve_range("0.94.14")
+    assert not boa_version_in_cve_range("0.94.12")
+    assert classify_tcp_5555(b"") == "unknown"
+    assert classify_tcp_5555(b"CNXN") == "adb"
+    assert classify_tcp_5555(b"SSH-2.0-dropbear") == "other"
+    print("  5555 classifier: empty != ADB; CNXN banner == ADB")
+
+    ports = [
+        {"port": 21, "service": "FTP"},
+        {"port": 22, "service": "SSH"},
+        {"port": 23, "service": "Telnet"},
+        {"port": 53, "service": "DNS"},
+        {"port": 80, "service": "HTTP"},
+        {"port": 443, "service": "HTTPS"},
+        {"port": 5555, "service": "TCP 5555"},
+        {"port": 7547, "service": "TR-069/CWMP"},
+    ]
+
+    class FieldClient:
+        server_header = "Boa/0.94.13"
+        tls = False
+        www_authenticate = 'Basic realm="admin"'
+
+        def get(self, path, **kwargs):
+            if path == "/dnscfg.cgi":
+                return HttpResponse(404, [], b"not found")
+            return HttpResponse(401, [("Server", "Boa/0.94.13")], b"401 Unauthorized")
+
+        def origin(self):
+            return "http://192.168.10.1"
+
+    info = {
+        "server_header": "Boa/0.94.13",
+        "auth_scheme": "Basic",
+        "auth_realm": "admin",
+        "basic_on_cleartext": True,
+        "_port_banners": {5555: b""},
+    }
+    findings = check_generic_vulns(FieldClient(), "192.168.10.1", info, ports)
+    ids = [f["id"] for f in findings]
+    print(f"  generic findings: {ids}")
+    assert "GEN-001" in ids and "GEN-003" in ids and "GEN-008" in ids
+    assert "GEN-006" not in ids, "HTTPS is open; GEN-006 must stay absent"
+    assert "GEN-009" not in ids, ids
+    assert "GEN-012" in ids
+    boa = next(f for f in findings if f["id"] == "GEN-011")
+    assert "CVE-2022-45956" in boa["cve"]
+    assert "2005" in boa["description"]
+    assert "arbitrary file read" not in boa["description"].lower()
+    assert boa["cve"] != "CVE-2017-9833"
+    assert "HEAD" in boa["description"] and "does not send" in boa["description"]
+    assert any(f["id"] == "GEN-013" for f in findings)
+    telnet = next(f for f in findings if f["id"] == "GEN-001")
+    assert "credentials in plaintext" in telnet["description"]
+    print("  Boa banner -> GEN-011 (CVE-2022-45956), 5555 -> GEN-012 not GEN-009")
+
+    class RejectClient:
+        server_header = "Boa/0.94.13"
+
+        def get(self, path, **kwargs):
+            return HttpResponse(401, [("Server", "Boa/0.94.13")], b"401 Unauthorized")
+
+        def origin(self):
+            return "http://192.168.10.1"
+
+    vendor_findings = check_dlink_vulns(RejectClient(), "192.168.10.1", {})
+    vendor_ids = [f["id"] for f in vendor_findings]
+    print(f"  forced dlink + 401 probes: {vendor_ids}")
+    assert "DLINK-008" in vendor_ids
+    assert "DLINK-001" not in vendor_ids
+    assert "DLINK-006" not in vendor_ids
+    assert any(f["id"] == "DLINK-007" and f["severity"] == "INFO" for f in vendor_findings)
+    print("  401 vendor probes -> INFO inconclusive, not a silent zero")
+
+    ctx = router_ssl_context()
+    assert ctx.verify_mode == ssl.CERT_NONE
+    assert ctx.check_hostname is False
+    https = HttpClient("192.168.10.1", 443, tls=True)
+    assert https.tls and https.origin() == "https://192.168.10.1"
+    print("  HTTPS fingerprint client does not verify the CPE cert")
+    print("✓ Boa/401 field-scan classification works")
+
+
 def test_report_generation():
     """Test report generation."""
     print("\n=== Test 4: Report Generation ===")
@@ -352,6 +506,7 @@ def main():
         test_dsl226_label_fields()
         test_dnscfg_probe()
         test_identity_merge_and_drift()
+        test_boa_401_field_shape()
 
         print("\n" + "=" * 70)
         print("  ✓ ALL TESTS PASSED")
