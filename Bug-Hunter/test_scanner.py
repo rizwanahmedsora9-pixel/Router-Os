@@ -491,6 +491,294 @@ def test_report_generation():
     print("✓ Report generation works")
 
 
+def test_v2_discovery_offline():
+    """v2 discovery: OUI lookup, wifi-info shape, host description (no network)."""
+    print("\n=== Test 10: v2 discovery (offline) ===")
+
+    from discovery import lookup_oui, get_wifi_info, describe_host
+
+    assert lookup_oui("00:0C:42:11:22:33") == "MikroTik"
+    assert lookup_oui("30:B5:C2:AA:BB:CC") == "TP-Link"
+    assert lookup_oui("00-19-C6-11-22-33") == "ZTE"  # hyphen form
+    assert lookup_oui("FF:FF:FF:00:00:00") is None
+    assert lookup_oui("") is None
+    print("  OUI lookup works (colon + hyphen forms)")
+
+    wifi = get_wifi_info()
+    assert isinstance(wifi, dict) and "available" in wifi
+    print(f"  wifi info shape OK (available={wifi['available']})")
+
+    entry = {"ip": "192.168.1.1", "oui_vendor": "TP-Link",
+             "title": "TL-WR840N", "server": None, "is_gateway": True}
+    desc = describe_host(entry)
+    assert "192.168.1.1" in desc and "TP-Link" in desc and "gateway" in desc
+    print(f"  describe_host: {desc}")
+    print("✓ v2 discovery offline helpers work")
+
+
+def test_v2_auth_module():
+    """v2 auth: Basic/Digest builders + live login against a localhost mock."""
+    print("\n=== Test 11: v2 auth module (live localhost mock) ===")
+
+    import base64
+    import http.server
+    import socketserver
+    import threading
+    from auth_audit import (AuthHttpClient, attempt_http_login,
+                            authenticated_enum, build_basic_header,
+                            build_digest_header, download_config_backup,
+                            parse_digest_challenge)
+
+    header = build_basic_header("admin", "s3cret")
+    assert base64.b64decode(header.split()[1]).decode() == "admin:s3cret"
+    print("  Basic header round-trips")
+
+    challenge = parse_digest_challenge(
+        'Digest realm="testrealm", nonce="abc123", qop="auth", opaque="zz"')
+    assert challenge == {"realm": "testrealm", "nonce": "abc123",
+                         "qop": "auth", "opaque": "zz"}, challenge
+    digest = build_digest_header("u", "p", "GET", "/", challenge)
+    assert digest.startswith("Digest ") and 'response="' in digest \
+        and 'username="u"' in digest
+    print("  Digest challenge parse + response build OK")
+
+    want = build_basic_header("admin", "secret")
+    status_page = (b"<html><head><title>Status</title></head><body>"
+                   b"<p>Model Name: TEST-100</p>"
+                   b"<p>Firmware Version: 9.9.9-test</p>"
+                   b"<p>Remote Management: Enabled</p>"
+                   b"<p>WPS: Enabled</p>"
+                   b"<p>Uptime: 10 days, 3:12:44</p>"
+                   b"<p>WAN IP Address: 203.0.113.7</p>"
+                   b"<p>DNS: 8.8.8.8</p></body></html>")
+    backup_blob = bytes(range(256)) * 4  # 1024 bytes, clearly binary
+
+    class Handler(http.server.BaseHTTPRequestHandler):
+        def log_message(self, *args):
+            pass
+
+        def _authed(self):
+            return self.headers.get("Authorization") == want
+
+        def _deny(self):
+            self.send_response(401)
+            self.send_header("WWW-Authenticate", 'Basic realm="test"')
+            self.end_headers()
+
+        def do_GET(self):
+            if self.path == "/backupsettings.conf":
+                if not self._authed():
+                    return self._deny()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/octet-stream")
+                self.end_headers()
+                return self.wfile.write(backup_blob)
+            if self.path in ("/", "/status"):
+                if not self._authed():
+                    return self._deny()
+                self.send_response(200)
+                self.send_header("Content-Type", "text/html")
+                self.end_headers()
+                return self.wfile.write(status_page)
+            self.send_response(404)
+            self.end_headers()
+
+        def do_POST(self):
+            length = int(self.headers.get("Content-Length", 0) or 0)
+            self.rfile.read(length)
+            self.send_response(404)
+            self.end_headers()
+
+    httpd = socketserver.TCPServer(("127.0.0.1", 0), Handler)
+    port = httpd.server_address[1]
+    thread = threading.Thread(target=httpd.serve_forever, daemon=True)
+    thread.start()
+    try:
+        good = attempt_http_login("127.0.0.1", "admin", "secret", port=port)
+        assert good["ok"] and good["method"] == "http-basic", good
+        print("  live Basic login accepted good creds")
+
+        bad = attempt_http_login("127.0.0.1", "admin", "wrong", port=port)
+        assert not bad["ok"], bad
+        print("  live Basic login rejected bad creds")
+
+        Authed = AuthHttpClient("127.0.0.1", port)
+        Authed.auth_header = want
+        facts, auth_findings = authenticated_enum(Authed, "127.0.0.1")
+        assert facts.get("model") == "TEST-100", facts
+        assert facts.get("firmware") == "9.9.9-test", facts
+        ids = [f["id"] for f in auth_findings]
+        assert "AUTH-003" in ids and "AUTH-004" in ids, ids
+        print(f"  post-login enum: model/fw + {ids}")
+
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            saved = download_config_backup(Authed, "127.0.0.1", tmp)
+            assert saved and os.path.getsize(saved) == len(backup_blob), saved
+            print(f"  config backup downloaded ({len(backup_blob)} bytes, 0600)")
+    finally:
+        httpd.shutdown()
+    print("✓ v2 auth module works")
+
+
+def test_v2_shell_module():
+    """v2 shell: redaction, MTD parse, live Telnet audit vs a fake server."""
+    print("\n=== Test 12: v2 shell module (fake Telnet server) ===")
+
+    import re
+    import socket
+    import threading
+    from shell_audit import parse_mtd_table, redact_secrets, run_telnet_audit
+
+    dirty = "ssid=Home\nwpa_key=hunter2secret\npassword =hunter2\npsk 'abc123'"
+    clean = redact_secrets(dirty)
+    assert "hunter2" not in clean and "abc123" not in clean, clean
+    assert "[REDACTED]" in clean and "ssid=Home" in clean
+    print("  secret redaction keeps values out, facts in")
+
+    parts = parse_mtd_table('dev:    size   erasesize  name\n'
+                            'mtd0: 00040000 00010000 "boot"\n'
+                            'mtd5: 007b0000 00010000 "firmware"\n')
+    assert len(parts) == 2 and parts[1]["size"] == 0x7B0000
+    assert parts[0]["name"] == "boot"
+    print("  /proc/mtd parsing works")
+
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    server.bind(("127.0.0.1", 0))
+    server.listen(1)
+    port = server.getsockname()[1]
+
+    def serve():
+        conn, _ = server.accept()
+        conn.settimeout(10)
+        conn.sendall(b"testbox login: ")
+        conn.recv(1024)
+        conn.sendall(b"Password: ")
+        conn.recv(1024)
+        conn.sendall(b"\nBusyBox v1.30.1 built-in shell\n# ")
+        buf = b""
+        try:
+            while True:
+                chunk = conn.recv(4096)
+                if not chunk:
+                    break
+                buf += chunk
+                while b"\n" in buf:
+                    line, buf = buf.split(b"\n", 1)
+                    match = re.search(rb"BH_END_\d+_\d+", line)
+                    marker = match.group(0) if match else b"DONE"
+                    if line.strip().startswith(b"id"):
+                        body = b"uid=0(root) gid=0(root)\n"
+                    elif b"/proc/version" in line:
+                        body = (b"Linux version 3.10.14 (b@b) #1 "
+                                b"Tue Jan 1 00:00:00 UTC 2020\n")
+                    elif b"/proc/mtd" in line:
+                        body = (b"mtd0: 00040000 00010000 \"boot\"\n"
+                                b"mtd5: 007b0000 00010000 \"firmware\"\n")
+                    else:
+                        body = b"ok\n"
+                    conn.sendall(body + marker + b"\n# ")
+        except (socket.timeout, OSError):
+            pass
+        finally:
+            try:
+                conn.close()
+            except OSError:
+                pass
+
+    thread = threading.Thread(target=serve, daemon=True)
+    thread.start()
+    try:
+        res = run_telnet_audit("127.0.0.1", "admin", "secret", port=port)
+        assert res["ok"], res.get("error")
+        assert res["facts"].get("uid") == 0, res["facts"]
+        assert res["facts"].get("is_root") is True
+        assert len(res["facts"].get("mtd_partitions", [])) == 2
+        ids = [f["id"] for f in res["findings"]]
+        assert "SHELL-001" in ids, ids
+        assert "secret" not in res["transcript"]
+        print(f"  fake-shell audit: uid=0, MTD x2, findings {ids}")
+    finally:
+        server.close()
+    print("✓ v2 shell module works")
+
+
+def test_v2_firmware_module():
+    """v2 firmware: magic scan + redacted indicator scan on a synthetic image."""
+    print("\n=== Test 13: v2 firmware module (synthetic image) ===")
+
+    import tempfile
+    from firmware import analyze_firmware
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "test-firmware.bin")
+        blob = (b"IMG0" + b"\x00" * 64
+                + b"\x27\x05\x19\x56" + b"u-boot-legacy-image"
+                + b"\npassword=supersecret123\n"
+                + b"admin_password=alsosecret\n"
+                + b"see http://192.168.1.1/update for release notes\n"
+                + b"\x1f\x8b\x08\x00" + b"gzip-payload-here"
+                + b"A" * 4096)
+        with open(path, "wb") as fh:
+            fh.write(blob)
+
+        report = analyze_firmware(path, outdir=tmp)
+        assert not report.get("error"), report.get("error")
+        names = {h["name"] for h in report["magics"]}
+        assert {"IMG0", "uImage", "gzip"} <= names, names
+        print(f"  magics: {sorted(names)}")
+
+        kinds = {h["type"] for h in report["indicators"]}
+        assert "hardcoded-password-assign" in kinds, kinds
+        assert "url-hardcoded" in kinds, kinds
+        for hit in report["indicators"]:
+            assert "supersecret123" not in hit["preview"]
+            assert "alsosecret" not in hit["preview"]
+        print(f"  indicators: {sorted(kinds)} (values redacted)")
+
+        assert os.path.isfile(report["saved_txt"])
+        assert os.path.isfile(report["saved_json"])
+        txt = open(report["saved_txt"], encoding="utf-8").read()
+        assert "supersecret123" not in txt and "alsosecret" not in txt
+        assert report["sha256"] and report["size"] == len(blob)
+        print("  TXT+JSON saved, secrets absent from the text report")
+    print("✓ v2 firmware module works")
+
+
+def test_v2_scanner_bits():
+    """v2 scanner: broadened vendors, UDP probes fail safe, fw CLI works."""
+    print("\n=== Test 14: v2 scanner bits ===")
+
+    import tempfile
+    from bug_hunter import (VERSION, detect_vendor, dns_version_probe,
+                            main as hunter_main, snmp_sysdescr_probe)
+
+    assert VERSION.startswith("2.")
+    assert detect_vendor("ASUS RT-AC68U administration", "httpd") == "asus"
+    assert detect_vendor("RouterOS v7 dashboard MikroTik", None) == "mikrotik"
+    assert detect_vendor("LuCI - OpenWrt", "uhttpd") == "openwrt"
+    assert detect_vendor("UniFi Controller Ubiquiti", None) == "ubiquiti"
+    assert detect_vendor("Tenda AC10 tendawifi", None) == "tenda"
+    assert detect_vendor("MERCUSYS MW305R", None) == "mercusys"
+    print("  broadened vendor detection works")
+
+    # Closed localhost UDP ports must fail safe (None) instead of hanging.
+    assert snmp_sysdescr_probe("127.0.0.1", timeout=0.5) is None
+    assert dns_version_probe("127.0.0.1", timeout=0.5) is None
+    print("  UDP probes fail safe on closed ports")
+
+    with tempfile.TemporaryDirectory() as tmp:
+        path = os.path.join(tmp, "cli-test.bin")
+        with open(path, "wb") as fh:
+            fh.write(b"HDR0" + b"trx-header" + b"hsqs" + b"squashfs-root"
+                     + b"B" * 2048)
+        code = hunter_main(["--analyze-firmware", path, "--no-banner"])
+        assert code == 0, code
+        print("  --analyze-firmware CLI path works end-to-end")
+    print("✓ v2 scanner bits work")
+
+
 def main():
     """Run all tests."""
     print("\n" + "=" * 70)
@@ -507,6 +795,11 @@ def main():
         test_dnscfg_probe()
         test_identity_merge_and_drift()
         test_boa_401_field_shape()
+        test_v2_discovery_offline()
+        test_v2_auth_module()
+        test_v2_shell_module()
+        test_v2_firmware_module()
+        test_v2_scanner_bits()
 
         print("\n" + "=" * 70)
         print("  ✓ ALL TESTS PASSED")
