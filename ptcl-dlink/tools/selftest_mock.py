@@ -72,6 +72,10 @@ VERSION_PAGE = "Linux version 2.6.30 (root@ptclbuild) (gcc 4.3.3) #1 SMP\n"
 class Handler(http.server.BaseHTTPRequestHandler):
     server_version = "Conexant/1.0"
 
+    def version_string(self):
+        # exact banner, no "Python/x.y" suffix - micro_httpd_probe.py classifies on it
+        return self.server.banner
+
     def log_message(self, fmt, *args):  # quiet by default
         if self.server.verbose:
             super().log_message(fmt, *args)
@@ -139,6 +143,7 @@ class Server(http.server.ThreadingHTTPServer):
     daemon_threads = True
     verbose = False
     secure = False
+    banner = "Conexant/1.0"
 
 
 def main():
@@ -149,10 +154,15 @@ def main():
     ap.add_argument("-v", "--verbose", action="store_true")
     ap.add_argument("--secure", action="store_true",
                     help="simulate a PATCHED unit: wizard requires auth, getpage is restricted")
+    ap.add_argument("--server", default="Conexant/1.0",
+                    help="the Server: banner to send (e.g. 'thttpd/2.25b' or "
+                         "'mini_httpd/1.29') - used to validate micro_httpd_probe.py's "
+                         "banner classification offline")
     args = ap.parse_args()
 
     Server.verbose = args.verbose
     Server.secure = args.secure
+    Server.banner = args.server
     httpd = Server((args.bind, args.port), Handler)
     mode = "PATCHED / secure" if args.secure else "VULNERABLE"
     print(f"mock PTCL D-Link webproc on http://{args.bind}:{args.port}/  [{mode}]")

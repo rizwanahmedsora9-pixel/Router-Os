@@ -474,7 +474,13 @@ VENDOR_PATTERNS = {
             re.compile(r"Conexant", re.I),
         ],
         "server": [
-            re.compile(r"micro-httpd", re.I),
+            # The ACME-Labs family. Real banners use the underscore spelling
+            # ("micro_httpd") - the hyphenated form appears in some writeups,
+            # so both are matched.
+            re.compile(r"micro[-_]?httpd", re.I),
+            re.compile(r"thttpd", re.I),
+            re.compile(r"mini[-_]?httpd", re.I),
+            re.compile(r"conexant", re.I),
             re.compile(r"d-link", re.I),
         ],
     },
@@ -598,12 +604,16 @@ HARDWARE_RES = [
 ]
 
 
-def detect_vendor(response: Optional[HttpResponse], server_header: Optional[str]) -> str:
-    """Detect router vendor from response body and server header."""
-    text = ""
-    if response:
-        text = response.text
+def detect_vendor(text: str, server_header: Optional[str],
+                  webproc_reachable: bool = False) -> str:
+    """Detect router vendor from page text, server header, and probe signals.
 
+    `webproc_reachable` means GET /cgi-bin/webproc answered with anything but a
+    404. That CGI is the Conexant web stack's signature endpoint, but some
+    routers return 401 for every unknown path - so the bare signal is only
+    trusted when a corroborating banner (ACME httpd / Conexant / D-Link) is
+    also present.
+    """
     for vendor, config in VENDOR_PATTERNS.items():
         # Check body patterns
         for pat in config["patterns"]:
@@ -614,6 +624,11 @@ def detect_vendor(response: Optional[HttpResponse], server_header: Optional[str]
             for pat in config["server"]:
                 if pat.search(server_header):
                     return vendor
+
+    if (webproc_reachable and server_header
+            and re.search(r"micro[-_]?httpd|thttpd|mini[-_]?httpd"
+                          r"|conexant|d-link", server_header, re.I)):
+        return "dlink"
 
     return "generic"
 
@@ -750,12 +765,16 @@ def check_dlink_vulns(client: HttpClient, host: str, info: Dict) -> List[Dict]:
             })
 
     # --- Check 3: File Traversal via getpage ---
+    # Same proven logic as ptcl-dlink/tools/ptcl_check.py: a real /proc/version
+    # contains "Linux" (any spelling) and a bounced request will echo the
+    # webproc page back instead. The old strict `Linux x.y.z #` regex missed
+    # real /proc/version lines (the (gcc ...) parenthetical sits before the #).
     trav_resp = client.get(
         "/cgi-bin/webproc?getpage=/proc/version&errorpage=html/main.html"
         "&var:language=en_us&var:menu=setup&var:page=wizard"
     )
     if trav_resp and trav_resp.status == 200:
-        if re.search(r'[Ll]inux\s+\S+\s+\S+\s+#', trav_resp.text):
+        if "linux" in trav_resp.text.lower() and "var:menu=" not in trav_resp.text:
             findings.append({
                 "id": "DLINK-004",
                 "title": "Unauthenticated File Read via getpage Parameter",
@@ -821,29 +840,47 @@ def check_dlink_vulns(client: HttpClient, host: str, info: Dict) -> List[Dict]:
                 ],
             })
 
-    # --- Check 5: micro-httpd Server Exposure ---
-    if client.server_header and "micro-httpd" in client.server_header.lower():
+    # --- Check 5: ACME httpd front door (CVE-2014-4927, never patched) ---
+    # The real banner is the underscore spelling ("micro_httpd"); the hyphenated
+    # form appears in writeups. This check only FLAGS the banner - it never
+    # sends the long URI, because that is a DoS against your own device.
+    server = client.server_header or ""
+    acme = re.search(r"micro[-_]?httpd|thttpd|mini[-_]?httpd", server, re.I)
+    if acme:
+        name = acme.group(0)
         findings.append({
             "id": "DLINK-006",
-            "title": "Legacy micro-httpd Web Server",
-            "severity": SEV_MEDIUM,
-            "cve": "N/A (known weak component)",
+            "title": "ACME httpd front door — long-URI DoS (CVE-2014-4927, never patched)",
+            "severity": SEV_HIGH,
+            "cve": "CVE-2014-4927 (see also CVE-2010-1544, same server)",
             "description": (
-                "The router uses micro-httpd, a minimal HTTP server from the 1990s. "
-                "This server has known buffer-overflow and request-smuggling weaknesses "
-                "and lacks modern security features (TLS, security headers, rate limiting)."
+                f"Port 80 is fronted by ACME Labs '{name}', a ~200-line inetd-style "
+                "HTTP server whose last public build is August 2014. CVE-2014-4927 "
+                "(crash via a long URI in a GET request) explicitly names D-Link "
+                "DSL-2750U/DSL-2740U — the hardware class PTCL ships — and was never "
+                "patched; the project is dormant, so no fixed version exists. PTCL "
+                "ISP build strings (PT_*, K92_PTCL_*, GAN5.PT113A-*) appear in no "
+                "public affected-version list: untested, not clean. This scanner "
+                "does NOT send the long URI — that would be a DoS against your own "
+                "device."
             ),
             "url": f"http://{host}/",
             "impact": (
-                "The web server itself is a known attack surface. Combined with "
-                "the webproc bugs, this makes the device extremely fragile."
+                "Anyone who can reach port 80 can crash the admin UI (the whole "
+                "web stack dies until a power cycle). LAN-only = nuisance; "
+                "internet-reachable = remote DoS for free."
             ),
             "fix": (
-                "1. No patch available for micro-httpd on this firmware\n"
-                "2. Restrict management access to wired LAN only\n"
-                "3. Bridge the device and use modern routing hardware"
+                "1. Keep port 80 off the WAN — disable remote management; exposure is the only control\n"
+                "2. Optionally confirm it live on YOUR unit (accepts a possible admin-UI crash):\n"
+                f"     python3 ptcl-dlink/tools/micro_httpd_probe.py {host} --dos\n"
+                "3. Durable fix: bridge the unit and route with hardware you control"
             ),
-            "urls": [],
+            "urls": [
+                "https://nvd.nist.gov/vuln/detail/CVE-2014-4927",
+                "http://www.exploit-db.com/exploits/34102",
+                "https://github.com/advisories/GHSA-rfw9-259h-m9m6",
+            ],
         })
 
     return findings
@@ -1530,6 +1567,8 @@ def generate_text_report(network_info: Dict, fingerprint: Dict,
     lines.append("-" * 78)
     lines.append(f"  Detected Vendor    : {vendor.upper()}")
     lines.append(f"  Model              : {fingerprint.get('model', 'Unknown')}")
+    if fingerprint.get("model_note"):
+        lines.append(f"  Model (note)       : {fingerprint['model_note']}")
     lines.append(f"  Firmware           : {fingerprint.get('firmware', 'Unknown')}")
     lines.append(f"  Hardware Version   : {fingerprint.get('hardware_version', 'Unknown')}")
     lines.append(f"  HTTP Server        : {fingerprint.get('server_header', 'Unknown')}")
@@ -1766,16 +1805,34 @@ def run_scan(target_host: str, target_port: int = 80,
 
     base_resp = client.get("/", use_cookies=False)
     fingerprint = {"server_header": client.server_header, "http_status": None}
-
+    base_text = base_resp.text if base_resp else ""
     if base_resp:
         fingerprint["http_status"] = base_resp.status
-        vendor = detect_vendor(base_resp, client.server_header)
-        dev_info = extract_info(base_resp.text, vendor)
-        fingerprint.update(dev_info)
-    else:
-        vendor = "generic"
-        if force_vendor:
-            vendor = force_vendor.lower()
+
+    # The D-Link/Conexant stack often answers "/" with a bare 401 and no
+    # vendor strings. Its signature endpoint is /cgi-bin/webproc - probe it
+    # with a NEUTRAL page (login is demanded, no session is minted) so
+    # detection works on 401-style UIs too. One extra GET on every other
+    # vendor, which simply 404s.
+    wp_path = ("/cgi-bin/webproc?getpage=html/index.html&errorpage=html/index.html"
+               "&var:language=en_us&var:menu=status&var:page=deviceinfo")
+    wp_resp = client.get(wp_path)
+    wp_text = wp_resp.text if wp_resp else ""
+    wp_reachable = wp_resp is not None and wp_resp.status != 404
+
+    text = base_text + "\n" + wp_text
+    vendor = detect_vendor(text, client.server_header,
+                           webproc_reachable=wp_reachable)
+    fingerprint.update(extract_info(text, vendor))
+
+    if vendor == "dlink" and not fingerprint.get("model"):
+        fingerprint["model"] = "DSL-27xxU class (inferred)"
+        fingerprint["model_note"] = (
+            "no model string visible in the UI; inferred from the "
+            "/cgi-bin/webproc CGI + ACME httpd banner (the Conexant DSL "
+            "stack PTCL ships). Confirm the exact model/HW rev on the unit's "
+            "label."
+        )
 
     if force_vendor:
         vendor = force_vendor.lower()

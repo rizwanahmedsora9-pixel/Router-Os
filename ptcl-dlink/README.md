@@ -131,6 +131,12 @@ tool for checking the box in your own house, not someone else's.
 
 **Verdicts:** `VULNERABLE` · `PARTIAL` · `NOT VULNERABLE` · `UNREACHABLE`
 
+The **other half of port 80** — the ACME Labs `micro_httpd` family that fronts the
+static layer in front of `webproc` — is covered by `tools/micro_httpd_probe.py`:
+fingerprint the `Server:` banner, map it to the family's CVE table, and (opt-in
+`--dos`) run the CVE-2014-4927 long-URI probe with an automatic health check.
+Full write-up: [`research/micro-httpd-report.md`](research/micro-httpd-report.md).
+
 ### Proving the tool works without touching hardware
 
 `tools/selftest_mock.py` is a local stand-in that imitates a PTCL D-Link webproc: it serves the
@@ -173,8 +179,9 @@ ptcl-dlink/
 ├── notes/
 │   └── auth-bypass.md         technical writeup: the two mechanisms, evidence, why it persists
 ├── tools/
-│   ├── ptcl_check.py          read-only LAN detector  (stdlib only)
-│   ├── selftest_mock.py       local mock router, so the detector can be tested offline
+│   ├── ptcl_check.py          read-only LAN detector for the webproc bypass  (stdlib only)
+│   ├── micro_httpd_probe.py   httpd front-door fingerprint + opt-in long-URI probe
+│   ├── selftest_mock.py       local mock router, so both detectors can be tested offline
 │   └── README.md              tool reference
 └── research/
     └── findings.md            sourced one-page summary + links
