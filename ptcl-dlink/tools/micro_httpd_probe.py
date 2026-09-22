@@ -336,9 +336,19 @@ def dos_probe(c: Client) -> dict:
 BAR = "-" * 68
 
 
+def is_boa_banner(banner: str) -> bool:
+    """True for a Boa Server header. CVE-2014-4927 does not apply to Boa."""
+    return bool(re.search(r"\bBoa/", banner or "", re.I))
+
+
 def decide(fp: dict, dos: dict | None) -> str:
     if not fp.get("reachable"):
         return "UNREACHABLE"
+
+    raw_banner = (fp.get("banner") or {}).get("raw") or ""
+    if is_boa_banner(raw_banner):
+        return ("NOT ACME: Boa banner — CVE-2014-4927 does not apply; "
+                "--dos was not run and must not be used on this server")
 
     if dos and dos.get("down"):
         return "EXPOSED: DoS confirmed (admin UI stopped answering after the long-URI probe)"
@@ -406,8 +416,13 @@ def report(fp: dict, dos: dict | None) -> None:
         print("     applies                  : none identified from the banner")
         if b["family"] == "unknown" and b["raw"]:
             print(f"     note                     : '{b['raw']}' is not an ACME-family banner.")
-            print("                               Cross-reference it on NVD manually if it")
-            print("                               names a server + version.")
+            if is_boa_banner(b["raw"]):
+                print("                               This is Boa, not micro_httpd. Do NOT re-run")
+                print("                               with --dos — CVE-2014-4927 does not apply,")
+                print("                               and a long URI is not a Boa test.")
+            else:
+                print("                               Cross-reference it on NVD manually if it")
+                print("                               names a server + version.")
 
     if dos:
         print()
@@ -432,11 +447,17 @@ def report(fp: dict, dos: dict | None) -> None:
         print("  remote/WAN management so only your LAN can reach port 80, and")
         print("  re-run after any change. See ../research/micro-httpd-report.md")
         print("  section 8 for the full order of actions.")
+    elif fp["verdict"].startswith("NOT ACME"):
+        print("  The Server banner is Boa, not ACME micro_httpd / thttpd / mini_httpd.")
+        print("  CVE-2014-4927's long-URI probe does not apply. --dos was not sent.")
+        print("  Use Bug Hunter for the Boa banner finding (CVE-2022-45956 is named")
+        print("  from the banner only — this tool does not send a HEAD auth bypass).")
     elif fp["verdict"].startswith("BANNER UNKNOWN"):
         print("  The banner did not identify an ACME-family server. This is NOT a")
         print("  clean bill of health - it only means the banner cannot be mapped")
         print("  to the CVE table. If you want the direct test, re-run with --dos")
-        print("  (accepting that it may reboot the admin UI).")
+        print("  (accepting that it may reboot the admin UI). Do not do that when")
+        print("  the banner says Boa.")
     else:
         print("  No exposure identified from what this tool can see. Re-run after")
         print("  any firmware change; the PTCL build strings are absent from the")
@@ -472,14 +493,6 @@ def main(argv=None) -> int:
         return 2
     print(addr)
 
-    if args.dos:
-        print()
-        print("  WARNING: --dos will send GET requests with URIs up to 64000 chars.")
-        print("  On an unpatched build that CAN CRASH or REBOOT the router's admin")
-        print("  UI (that is exactly what CVE-2014-4927 does). Do it last, on your")
-        print("  own device, and be ready to power-cycle the router.")
-        print()
-
     try:
         result = fingerprint(addr, args.port, args.timeout, args.verbose)
     except KeyboardInterrupt:
@@ -487,7 +500,19 @@ def main(argv=None) -> int:
         return 130
 
     dos = None
-    if args.dos and result.get("reachable"):
+    banner = ((result.get("banner") or {}).get("raw") or "")
+    if args.dos and result.get("reachable") and is_boa_banner(banner):
+        print()
+        print("  --dos refused: Server banner is Boa, not ACME micro_httpd.")
+        print("  CVE-2014-4927 does not apply. No long URI was sent.")
+        result["dos_refused"] = "boa banner is not the ACME long-URI bug"
+    elif args.dos and result.get("reachable"):
+        print()
+        print("  WARNING: --dos will send GET requests with URIs up to 64000 chars.")
+        print("  On an unpatched ACME build that CAN CRASH or REBOOT the router's")
+        print("  admin UI (that is exactly what CVE-2014-4927 does). Do it last,")
+        print("  on your own device, and be ready to power-cycle the router.")
+        print()
         dos = dos_probe(Client(addr, args.port, args.timeout, args.verbose))
         result["dos"] = dos
 

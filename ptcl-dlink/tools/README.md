@@ -99,7 +99,7 @@ python3 micro_httpd_probe.py 192.168.10.1 --dos              # LAST: long-URI Do
 | `--port N` | management port, default `80` |
 | `--timeout S` | per-request timeout, default `6.0` |
 | `--json PATH` | also write the raw result as JSON |
-| `--dos` | **also** run the staged long-URI probe (CVE-2014-4927 shape). Off by default because it can crash the admin UI on an unpatched build |
+| `--dos` | **also** run the staged long-URI probe (CVE-2014-4927 shape). Off by default because it can crash the admin UI on an unpatched ACME build. Refused, and not sent, when the banner is Boa |
 | `-v`, `--verbose` | log every request |
 
 **Exit codes:** `0` = not exposed / inconclusive · `1` = **exposed** (a known-vulnerable
@@ -124,6 +124,9 @@ ACME banner, or the DoS probe took the UI down) · `2` = refused, the target is 
   Exposure is the only real control: keep port 80 off the WAN.
 * **`EXPOSED: DoS confirmed`** — the long-URI probe stopped the UI answering. Power-cycle
   the router, then re-run to confirm it is back.
+* **`NOT ACME` / Boa** — a `Boa/` banner is not micro_httpd. `--dos` is refused
+  and must not be used; CVE-2014-4927 does not apply. Bug Hunter names
+  CVE-2022-45956 from the banner only (no HEAD bypass is sent).
 * **`BANNER UNKNOWN`** — the banner is not an ACME-family string. That is *inconclusive*,
   not clean: the banner simply cannot be mapped to the table. Only `--dos` tests that
   question directly.

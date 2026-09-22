@@ -13,7 +13,7 @@ and step-by-step fix/remediation methods.
 > `demo_scan.py` / `test_scanner.py` are the playground — mock routers on
 > localhost for learning and testing only. Nothing in them touches hardware.
 
-## Physical Device Audit (v1.1 — the primary use)
+## Physical Device Audit (v1.2 — the primary use)
 
 Feed Bug Hunter the sticker off the bottom of your unit and it anchors the audit
 to the physical box, cross-checks the sticker against what the device reports
@@ -50,11 +50,11 @@ becomes the baseline for the unit being audited.
 | **Sticker identity cross-check** | `--model/--firmware/--hw/--serial/--mac` vs. the unit's self-report; mismatches flagged |
 | **Auto-detect gateway** | Finds your router automatically — works on Windows, Linux, macOS, Termux |
 | **Vendor fingerprinting** | Identifies D-Link, ZTE, TP-Link, Huawei, Netgear, Linksys, FiberHome |
-| **Port scanning** | Checks common router services (HTTP, SSH, Telnet, FTP, SNMP, UPnP, TR-069, ADB) |
+| **Port scanning** | Checks common router services (HTTP, HTTPS, SSH, Telnet, FTP, SNMP, UPnP, TR-069, TCP 5555) |
 | **D-Link checks** | webproc auth bypass, Wi-Fi key leak, file traversal, persistent session, ACME httpd banner (CVE-2014-4927), `dnscfg.cgi` exposure (CVE-2026-0625) |
 | **ZTE checks** | UPnP WLAN key disclosure (CVE-2018-7357/7358), CSRF, info leaks |
 | **TP-Link checks** | rom-0 config disclosure, command injection, credential disclosure, RomPager |
-| **Generic checks** | Telnet, FTP, SNMP, UPnP, TR-069, ADB, missing HTTPS, info leakage |
+| **Generic checks** | Telnet, FTP, SNMP, UPnP, TR-069, Boa banner, TCP 5555 (ADB only if the banner says so), missing HTTPS, Basic-on-HTTP |
 | **Text report** | Detailed `.txt` report with CVE links, descriptions, impacts, and fixes |
 | **JSON report** | Machine-readable `.json` for automation and integration |
 | **Zero dependencies** | Python standard library only — runs anywhere Python 3.8+ exists |
@@ -68,7 +68,7 @@ becomes the baseline for the unit being audited.
 | **Windows** | ✅ | Uses `ipconfig` for gateway detection |
 | **Linux** | ✅ | Uses `ip route` / `route` |
 | **macOS** | ✅ | Uses `route -n get default` |
-| **Termux (Android)** | ✅ | Uses `ip route`, same as Linux |
+| **Termux (Android)** | ✅ | `platform.system()` is often `Android`; treated as Termux and uses `ip route` |
 | **FreeBSD** | ✅ | Uses `route` |
 | **Raspberry Pi** | ✅ | Same as Linux |
 
@@ -115,10 +115,12 @@ python bug_hunter.py -v
 > **Detection note:** the ACME banner on real units uses the underscore spelling
 > (`micro_httpd`), and these units often answer `/` with a bare `401` and no
 > vendor strings. Bug Hunter matches the banner (both spellings) and probes
-> `/cgi-bin/webproc` with a neutral page, so the PTCL DSL class is detected
-> from the field-scan shape, not only from a full login page. If the UI does
-> not self-identify at all, a sticker `--model DSL-…` also implies D-Link and
-> runs the same checks.
+> `/cgi-bin/webproc` with a neutral page. A 401/404 body that only echoes that
+> probe URL is **not** webproc evidence, and a `Boa/` banner is **not** ACME.
+> Boa + no model is reported as an unidentified Boa CPE. A `WWW-Authenticate`
+> realm (and a sticker `--model DSL-…`) can still name the unit. If the vendor
+> checks run and only see 401/403/404, the report says the bypass was **not
+> demonstrated** — that is inconclusive, not clean.
 
 > **dnscfg.cgi probe is reachability-only.** CVE-2026-0625 (CVSS 9.3, exploited
 > since 2025-11-27; confirmed on DSL-2740R / 2640B / 2780B / 526B) is a command
@@ -163,7 +165,10 @@ python bug_hunter.py -v
 | HTTP only (no HTTPS) | **MEDIUM** | Plaintext admin credentials |
 | SSH with defaults | **LOW** | Potential weak credentials |
 | Server header leak | **INFO** | Server software disclosure |
-| ADB debug port | **HIGH** | Full shell access |
+| ADB banner on TCP 5555 | **HIGH** | Confirmed only if a passive read shows ADB. No handshake is sent |
+| TCP 5555, no ADB banner | **MEDIUM** | Open listener, not a shell |
+| Boa/0.94.13–0.94.14 banner | **HIGH** | Abandoned httpd; CVE-2022-45956 named, not probed |
+| HTTP Basic on cleartext | **MEDIUM** | Admin password is only Base64 on the LAN |
 | No login prompt | **HIGH** | Possible unauthenticated admin access |
 
 ## Report Format
@@ -172,7 +177,7 @@ python bug_hunter.py -v
 ```
 ==============================================================================
   BUG HUNTER — ROUTER VULNERABILITY SCAN REPORT
-  Version 1.1.0
+  Version 1.2.0
 ==============================================================================
 
   Scan Date     : 2026-09-21 14:30:00 UTC
@@ -207,7 +212,7 @@ python bug_hunter.py -v
 ```json
 {
   "tool": "Bug Hunter",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "timestamp": "2026-09-21T14:30:00+00:00",
   "network": { "gateway": "192.168.10.1", ... },
   "device": { "vendor": "dlink", "model": "DSL-2750U", ... },
@@ -230,7 +235,7 @@ python bug_hunter.py -v
 
 | Code | Meaning |
 |---|---|
-| `0` | No vulnerabilities found |
+| `0` | No findings from the checks that ran (not a guarantee) |
 | `1` | Minor findings (LOW/INFO) |
 | `2` | High-severity findings |
 | `3` | Critical-severity findings |
@@ -246,7 +251,8 @@ This tool is designed to be **safe by construction**:
    but never displayed, decoded, or saved in reports
 4. **No exploitation** — Does not run exploit code, brute-force, or send payloads;
    the `dnscfg.cgi` CVE-2026-0625 probe is a bare reachability GET with no
-   injection parameters
+   injection parameters. A Boa banner is recorded only — no HEAD auth-bypass
+   and no path traversal. TCP 5555 is read passively; no ADB handshake is sent
 5. **Audit data stays local** — `audits/` is git-ignored; device reports are never
    committed to the repository
 6. **No installation** — Single Python file, standard library only, no pip packages

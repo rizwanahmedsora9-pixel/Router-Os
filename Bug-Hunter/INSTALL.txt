@@ -157,8 +157,11 @@ Solution: The router's HTTP port might be different. Try:
           python3 bug_hunter.py 192.168.1.1 --port 8080
 
 Problem: No vulnerabilities found
-Solution: This is GOOD! Your router passed the checks.
-          Still, keep firmware updated and follow security best practices.
+Solution: Exit code 0 means the checks that ran did not match a known
+          issue. It is not a guarantee. An INFO finding such as
+          "bypass not demonstrated" means the probe was rejected, not
+          that the bug is absent. Read the model note: a Boa banner is
+          not an ACME/D-Link inference. Keep firmware updated anyway.
 
 
 REPORT FORMAT
@@ -180,7 +183,7 @@ JSON Report (.json):
 EXIT CODES
 ----------
 
-  0 = No vulnerabilities found (clean)
+  0 = No findings from the checks that ran (not a guarantee the unit is clean)
   1 = Minor findings (LOW/INFO severity)
   2 = High-severity findings
   3 = Critical-severity findings

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Bug Hunter v1.1 — Cross-Platform Router Vulnerability Scanner
+Bug Hunter v1.2 — Cross-Platform Router Vulnerability Scanner
 =============================================================
 
 Detects connected router/gateway on WiFi/LAN and scans for known vulnerabilities,
@@ -37,6 +37,10 @@ SAFETY PROPERTIES:
   * Read-only fingerprinting — does not brute-force or exploit
   * dnscfg.cgi probe (CVE-2026-0625) is reachability-only: a bare GET,
     no DNS parameters, no injection payload is ever sent
+  * A Boa/0.94.x banner is recorded as exposure only. No HEAD auth-bypass
+    and no path-traversal request is ever sent
+  * TCP 5555 is not reported as a confirmed ADB shell unless a service
+    banner says so. No ADB handshake is sent
 
 USAGE:
   python bug_hunter.py                    # auto-detect gateway, scan, report
@@ -60,6 +64,7 @@ import os
 import platform
 import re
 import socket
+import ssl
 import struct
 import subprocess
 import sys
@@ -72,7 +77,7 @@ from typing import Any, Dict, List, Optional, Tuple
 # Version & Banner
 # --------------------------------------------------------------------------- #
 
-VERSION = "1.1.0"
+VERSION = "1.2.0"
 BANNER = r"""
  ____              _   _       _   _             _
 | __ )  ___  __ _ | | | |_   _| |__ | |_ ___  _ __| |_
@@ -121,7 +126,9 @@ COMMON_PORTS = [
     (52869, "UPnP-WLAN"),
     (34567, "DDNS"),
     (7547, "TR-069/CWMP"),
-    (5555, "ADB Debug"),
+    # 5555 is ADB on some Android boxes and an unrelated debug/management
+    # port on many DSL CPEs. The label stays neutral; the finding decides.
+    (5555, "TCP 5555"),
 ]
 
 # Severity levels
@@ -135,22 +142,43 @@ SEV_INFO = "INFO"
 # Platform Detection
 # --------------------------------------------------------------------------- #
 
+def describe_platform(system: str, machine: str,
+                      env: Optional[Dict[str, str]] = None,
+                      android_fs: bool = False) -> str:
+    """Format a platform string.
+
+    Termux's Python often reports ``platform.system() == 'Android'`` rather
+    than ``'Linux'``. A field run on 2026-09-22 printed ``android (aarch64)``
+    and then skipped the Linux ``ip route`` lookup. Both the label and the
+    route lookup treat Android as Termux.
+    """
+    system_l = (system or "").lower()
+    machine_l = (machine or "unknown").lower()
+    env = os.environ if env is None else env
+    if system_l in ("linux", "android"):
+        if (system_l == "android" or android_fs
+                or "ANDROID_ROOT" in env or "TERMUX_VERSION" in env):
+            return f"Termux/Android ({machine_l})"
+        return f"Linux ({machine_l})"
+    if system_l == "freebsd":
+        return f"FreeBSD ({machine_l})"
+    return f"{system_l or 'unknown'} ({machine_l})"
+
+
 def detect_platform() -> str:
     """Return a human-readable platform string."""
-    system = platform.system().lower()
+    system = platform.system()
+    system_l = system.lower()
     machine = platform.machine().lower()
-    if system == "linux":
-        # Check for Termux/Android
-        if "ANDROID_ROOT" in os.environ or os.path.isdir("/data/data"):
-            return f"Termux/Android ({machine})"
-        return f"Linux ({machine})"
-    elif system == "windows":
+    if system_l == "windows":
         return f"Windows {platform.version()}"
-    elif system == "darwin":
+    if system_l == "darwin":
         return f"macOS {platform.mac_ver()[0]} ({machine})"
-    elif system == "freebsd":
-        return f"FreeBSD ({machine})"
-    return f"{system} ({machine})"
+    return describe_platform(
+        system, machine,
+        env=os.environ,
+        android_fs=os.path.isdir("/data/data"),
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -161,7 +189,10 @@ def get_default_gateway() -> Optional[str]:
     """Detect the default gateway IP across platforms."""
     system = platform.system().lower()
 
-    if system == "linux" or system == "darwin" or system == "freebsd":
+    # Termux/Android Python reports system == "android", but `ip route` is
+    # the same tool. Falling through here used to skip the route table and
+    # guess "<local-subnet>.1" instead.
+    if system in ("linux", "android", "darwin", "freebsd"):
         try:
             output = subprocess.check_output(
                 ["ip", "route", "show", "default"],
@@ -207,7 +238,7 @@ def get_default_gateway() -> Optional[str]:
                 ["ipconfig"],
                 stderr=subprocess.DEVNULL,
                 timeout=5
-            ).decode("utf-8", "replace", errors="replace")
+            ).decode("utf-8", errors="replace")
             match = re.search(r"Default Gateway[.:]\s*(\S+)", output, re.I)
             if match:
                 return match.group(1)
@@ -220,7 +251,7 @@ def get_default_gateway() -> Optional[str]:
                 ["netstat", "-r"],
                 stderr=subprocess.DEVNULL,
                 timeout=5
-            ).decode("utf-8", "replace", errors="replace")
+            ).decode("utf-8", errors="replace")
             match = re.search(r"0\.0\.0\.0\s+0\.0\.0\.0\s+(\S+)", output)
             if match:
                 return match.group(1)
@@ -371,24 +402,70 @@ class HttpResponse:
         return jar
 
 
+def router_ssl_context() -> "ssl.SSLContext":
+    """TLS context for fingerprinting a router that ships a self-signed cert.
+
+    Hostname and certificate are not verified — CPE admin ports almost never
+    present a publicly trusted cert. No credentials are attached to the context.
+    """
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+    ctx.check_hostname = False
+    ctx.verify_mode = ssl.CERT_NONE
+    try:
+        ctx.minimum_version = ssl.TLSVersion.TLSv1
+    except (AttributeError, ValueError):
+        # OpenSSL build has TLS 1.0 compiled out. Default minimum still works
+        # for anything modern; ancient CPE will just fail the fingerprint.
+        pass
+    return ctx
+
+
 class HttpClient:
     def __init__(self, host: str, port: int = 80, timeout: float = 8.0,
-                 verbose: bool = False):
+                 verbose: bool = False, tls: bool = False):
         self.host = host
         self.port = port
         self.timeout = timeout
         self.verbose = verbose
+        self.tls = tls
         self.cookies: Dict[str, str] = {}
         self.server_header: Optional[str] = None
+        self.www_authenticate: Optional[str] = None
         self.response_body_max = 64 * 1024  # 64KB max body read
+        self._ssl_context = router_ssl_context() if tls else None
+
+    def origin(self) -> str:
+        """Scheme/host/port for report URLs. Default ports are omitted."""
+        scheme = "https" if self.tls else "http"
+        if (self.tls and self.port == 443) or (not self.tls and self.port == 80):
+            return f"{scheme}://{self.host}"
+        return f"{scheme}://{self.host}:{self.port}"
+
+    def _connect(self):
+        if self.tls:
+            return http.client.HTTPSConnection(
+                self.host, self.port, timeout=self.timeout,
+                context=self._ssl_context,
+            )
+        return http.client.HTTPConnection(self.host, self.port,
+                                           timeout=self.timeout)
+
+    def _note_headers(self, resp: HttpResponse) -> None:
+        if not self.server_header:
+            server = resp.header("Server")
+            if server:
+                self.server_header = server
+        if not self.www_authenticate:
+            auth = resp.header("WWW-Authenticate")
+            if auth:
+                self.www_authenticate = auth
 
     def get(self, path: str, use_cookies: bool = True,
             extra_headers: Optional[Dict] = None) -> Optional[HttpResponse]:
         """Send a GET request. Returns None on connection failure."""
         conn = None
         try:
-            conn = http.client.HTTPConnection(self.host, self.port,
-                                               timeout=self.timeout)
+            conn = self._connect()
             headers = {
                 "User-Agent": f"BugHunter/{VERSION} (read-only LAN audit)",
                 "Accept": "text/html,application/xhtml+xml,*/*",
@@ -401,7 +478,7 @@ class HttpClient:
                 headers.update(extra_headers)
 
             if self.verbose:
-                print(f"    -> GET http://{self.host}:{self.port}{path}")
+                print(f"    -> GET {self.origin()}{path}")
 
             conn.request("GET", path, headers=headers)
             raw = conn.getresponse()
@@ -414,6 +491,7 @@ class HttpClient:
                         break
 
             resp = HttpResponse(raw.status, raw.getheaders(), body)
+            self._note_headers(resp)
             # Collect cookies
             new_cookies = resp.set_cookies()
             if new_cookies:
@@ -431,11 +509,15 @@ class HttpClient:
                     pass
 
     def head(self, path: str) -> Optional[HttpResponse]:
-        """Send a HEAD request."""
+        """Send a HEAD request.
+
+        Not used to test Boa CVE-2022-45956. That CVE is a Basic-auth bypass
+        on HEAD; sending it against a protected path would be the bypass.
+        The only caller is the TP-Link ``/rom-0`` existence check.
+        """
         conn = None
         try:
-            conn = http.client.HTTPConnection(self.host, self.port,
-                                               timeout=self.timeout)
+            conn = self._connect()
             headers = {
                 "User-Agent": f"BugHunter/{VERSION} (read-only LAN audit)",
                 "Accept": "*/*",
@@ -478,6 +560,372 @@ LOGIN_FORM_RE = re.compile(
 
 def looks_like_login(text: str) -> bool:
     return bool(LOGIN_FORM_RE.search(text))
+
+
+
+# Neutral device-info request. Login is demanded; no wizard session is minted.
+NEUTRAL_WEBPROC = (
+    "/cgi-bin/webproc?getpage=html/index.html&errorpage=html/index.html"
+    "&var:language=en_us&var:menu=status&var:page=deviceinfo"
+)
+
+ACME_BANNER_RE = re.compile(r"micro[-_]?httpd|thttpd|mini[-_]?httpd", re.I)
+# Group 1 is the version when the banner is "Boa/0.94.13".
+BOA_BANNER_RE = re.compile(r"\bBoa(?:/([0-9][0-9A-Za-z.]*))?", re.I)
+AUTH_REALM_RE = re.compile(
+    r"""realm\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s,]+))""",
+    re.I,
+)
+
+
+def parse_www_authenticate(header: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
+    """Split a WWW-Authenticate header into (scheme, realm). No credentials."""
+    if not header or not str(header).strip():
+        return None, None
+    raw = str(header).strip()
+    scheme = raw.split(None, 1)[0]
+    match = AUTH_REALM_RE.search(raw)
+    realm = None
+    if match:
+        realm = next((group for group in match.groups() if group), None)
+    return scheme, realm
+
+
+def strip_probe_echo(text: str, paths: List[str]) -> str:
+    """Remove this scanner's own request URLs from an error page.
+
+    Boa and many tiny httpds echo the request line into a 401/404 body.
+    That echo contains ``webproc`` because we asked for it — it is not
+    evidence the CGI exists.
+    """
+    cleaned = text or ""
+    for path in paths:
+        if not path:
+            continue
+        cleaned = cleaned.replace(path, " ")
+        cleaned = cleaned.replace(path.replace("&", "&amp;"), " ")
+    return cleaned
+
+
+def response_signal(resp: Optional["HttpResponse"], path: str) -> str:
+    """Body text that is safe to feed to vendor detection."""
+    if resp is None:
+        return ""
+    raw = resp.text or ""
+    cleaned = strip_probe_echo(raw, [path])
+    # A stock reject that only echoed the probe is not a vendor page.
+    if resp.status in (400, 401, 403, 404, 500, 501) and not looks_like_login(raw):
+        cleaned = re.sub(r"/cgi-bin/webproc|\bwebproc\b", " ", cleaned, flags=re.I)
+    return cleaned
+
+
+def webproc_evidence_from(resp: Optional["HttpResponse"], path: str) -> bool:
+    """True only when /cgi-bin/webproc looks like the Conexant CGI.
+
+    A 401/403/404 whose body is a stock error page — or that body with the
+    probe URL removed — is not evidence. A login form, a 200 page, or a
+    residual ``webproc`` / ``:sessionid`` / ``Conexant`` string is.
+    """
+    if resp is None or resp.status == 404:
+        return False
+    raw = resp.text or ""
+    if resp.status in (400, 401, 403, 500, 501) and not looks_like_login(raw):
+        return False
+    residual = strip_probe_echo(raw, [path])
+    if re.search(r"\bwebproc\b|conexant|:sessionid", residual, re.I):
+        return True
+    if (resp.status == 200 and "not found" not in residual.lower()
+            and len(residual.strip()) > 80):
+        return True
+    return False
+
+
+def classify_http_identity(base_resp: Optional["HttpResponse"],
+                           wp_resp: Optional["HttpResponse"],
+                           wp_path: str,
+                           server_header: Optional[str]) -> Dict[str, Any]:
+    """Vendor + auth facts from one origin, with probe-echo stripped."""
+    scheme = realm = None
+    for resp in (base_resp, wp_resp):
+        if resp is None:
+            continue
+        got_scheme, got_realm = parse_www_authenticate(
+            resp.header("WWW-Authenticate"))
+        if got_scheme and not scheme:
+            scheme = got_scheme
+        if got_realm and not realm:
+            realm = got_realm
+    evidence = (webproc_evidence_from(wp_resp, wp_path)
+                or webproc_evidence_from(base_resp, "/"))
+    text = (response_signal(base_resp, "/") + "\n"
+            + response_signal(wp_resp, wp_path))
+    if realm:
+        # Realm is the one vendor string a 401 page is allowed to contribute.
+        text += "\n" + realm
+    vendor = detect_vendor(text, server_header, webproc_reachable=evidence)
+    return {
+        "vendor": vendor,
+        "text": text,
+        "webproc_evidence": evidence,
+        "auth_scheme": scheme,
+        "auth_realm": realm,
+        "http_status": base_resp.status if base_resp else None,
+    }
+
+
+def annotate_missing_model(fingerprint: Dict, vendor: str) -> None:
+    """Fill a model note without inventing an ACME/D-Link stack.
+
+    The 2026-09-22 field scan printed "D-Link DSL-series (inferred)" and a
+    note about /cgi-bin/webproc + ACME httpd while the Server banner was
+    Boa/0.94.13 and the body was a 401. That inference is only valid when
+    both the CGI and the ACME banner were actually seen.
+    """
+    if fingerprint.get("model"):
+        return
+    server = fingerprint.get("server_header") or ""
+    webproc = bool(fingerprint.get("webproc_evidence"))
+    if vendor == "dlink" and ACME_BANNER_RE.search(server) and webproc:
+        fingerprint["model"] = "D-Link DSL-series (inferred)"
+        fingerprint["model_note"] = (
+            "no model string visible in the UI; inferred from a real "
+            "/cgi-bin/webproc response plus an ACME httpd banner (the "
+            "Conexant DSL stack some PTCL D-Link units ship with). Pass "
+            "--model/--firmware/--hw from the sticker to anchor the audit."
+        )
+        return
+    if vendor == "dlink" and webproc:
+        fingerprint["model"] = "D-Link/Conexant webproc (inferred)"
+        fingerprint["model_note"] = (
+            "webproc answered, but the UI showed no model string and the "
+            f"Server banner is '{server or 'absent'}' — not ACME micro_httpd. "
+            "Pass --model/--firmware/--hw from the sticker."
+        )
+        return
+    if vendor == "dlink":
+        fingerprint["model_note"] = (
+            "vendor matched (page text or auth realm) but no model string "
+            "was visible. Pass --model from the sticker."
+        )
+        return
+    if BOA_BANNER_RE.search(server):
+        fingerprint["model"] = "unidentified Boa-fronted CPE"
+        fingerprint["model_note"] = (
+            "Server banner is Boa, not the Conexant/ACME stack. A 401/404 "
+            "page that mentions /cgi-bin/webproc is this scanner's own probe "
+            "URL echoed by the error page — not proof of the D-Link webproc "
+            "CGI. Read the sticker (or the WWW-Authenticate realm) and re-run "
+            "with --model/--firmware/--hw."
+        )
+
+
+def boa_version_in_cve_range(version: Optional[str]) -> bool:
+    """CVE-2022-45956 names Boa 0.94.13 through 0.94.14, not every Boa build."""
+    if not version:
+        return False
+    match = re.match(r"(\d+)\.(\d+)\.(\d+)", version)
+    if not match:
+        return False
+    major, minor, patch = (int(match.group(1)), int(match.group(2)),
+                           int(match.group(3)))
+    return (major, minor) == (0, 94) and 13 <= patch <= 14
+
+
+def boa_banner_finding(host: str, banner: str) -> Dict[str, Any]:
+    """Banner-only Boa finding. Does not send a HEAD bypass or a ../ request.
+
+    CVE-2017-9833 is disputed and scoped to an integrator CGI
+    (/cgi-bin/wapopen FILECAMERA), not the Boa binary. It is named so the
+    report does not treat a Boa banner as that bug.
+    """
+    match = BOA_BANNER_RE.search(banner or "")
+    version = match.group(1) if match and match.group(1) else None
+    in_range = bool(version) and boa_version_in_cve_range(version)
+    if in_range:
+        cve = "CVE-2022-45956 (banner match, not live-confirmed)"
+        cvss = "5.3 (CVE); the binary itself has had no upstream release since 2005"
+        extra = (
+            "CVE-2022-45956 names Boa 0.94.13 through 0.94.14: Basic "
+            "authentication is not applied to HEAD. This scanner does not "
+            "send that request — doing so would be the bypass. The finding "
+            "is the banner, plus the fact that upstream stopped in 2005."
+        )
+    else:
+        cve = "abandoned Boa httpd (banner match)"
+        cvss = None
+        extra = (
+            "The version in the banner is outside the CVE-2022-45956 range "
+            "or could not be parsed, so that CVE is not asserted. The "
+            "project is still abandoned (last upstream release, 2005)."
+        )
+    finding: Dict[str, Any] = {
+        "id": "GEN-011",
+        "title": "Abandoned Boa web server on the admin port",
+        "severity": SEV_HIGH if in_range else SEV_MEDIUM,
+        "cve": cve,
+        "description": (
+            f"The HTTP Server banner is '{banner}'. Boa's last upstream "
+            "release was in 2005; this binary will not be patched. "
+            + extra + " "
+            "CVE-2017-9833 is often cited next to Boa banners, but NVD marks "
+            "it disputed and attributes it to an integrator CGI, not the Boa "
+            "binary — a banner alone does not prove that bug. Model-specific "
+            "CVEs on images that embed this banner can only be matched once "
+            "the sticker model is known."
+        ),
+        "url": f"http://{host}/",
+        "impact": (
+            "An unmaintained admin front door. Internet scanners key off this "
+            "banner. If management is reachable from the WAN, the box stays "
+            "on those lists. LAN-only exposure is smaller, but there is no "
+            "Boa patch to apply."
+        ),
+        "fix": (
+            "1. Disable remote/WAN management so ports 80 and 443 are not internet-reachable\n"
+            "2. Read model and firmware off the sticker and re-run with --model/--firmware/--hw\n"
+            "3. Do not expect a Boa update — the project is dead\n"
+            "4. Durable fix: bridge the ISP unit and route with hardware you control\n"
+            "5. Rotate the admin password; treat the management plane as old"
+        ),
+        "urls": [
+            "https://nvd.nist.gov/vuln/detail/CVE-2022-45956",
+            "https://www.microsoft.com/en-us/security/blog/2022/11/22/vulnerable-sdk-components-lead-to-supply-chain-risks-in-iot-and-ot-environments/",
+        ],
+    }
+    if cvss:
+        finding["cvss"] = cvss
+    return finding
+
+
+def classify_tcp_5555(banner: bytes) -> str:
+    """Classify a passive read of TCP 5555.
+
+    Returns ``adb`` only when the banner itself says so, ``other`` when it
+    is some other protocol, ``unknown`` when the peer sent nothing. No ADB
+    handshake (CNXN) is ever sent — that handshake is what opens the shell.
+    """
+    if not banner:
+        return "unknown"
+    head = banner[:32]
+    low = banner.lower()
+    if (head.startswith(b"SSH-") or head.startswith(b"HTTP/")
+            or head.startswith(b"220") or head[:1] == b"\xff"):
+        return "other"
+    if b"CNXN" in banner or b"AUTH" in banner[:16] or b"android debug" in low:
+        return "adb"
+    if any(32 <= byte < 127 for byte in banner[:8]):
+        return "other"
+    return "unknown"
+
+
+def peek_banner(host: str, port: int, timeout: float = 1.5) -> bytes:
+    """Read whatever the service sends on connect. Send nothing."""
+    try:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.settimeout(timeout)
+        sock.connect((host, port))
+        try:
+            sock.settimeout(1.0)
+            data = sock.recv(128)
+        except socket.timeout:
+            data = b""
+        sock.close()
+        return data or b""
+    except OSError:
+        return b""
+
+
+def _banner_preview(raw: bytes) -> str:
+    shown = (raw or b"")[:40].decode("latin-1", "replace")
+    return "".join(ch if 32 <= ord(ch) < 127 else "." for ch in shown)
+
+
+def probe_dnscfg_cgi(client: "HttpClient", host: str) -> List[Dict]:
+    """Reachability-only GET of /dnscfg.cgi. Never sends DNS parameters."""
+    findings: List[Dict] = []
+    origin = client.origin() if hasattr(client, "origin") else f"http://{host}"
+    dns_resp = client.get("/dnscfg.cgi")
+    if dns_resp is None or dns_resp.status == 404:
+        return findings
+    loc = dns_resp.header("Location") or ""
+    gated = (dns_resp.status in (401, 403)
+             or looks_like_login(dns_resp.text)
+             or "login" in loc.lower())
+    if gated:
+        findings.append({
+            "id": "DLINK-007",
+            "title": "dnscfg.cgi present (auth-gated) — CVE-2026-0625 endpoint family",
+            "severity": SEV_INFO,
+            "cve": "CVE-2026-0625 (family exposure)",
+            "description": (
+                "The router serves the dnscfg.cgi endpoint (HTTP "
+                f"{dns_resp.status}) but demanded authentication in this probe. "
+                "This is the same CGI family behind CVE-2026-0625, the actively "
+                "exploited unauthenticated DNSChanger command injection on legacy "
+                "D-Link DSL gateways. This unit did not expose it without a login "
+                "in this test - exposure is currently gated, but the endpoint "
+                "is on the box. Confirmed-affected models are DSL-2740R, "
+                "DSL-2640B, DSL-2780B and DSL-526B; a gated 401 is not that list."
+            ),
+            "url": f"{origin}/dnscfg.cgi",
+            "impact": (
+                "Low while it stays auth-gated on the LAN side. The risk model "
+                "changes completely if the management UI is ever reachable from "
+                "the WAN: the exploit needs no credentials at all on affected "
+                "builds."
+            ),
+            "fix": (
+                "1. Keep remote/WAN management DISABLED - this is the control\n"
+                "2. Re-test after any firmware change\n"
+                "3. Track D-Link's CVE-2026-0625 model list - D-Link is still "
+                "reviewing firmware builds for the same CGI library\n"
+                "4. Planning assumption for EOL DSL hardware: replace or bridge"
+            ),
+            "urls": [
+                "https://nvd.nist.gov/vuln/detail/CVE-2026-0625",
+                "https://thehackernews.com/2026/01/active-exploitation-hits-legacy-d-link.html",
+            ],
+        })
+    else:
+        findings.append({
+            "id": "DLINK-007",
+            "title": "dnscfg.cgi reachable WITHOUT authentication — CVE-2026-0625 exposure",
+            "severity": SEV_HIGH,
+            "cve": "CVE-2026-0625",
+            "cvss": "9.3 (confirmed models: DSL-2740R/2640B/2780B/526B)",
+            "description": (
+                "The router answered a bare, unauthenticated GET of /dnscfg.cgi "
+                f"with HTTP {dns_resp.status} (a 404 would mean absent). The CGI "
+                "executed or served content without any login session. This is "
+                "the endpoint exploited by CVE-2026-0625 - unauthenticated OS "
+                "command injection used for DNS hijacking, observed in the wild "
+                "since 2025-11-27. NOTE: Bug Hunter is read-only and sent NO "
+                "injection payload, so exploitability itself is unconfirmed; what "
+                "is confirmed is that the endpoint does not demand a session."
+            ),
+            "url": f"{origin}/dnscfg.cgi",
+            "impact": (
+                "On confirmed-affected builds this endpoint gives unauthenticated "
+                "remote code execution and silent DNS hijack of every device "
+                "behind the router. Your model is not on D-Link's confirmed list, "
+                "but the endpoint being reachable without auth is the pre-condition "
+                "the exploit needs."
+            ),
+            "fix": (
+                "1. DISABLE remote/WAN management immediately if enabled\n"
+                "2. Verify DNS settings on the router and downstream clients now\n"
+                "3. Assume the worst for EOL DSL hardware: D-Link's guidance for "
+                "confirmed models is retire/replace - no patch exists\n"
+                "4. Bridge the unit and route through hardware you control\n"
+                "5. Re-run this audit after any firmware change"
+            ),
+            "urls": [
+                "https://nvd.nist.gov/vuln/detail/CVE-2026-0625",
+                "https://thehackernews.com/2026/01/active-exploitation-hits-legacy-d-link.html",
+                "https://supportannouncement.us.dlink.com/",
+            ],
+        })
+    return findings
 
 
 # Vendor detection patterns
@@ -801,6 +1249,16 @@ def merge_identity(fingerprint: Dict, identity: Dict[str, str]) -> None:
 def check_dlink_vulns(client: HttpClient, host: str, info: Dict) -> List[Dict]:
     """Check D-Link specific vulnerabilities."""
     findings: List[Dict] = []
+    _webproc_statuses: List[int] = []
+    _orig_get = client.get
+
+    def _tracking_get(path, *args, **kwargs):
+        resp = _orig_get(path, *args, **kwargs)
+        if isinstance(path, str) and "webproc" in path and resp is not None:
+            _webproc_statuses.append(resp.status)
+        return resp
+
+    client.get = _tracking_get  # type: ignore[method-assign]
 
     # --- Check 1: webproc Authentication Bypass (wizard) ---
     wizard_urls = [
@@ -1009,97 +1467,61 @@ def check_dlink_vulns(client: HttpClient, host: str, info: Dict) -> List[Dict]:
         })
 
     # --- Check 7: dnscfg.cgi exposure probe (CVE-2026-0625) ---
-    # Actively-exploited unauthenticated command injection in dnscfg.cgi on
-    # legacy D-Link DSL gateways: Shadowserver observed exploitation on
-    # 2025-11-27, and D-Link advisories SAP10068 / SAP10118 / SAP10488 document
-    # the CGI's DNSChanger history. Confirmed-affected models are DSL-2740R,
-    # DSL-2640B, DSL-2780B and DSL-526B (all EOL ~2020) - DSL-226 / PT_*
-    # builds are NOT on the confirmed list, so this probe states exposure,
-    # not exploitability.
-    #
-    # READ-ONLY BY DESIGN: this sends a bare GET of the endpoint only. No
-    # ?hostName=/?dnsPrimary= parameters, no shell metacharacters, no
-    # injection payload - those code paths are never exercised by Bug Hunter.
-    dns_resp = client.get("/dnscfg.cgi")
-    if dns_resp is not None and dns_resp.status != 404:
-        loc = dns_resp.header("Location") or ""
-        gated = (dns_resp.status in (401, 403)
-                 or looks_like_login(dns_resp.text)
-                 or "login" in loc.lower())
-        if gated:
-            findings.append({
-                "id": "DLINK-007",
-                "title": "dnscfg.cgi present (auth-gated) — CVE-2026-0625 endpoint family",
-                "severity": SEV_INFO,
-                "cve": "CVE-2026-0625 (family exposure)",
-                "description": (
-                    "The router serves the dnscfg.cgi endpoint (HTTP "
-                    f"{dns_resp.status}) but demanded authentication in this probe. "
-                    "This is the same CGI family behind CVE-2026-0625, the actively "
-                    "exploited unauthenticated DNSChanger command injection on legacy "
-                    "D-Link DSL gateways. This unit did not expose it without a login "
-                    "in this test - exposure is currently gated, but the endpoint "
-                    "is on the box."
-                ),
-                "url": f"http://{host}/dnscfg.cgi",
-                "impact": (
-                    "Low while it stays auth-gated on the LAN side. The risk model "
-                    "changes completely if the management UI is ever reachable from "
-                    "the WAN: the exploit needs no credentials at all on affected "
-                    "builds."
-                ),
-                "fix": (
-                    "1. Keep remote/WAN management DISABLED - this is the control\n"
-                    "2. Re-test after any firmware change\n"
-                    "3. Track D-Link's CVE-2026-0625 model list - D-Link is still "
-                    "reviewing firmware builds for the same CGI library\n"
-                    "4. Planning assumption for EOL DSL hardware: replace or bridge"
-                ),
-                "urls": [
-                    "https://nvd.nist.gov/vuln/detail/CVE-2026-0625",
-                    "https://thehackernews.com/2026/01/active-exploitation-hits-legacy-d-link.html",
-                ],
-            })
-        else:
-            findings.append({
-                "id": "DLINK-007",
-                "title": "dnscfg.cgi reachable WITHOUT authentication — CVE-2026-0625 exposure",
-                "severity": SEV_HIGH,
-                "cve": "CVE-2026-0625",
-                "cvss": "9.3 (confirmed models: DSL-2740R/2640B/2780B/526B)",
-                "description": (
-                    "The router answered a bare, unauthenticated GET of /dnscfg.cgi "
-                    f"with HTTP {dns_resp.status} (a 404 would mean absent). The CGI "
-                    "executed or served content without any login session. This is "
-                    "the endpoint exploited by CVE-2026-0625 - unauthenticated OS "
-                    "command injection used for DNS hijacking, observed in the wild "
-                    "since 2025-11-27. NOTE: Bug Hunter is read-only and sent NO "
-                    "injection payload, so exploitability itself is unconfirmed; what "
-                    "is confirmed is that the endpoint does not demand a session."
-                ),
-                "url": f"http://{host}/dnscfg.cgi",
-                "impact": (
-                    "On confirmed-affected builds this endpoint gives unauthenticated "
-                    "remote code execution and silent DNS hijack of every device "
-                    "behind the router. Your model is not on D-Link's confirmed list, "
-                    "but the endpoint being reachable without auth is the pre-condition "
-                    "the exploit needs."
-                ),
-                "fix": (
-                    "1. DISABLE remote/WAN management immediately if enabled\n"
-                    "2. Verify DNS settings on the router and downstream clients now\n"
-                    "3. Assume the worst for EOL DSL hardware: D-Link's guidance for "
-                    "confirmed models is retire/replace - no patch exists\n"
-                    "4. Bridge the unit and route through hardware you control\n"
-                    "5. Re-run this audit after any firmware change"
-                ),
-                "urls": [
-                    "https://nvd.nist.gov/vuln/detail/CVE-2026-0625",
-                    "https://thehackernews.com/2026/01/active-exploitation-hits-legacy-d-link.html",
-                    "https://supportannouncement.us.dlink.com/",
-                ],
-            })
+    # READ-ONLY: probe_dnscfg_cgi sends a bare GET. No DNS parameters.
+    findings.extend(probe_dnscfg_cgi(client, host))
+    if isinstance(info, dict):
+        info["dnscfg_probed"] = True
 
+    # --- Check 8: vendor probes that did not demonstrate a bypass ---
+    # A silent zero used to read as "clean" when every wizard URL was 401.
+    # Only emit this when a response was actually seen (a connection failure
+    # is not evidence either way).
+    if _webproc_statuses and not any(
+            f["id"] in ("DLINK-001", "DLINK-002", "DLINK-003",
+                        "DLINK-004", "DLINK-005")
+            for f in findings):
+        seen = sorted(set(_webproc_statuses))
+        if all(code == 404 for code in seen):
+            why = ("every webproc URL returned 404, so this does not look "
+                   "like the Conexant CGI")
+        elif any(code in (401, 403) for code in seen):
+            why = ("the server answered HTTP " + ", ".join(str(c) for c in seen)
+                   + " and no wizard page was served. A reject is not proof "
+                   "the wizard bug is absent, and this scanner does not "
+                   "attempt an authentication bypass")
+        else:
+            why = ("probes returned HTTP " + ", ".join(str(c) for c in seen)
+                   + " and no unauthenticated wizard page was served")
+        origin = client.origin() if hasattr(client, "origin") else f"http://{host}"
+        findings.append({
+            "id": "DLINK-008",
+            "title": "D-Link webproc class checked — bypass not demonstrated",
+            "severity": SEV_INFO,
+            "cve": "CVE-2025-34048 / CVE-2019-1010155 (not confirmed)",
+            "description": (
+                "The Conexant/webproc checks ran and " + why + ". "
+                "Vulnerable units serve the wizard at HTTP 200 without a "
+                "login form. This result is inconclusive, not a clean bill."
+            ),
+            "url": origin + "/",
+            "impact": (
+                "No demonstrated unauthenticated admin page in this pass. "
+                "If the management ports are reachable from the WAN, that "
+                "exposure remains regardless of this result."
+            ),
+            "fix": (
+                "1. Keep remote/WAN management disabled\n"
+                "2. Pass --model/--firmware/--hw from the sticker so the "
+                "audit is tied to a real build\n"
+                "3. Re-test after any firmware change — a 401 today is not "
+                "a patch"
+            ),
+            "urls": [
+                "https://nvd.nist.gov/vuln/detail/CVE-2025-34048",
+            ],
+        })
+
+    client.get = _orig_get  # type: ignore[method-assign]
     return findings
 
 
@@ -1699,28 +2121,68 @@ def check_generic_vulns(client: HttpClient, host: str, info: Dict,
             "urls": [],
         })
 
-    # --- Check 9: ADB Debug Port ---
-    adb_open = any(p["port"] == 5555 for p in open_ports)
-    if adb_open:
-        findings.append({
-            "id": "GEN-009",
-            "title": "ADB Debug Port (5555) Exposed",
-            "severity": SEV_HIGH,
-            "cve": "N/A (debug interface exposure)",
-            "description": (
-                "Android Debug Bridge (ADB) port 5555 is open. This is extremely "
-                "dangerous — it provides full shell access to the device. "
-                "Some Android-based routers and IPTV boxes leave this enabled."
-            ),
-            "url": f"adb://{host}:5555/",
-            "impact": "Full shell/root access to the device via ADB.",
-            "fix": (
-                "1. Disable ADB debugging immediately in device settings\n"
-                "2. If this is an Android TV box/router, disable developer options\n"
-                "3. Block port 5555 at the firewall"
-            ),
-            "urls": [],
-        })
+    # --- Check 9: TCP 5555 (ADB only if the banner says so) ---
+    # A connect-and-read is not an ADB handshake. Sending CNXN is what
+    # opens a shell; this scanner never sends it.
+    if any(p["port"] == 5555 for p in open_ports):
+        cached = None
+        if isinstance(info, dict):
+            cached = (info.get("_port_banners") or {}).get(5555)
+        raw = cached if isinstance(cached, (bytes, bytearray)) else peek_banner(host, 5555)
+        kind = classify_tcp_5555(bytes(raw))
+        preview = _banner_preview(bytes(raw))
+        if kind == "adb":
+            findings.append({
+                "id": "GEN-009",
+                "title": "ADB protocol banner on TCP 5555",
+                "severity": SEV_HIGH,
+                "cve": "N/A (debug interface exposure)",
+                "description": (
+                    "TCP 5555 answered with an Android Debug Bridge banner "
+                    f"({preview!r}). That is the debug bridge, not a guess from "
+                    "the port number. No handshake was sent, so this is not a "
+                    "confirmed shell — it is a confirmed ADB listener."
+                ),
+                "url": f"tcp://{host}:5555/",
+                "impact": (
+                    "An ADB listener on the LAN can become a shell if a client "
+                    "completes the handshake. This scanner did not do that."
+                ),
+                "fix": (
+                    "1. Disable ADB debugging in device settings\n"
+                    "2. If this is an Android TV box, disable developer options\n"
+                    "3. Block port 5555 at the firewall"
+                ),
+                "urls": [],
+            })
+        else:
+            if kind == "other":
+                detail = f"The passive read returned {preview!r}, which is not an ADB banner."
+            else:
+                detail = ("A passive read returned no banner. Many DSL CPEs use "
+                          "5555 for a debug or management listener that is not ADB.")
+            findings.append({
+                "id": "GEN-012",
+                "title": "TCP 5555 open — ADB not confirmed",
+                "severity": SEV_MEDIUM,
+                "cve": "N/A (unidentified listener)",
+                "description": (
+                    "Port 5555 is open. " + detail + " No ADB handshake was "
+                    "sent. Calling this a full shell would be a guess."
+                ),
+                "url": f"tcp://{host}:5555/",
+                "impact": (
+                    "An unidentified LAN listener. It may be harmless debug, "
+                    "or a management service. It is not evidence of a shell."
+                ),
+                "fix": (
+                    "1. Identify the service from the device manual or sticker vendor\n"
+                    "2. Disable unused debug/management listeners in the admin UI\n"
+                    "3. Keep port 5555 off the WAN\n"
+                    "4. Do not run an ADB client against it just to 'see'"
+                ),
+                "urls": [],
+            })
 
     # --- Check 10: No Authentication on Web UI ---
     base_resp = client.get("/", use_cookies=False)
@@ -1751,6 +2213,62 @@ def check_generic_vulns(client: HttpClient, host: str, info: Dict,
                 ),
                 "urls": [],
             })
+
+    # --- Check 11: Boa banner (abandoned httpd; no bypass probe) ---
+    banners = []
+    for candidate in (
+            server,
+            (info or {}).get("server_header") if isinstance(info, dict) else None,
+            (info or {}).get("https_server") if isinstance(info, dict) else None,
+    ):
+        if candidate and candidate not in banners:
+            banners.append(candidate)
+    boa_banner = next((b for b in banners if BOA_BANNER_RE.search(b)), None)
+    if boa_banner:
+        findings.append(boa_banner_finding(host, boa_banner))
+        # The D-Link checks already probed dnscfg when vendor was dlink.
+        # A Boa box that was not classified as D-Link still deserves the
+        # reachability-only GET — that is how a 401 used to vanish.
+        if isinstance(info, dict) and not info.get("dnscfg_probed"):
+            findings.extend(probe_dnscfg_cgi(client, host))
+            info["dnscfg_probed"] = True
+
+    # --- Check 12: Basic auth on cleartext HTTP ---
+    scheme = ""
+    realm = ""
+    if isinstance(info, dict):
+        scheme = info.get("auth_scheme") or ""
+        realm = info.get("auth_realm") or ""
+    if not scheme and getattr(client, "www_authenticate", None):
+        scheme, realm = parse_www_authenticate(client.www_authenticate)
+    cleartext_basic = bool(isinstance(info, dict) and info.get("basic_on_cleartext"))
+    if not cleartext_basic and (scheme or "").lower() == "basic" and not getattr(client, "tls", False):
+        cleartext_basic = True
+    if cleartext_basic:
+        findings.append({
+            "id": "GEN-013",
+            "title": "Admin login uses HTTP Basic on cleartext HTTP",
+            "severity": SEV_MEDIUM,
+            "cve": "N/A (transport exposure)",
+            "description": (
+                "WWW-Authenticate advertised Basic"
+                + (f" (realm {realm!r})" if realm else "")
+                + ". The password is only Base64 on the wire. Anyone on the "
+                "LAN who can see the admin session can recover it. No "
+                "credentials were sent by this scanner."
+            ),
+            "url": f"http://{host}/",
+            "impact": (
+                "Admin password recoverable from a LAN capture. Combined with "
+                "an open telnet or FTP port, the same password is often reused."
+            ),
+            "fix": (
+                "1. Prefer the HTTPS admin port if the firmware has one\n"
+                "2. Change the admin password; do not reuse it for Wi-Fi or ISP login\n"
+                "3. Disable remote management so this header is not on the WAN"
+            ),
+            "urls": [],
+        })
 
     return findings
 
@@ -1802,6 +2320,16 @@ def generate_text_report(network_info: Dict, fingerprint: Dict,
         lines.append(f"  MACs seen          : {', '.join(fingerprint['mac_addresses'])}")
     lines.append(f"  HTTP Server        : {fingerprint.get('server_header', 'Unknown')}")
     lines.append(f"  HTTP Status        : {fingerprint.get('http_status', 'Unknown')}")
+    if fingerprint.get("auth_scheme") or fingerprint.get("auth_realm"):
+        realm = fingerprint.get("auth_realm") or "(none)"
+        lines.append(f"  HTTP auth          : {fingerprint.get('auth_scheme') or '?'} realm={realm}")
+    if "webproc_evidence" in fingerprint:
+        lines.append("  webproc CGI        : "
+                     + ("yes" if fingerprint.get("webproc_evidence") else "no"))
+    if fingerprint.get("https_status") is not None or fingerprint.get("https_error"):
+        lines.append(f"  HTTPS Status       : {fingerprint.get('https_status', fingerprint.get('https_error'))}")
+    if fingerprint.get("https_server"):
+        lines.append(f"  HTTPS Server       : {fingerprint['https_server']}")
     lines.append("")
 
     # Label / sticker identity of the physical unit
@@ -1867,7 +2395,7 @@ def generate_text_report(network_info: Dict, fingerprint: Dict,
     elif total > 0:
         risk = "LOW — Minor issues found"
     else:
-        risk = "CLEAN — No known vulnerabilities detected"
+        risk = "NONE REPORTED — checks that ran did not match; not a guarantee"
     lines.append(f"  Overall Risk     : {risk}")
     lines.append("")
 
@@ -2015,6 +2543,14 @@ def generate_json_report(network_info: Dict, fingerprint: Dict,
             "serial": fingerprint.get("serial"),
             "mac_addresses": fingerprint.get("mac_addresses") or [],
             "server_header": fingerprint.get("server_header"),
+            "http_status": fingerprint.get("http_status"),
+            "https_status": fingerprint.get("https_status"),
+            "https_server": fingerprint.get("https_server"),
+            "https_error": fingerprint.get("https_error"),
+            "auth_scheme": fingerprint.get("auth_scheme"),
+            "auth_realm": fingerprint.get("auth_realm"),
+            "webproc_evidence": fingerprint.get("webproc_evidence"),
+            "model_note": fingerprint.get("model_note"),
         },
         "label_identity": identity or {},
         "label_check": {
@@ -2175,28 +2711,61 @@ def run_scan(target_host: str, target_port: int = 80,
 
     # Step 2: HTTP fingerprinting
     print(f"\n[*] Fingerprinting HTTP service...")
-    client = HttpClient(target_host, target_port, timeout=timeout, verbose=verbose)
+    # --port 443 means the caller already pointed us at the TLS admin port.
+    client = HttpClient(target_host, target_port, timeout=timeout,
+                        verbose=verbose, tls=(target_port == 443))
 
     base_resp = client.get("/", use_cookies=False)
-    fingerprint = {"server_header": client.server_header, "http_status": None}
-    base_text = base_resp.text if base_resp else ""
-    if base_resp:
-        fingerprint["http_status"] = base_resp.status
+    wp_resp = client.get(NEUTRAL_WEBPROC)
+    ident = classify_http_identity(
+        base_resp, wp_resp, NEUTRAL_WEBPROC, client.server_header)
+    fingerprint = {
+        "server_header": client.server_header,
+        "http_status": ident["http_status"],
+        "webproc_evidence": ident["webproc_evidence"],
+        "auth_scheme": ident["auth_scheme"],
+        "auth_realm": ident["auth_realm"],
+    }
+    text = ident["text"]
+    vendor = ident["vendor"]
+    # Record Basic-on-cleartext before a later HTTPS client can hide it.
+    if (not client.tls and (ident.get("auth_scheme") or "").lower() == "basic"):
+        fingerprint["basic_on_cleartext"] = True
 
-    # The D-Link/Conexant stack often answers "/" with a bare 401 and no
-    # vendor strings. Its signature endpoint is /cgi-bin/webproc - probe it
-    # with a NEUTRAL page (login is demanded, no session is minted) so
-    # detection works on 401-style UIs too. One extra GET on every other
-    # vendor, which simply 404s.
-    wp_path = ("/cgi-bin/webproc?getpage=html/index.html&errorpage=html/index.html"
-               "&var:language=en_us&var:menu=status&var:page=deviceinfo")
-    wp_resp = client.get(wp_path)
-    wp_text = wp_resp.text if wp_resp else ""
-    wp_reachable = wp_resp is not None and wp_resp.status != 404
-
-    text = base_text + "\n" + wp_text
-    vendor = detect_vendor(text, client.server_header,
-                           webproc_reachable=wp_reachable)
+    # Port 443 open, and we have not already fingerprinted it as the primary
+    # client. Read-only GET, self-signed CPE certs accepted, no credentials.
+    https_open = any(p["port"] == 443 for p in result["open_ports"])
+    if https_open and not client.tls:
+        print("\n[*] Fingerprinting HTTPS (read-only; router cert is not verified)...")
+        https_client = HttpClient(
+            target_host, 443, timeout=timeout, verbose=verbose, tls=True)
+        h_base = https_client.get("/", use_cookies=False)
+        h_wp = https_client.get(NEUTRAL_WEBPROC) if h_base is not None else None
+        if h_base is None and h_wp is None:
+            fingerprint["https_error"] = "TLS handshake or HTTP response failed"
+            print("    HTTPS did not complete a handshake")
+        else:
+            h_ident = classify_http_identity(
+                h_base, h_wp, NEUTRAL_WEBPROC, https_client.server_header)
+            fingerprint["https_status"] = h_ident["http_status"]
+            fingerprint["https_server"] = https_client.server_header
+            print(f"    HTTPS status {h_ident['http_status']}, "
+                  f"server {https_client.server_header or 'none'}")
+            if not fingerprint.get("auth_realm") and h_ident.get("auth_realm"):
+                fingerprint["auth_scheme"] = h_ident["auth_scheme"]
+                fingerprint["auth_realm"] = h_ident["auth_realm"]
+            fingerprint["webproc_evidence"] = (
+                fingerprint["webproc_evidence"] or h_ident["webproc_evidence"])
+            text = text + "\n" + h_ident["text"]
+            if vendor == "generic" and h_ident["vendor"] != "generic":
+                vendor = h_ident["vendor"]
+            # Prefer the origin that actually served a page for the vuln checks.
+            http_rejected = ident["http_status"] in (None, 401, 403)
+            https_served = h_ident["http_status"] not in (None, 401, 403)
+            if http_rejected and (https_served or h_ident["webproc_evidence"]):
+                client = https_client
+                if not fingerprint.get("server_header"):
+                    fingerprint["server_header"] = https_client.server_header
 
     # Sticker-implied vendor: if the UI did not self-identify but the label on
     # the physical unit says D-Link DSL/DIR/DVA, run the D-Link checks anyway.
@@ -2208,6 +2777,14 @@ def run_scan(target_host: str, target_port: int = 80,
         vendor = "dlink"
 
     fingerprint.update(extract_info(text, vendor))
+    # Realm can carry the model ("DSL-2640B") even when the body was a 401.
+    if not fingerprint.get("model") and fingerprint.get("auth_realm"):
+        realm_info = extract_info(fingerprint["auth_realm"], vendor)
+        if realm_info.get("model"):
+            fingerprint["model"] = realm_info["model"]
+            fingerprint["model_note"] = (
+                "model taken from the WWW-Authenticate realm, not the page body"
+            )
 
     # Firmware-build classification (PTCL PT_* builds: untested by CVE lists)
     fingerprint["firmware_note"] = classify_firmware_build(
@@ -2217,14 +2794,7 @@ def run_scan(target_host: str, target_port: int = 80,
     if identity:
         merge_identity(fingerprint, identity)
 
-    if vendor == "dlink" and not fingerprint.get("model"):
-        fingerprint["model"] = "D-Link DSL-series (inferred)"
-        fingerprint["model_note"] = (
-            "no model string visible in the UI; inferred from the "
-            "/cgi-bin/webproc CGI + ACME httpd banner (the Conexant DSL "
-            "stack PTCL D-Link units ship with). Pass --model/--firmware/--hw "
-            "from the sticker on the unit to anchor the audit to the box."
-        )
+    annotate_missing_model(fingerprint, vendor)
 
     if force_vendor:
         vendor = force_vendor.lower()
