@@ -1,12 +1,20 @@
 #!/usr/bin/env python3
 """
-Bug Hunter — Demo/Mock Scan
-============================
+Bug Hunter — Demo/Mock Scan  (PLAY MODE — not the real audit)
+==============================================================
 
-This script demonstrates Bug Hunter's capabilities by simulating a scan
-against a mock D-Link router with known vulnerabilities.
+⚠  THIS IS THE PLAYGROUND, NOT THE HUNT.  Everything below happens against a
+   fake router on localhost. Nothing here touches your physical device.
 
-This is useful for:
+To audit the REAL router on your network, use bug_hunter.py instead:
+
+    python3 bug_hunter.py                      # auto-detect your gateway
+    python3 bug_hunter.py 192.168.10.1 --audit # physical audit, saved + drift
+    python3 bug_hunter.py 192.168.10.1 --audit \\
+        --model DSL-226 --firmware PT_1.10_J2 --hw J2 \\
+        --serial <sticker> --mac <sticker>
+
+This demo only exists for:
   - Testing the tool without a real router
   - Demonstrating the report format
   - CI/CD testing
@@ -147,11 +155,14 @@ def start_mock_server(port=18080):
 def main():
     print(BANNER)
     print("\n" + "=" * 70)
-    print("  DEMO MODE — Simulating a vulnerable D-Link router")
+    print("  DEMO MODE (PLAY) — Simulating a vulnerable D-Link router")
     print("=" * 70)
     print()
     print("This demo starts a mock router on localhost:18080 that simulates")
     print("a PTCL D-Link DSL-2750U with known vulnerabilities.")
+    print()
+    print("Nothing here touches your physical device. To hunt the real unit:")
+    print("    python3 bug_hunter.py <router-ip> --audit --model <sticker> ...")
     print()
 
     # Start mock server

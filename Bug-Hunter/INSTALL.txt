@@ -46,10 +46,23 @@ PLATFORM-SPECIFIC INSTRUCTIONS
 USAGE EXAMPLES
 --------------
 
-  # Auto-detect and scan your router
+  PHYSICAL HUNT (audit the real router on your LAN):
+  # Auto-detect your gateway and audit the live unit
   python3 bug_hunter.py
 
-  # Scan a specific IP address
+  # Physical audit of a specific unit: saves the hunt to audits/ and
+  # diffs later runs against the previous ones (drift tracking)
+  python3 bug_hunter.py 192.168.10.1 --audit
+
+  # ...with the sticker identity of the physical unit (e.g. a PTCL DSL-226):
+  python3 bug_hunter.py 192.168.10.1 --audit \
+      --model DSL-226 --firmware PT_1.10_J2 --hw J2 \
+      --serial <serial on sticker> --mac <mac on sticker>
+
+  The sticker values are cross-checked against what the unit reports
+  about itself; contradictions are flagged as MISMATCH in the report.
+
+  # Scan a specific IP address without saving
   python3 bug_hunter.py 192.168.1.1
 
   # Save a detailed text report
@@ -74,15 +87,16 @@ USAGE EXAMPLES
   python3 bug_hunter.py --help
 
 
-DEMO MODE
----------
+DEMO MODE (play only — does NOT touch your router)
+--------------------------------------------------
 
 See Bug Hunter in action with a simulated vulnerable router:
 
   python3 demo_scan.py
 
-This starts a mock D-Link router and shows how the tool detects
-vulnerabilities and generates reports.
+This starts a mock D-Link router on localhost and shows how the tool detects
+vulnerabilities and generates reports. To audit the REAL device on your
+network, always use bug_hunter.py directly (see PHYSICAL HUNT above).
 
 
 TESTING
@@ -119,7 +133,11 @@ SAFETY
 ✓ READ-ONLY: Only GET/HEAD requests, no POST, no config changes
 ✓ LAN-ONLY: Refuses to scan public IPs
 ✓ NO SECRETS: Never prints passwords or Wi-Fi keys
-✓ NO EXPLOITS: Does not run exploit code or payloads
+✓ NO EXPLOITS: Does not run exploit code or payloads — the dnscfg.cgi
+  probe (CVE-2026-0625) is a bare reachability GET with no injection
+  parameters, same class as every other check
+✓ AUDIT DATA STAYS LOCAL: audits/ is git-ignored, device reports are never
+  committed to the repository
 ✓ NO INSTALLATION: Single Python file, standard library only
 
 

@@ -1,1 +1,4 @@
 __pycache__/
+
+# Local physical-audit artifacts (Bug Hunter --audit) — never commit device scan data
+Bug-Hunter/audits/
