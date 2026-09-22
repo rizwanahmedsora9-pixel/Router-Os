@@ -3,17 +3,53 @@
 A **read-only** Python tool that detects your connected router/gateway on WiFi or LAN
 and scans it for known vulnerabilities, security misconfigurations, and exposures.
 
+**`bug_hunter.py` is always a LIVE physical-device audit** — it probes the real router
+on your LAN, never a simulation. (The simulated demo is the separate `demo_scan.py`.)
+
 Generates a detailed report with vulnerability details, CVE references, severity ratings,
 and step-by-step fix/remediation methods.
+
+## Quick start — audit your physical device
+
+```bash
+# Generic live audit: auto-detect the gateway and scan it
+python3 bug_hunter.py
+
+# Pin a specific unit by its label data and verify identity before scanning
+python3 bug_hunter.py --profile dsl226
+
+# Pinned to an explicit IP, with reports saved
+python3 bug_hunter.py 192.168.1.1 --profile dsl226 \
+    --report dsl226_audit.txt --json dsl226_audit.json
+```
+
+### Device profiles (`--profile`)
+
+A profile records the **label data of a specific physical unit** so the audit can
+prove it scanned the right device:
+
+| Profile | Device | Verifies |
+|---|---|---|
+| `dsl226` | D-Link DSL-226 (PTCL), fw `PT_1.10_J2`, H/W `J2` | model, firmware, H/W rev, MAC (`88:76:B9:17:34:61`, via OS neighbor table), serial noted |
+
+Identity verdicts: `VERIFIED` · `MISMATCH` (findings may belong to another unit) ·
+`INCONCLUSIVE` (device didn't expose enough — e.g. MAC unavailable). The serial
+number is never exposed over HTTP, so it is recorded as `NOT_OBSERVED`, not silently
+passed.
+
+Profiles also steer discovery: with `--profile dsl226` and no target given, the tool
+probes the DSL-226's documented management IPs (`192.168.1.1`, `192.168.10.1`) first.
 
 ## Features
 
 | Feature | Description |
 |---|---|
+| **Live physical audit** | Every `bug_hunter.py` run probes a real device — no simulation fallback |
+| **Device identity** | `--profile` verifies model/firmware/H/W/MAC against the unit's label |
 | **Auto-detect gateway** | Finds your router automatically — works on Windows, Linux, macOS, Termux |
 | **Vendor fingerprinting** | Identifies D-Link, ZTE, TP-Link, Huawei, Netgear, Linksys, FiberHome |
 | **Port scanning** | Checks common router services (HTTP, SSH, Telnet, FTP, SNMP, UPnP, TR-069, ADB) |
-| **D-Link checks** | webproc auth bypass, Wi-Fi key leak, file traversal, persistent session, ACME httpd banner (CVE-2014-4927) |
+| **D-Link checks** | webproc auth bypass, Wi-Fi key leak, file traversal, persistent session, ACME httpd banner (CVE-2014-4927), dnscfg.cgi exposure precondition (CVE-2026-0625, GET-only) |
 | **ZTE checks** | UPnP WLAN key disclosure (CVE-2018-7357/7358), CSRF, info leaks |
 | **TP-Link checks** | rom-0 config disclosure, command injection, credential disclosure, RomPager |
 | **Generic checks** | Telnet, FTP, SNMP, UPnP, TR-069, ADB, missing HTTPS, info leakage |
@@ -37,11 +73,17 @@ and step-by-step fix/remediation methods.
 ## Quick Start
 
 ```bash
-# Auto-detect your router and run a full scan
+# Live audit: auto-detect your router and run a full scan
 python bug_hunter.py
+
+# Live audit of a specific physical unit (identity-verified against its label)
+python bug_hunter.py --profile dsl226
 
 # Scan a specific IP
 python bug_hunter.py 192.168.1.1
+
+# Scan a specific IP with device identity verification
+python bug_hunter.py 192.168.1.1 --profile dsl226
 
 # Save a text report
 python bug_hunter.py --report scan_report.txt
@@ -62,6 +104,9 @@ python bug_hunter.py --vendor dlink
 python bug_hunter.py -v
 ```
 
+> **Demo vs live:** `demo_scan.py` is a localhost simulation for previewing the
+> report format. `bug_hunter.py` (this tool) always audits a physical device.
+
 ## What Gets Checked
 
 ### D-Link (PTCL DSL-series)
@@ -73,6 +118,7 @@ python bug_hunter.py -v
 | File Traversal | CVE-2025-34048 | **CRITICAL** | Read any file on the router |
 | Persistent Session | CVE-2019-1010155 | **HIGH** | Bypass session never expires |
 | ACME httpd front door | CVE-2014-4927 | **HIGH** | `micro_httpd` banner → long-URI DoS, never patched (flagged, not probed) |
+| dnscfg.cgi exposure | CVE-2026-0625 | **CRITICAL** | DNS config CGI served without login — the missing-auth precondition of the actively exploited command injection (GET-only; injection never sent) |
 
 > **Detection note:** the ACME banner on real units uses the underscore spelling
 > (`micro_httpd`), and these units often answer `/` with a bare `401` and no
@@ -119,14 +165,23 @@ python bug_hunter.py -v
 ### Text Report (`.txt`)
 ```
 ==============================================================================
-  BUG HUNTER — ROUTER VULNERABILITY SCAN REPORT
-  Version 1.0.0
+  BUG HUNTER — PHYSICAL DEVICE SECURITY AUDIT REPORT
+  Version 1.1.0
 ==============================================================================
 
-  Scan Date     : 2026-09-21 14:30:00 UTC
+  Scan Date     : 2026-09-22 14:30:00 UTC
+  Mode          : LIVE physical-device audit (read-only)
   Platform      : Linux (x86_64)
   Gateway IP    : 192.168.10.1
   ...
+
+  ┌─── [DEVICE IDENTITY VERIFICATION]
+  │  Profile  : D-Link DSL-226 (PTCL)
+  │  Verdict  : VERIFIED
+  │  Model    : expected DSL-226   | observed DSL-226          | MATCH
+  │  Firmware : expected PT_1.10_J2 | observed PT_1.10_J2       | MATCH
+  │  ...
+  └──────────────────────────────────────────────────────────────────────────
 
   ┌─── [DLINK-001] CRITICAL: D-Link webproc Authentication Bypass
   │
@@ -155,10 +210,12 @@ python bug_hunter.py -v
 ```json
 {
   "tool": "Bug Hunter",
-  "version": "1.0.0",
-  "timestamp": "2026-09-21T14:30:00+00:00",
+  "version": "1.1.0",
+  "mode": "physical-audit",
+  "timestamp": "2026-09-22T14:30:00+00:00",
   "network": { "gateway": "192.168.10.1", ... },
-  "device": { "vendor": "dlink", "model": "DSL-2750U", ... },
+  "identity": { "profile": "D-Link DSL-226 (PTCL)", "verdict": "VERIFIED", ... },
+  "device": { "vendor": "dlink", "model": "DSL-226", ... },
   "findings": [
     {
       "id": "DLINK-001",

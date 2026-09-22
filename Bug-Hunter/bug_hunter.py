@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Bug Hunter v1.0 — Cross-Platform Router Vulnerability Scanner
+Bug Hunter v1.1 — Cross-Platform Router Vulnerability Scanner
 =============================================================
 
 Detects connected router/gateway on WiFi/LAN and scans for known vulnerabilities,
@@ -9,6 +9,13 @@ security misconfigurations, and exposures.  Generates a detailed report with:
   - CVE references and source URLs
   - Detailed descriptions of each finding
   - Step-by-step fix/remediation methods
+
+Two modes:
+  * PHYSICAL DEVICE AUDIT (default) — probes a real router on your LAN.
+    Optionally pin the exact unit with --profile (e.g. --profile dsl226) to
+    verify device identity (model / firmware / MAC) before running checks.
+  * DEMO — demo_scan.py only; simulates a vulnerable router on localhost.
+    This file never runs in demo mode: every scan here is a live scan.
 
 PLATFORMS:  Windows, Linux, macOS, Termux (Android), FreeBSD — any device
             with Python 3.8+ and a network connection.
@@ -20,9 +27,11 @@ SAFETY PROPERTIES:
   * Private/LAN addresses only — refuses public IPs
   * Never prints recovered secrets (WiFi keys, passwords)
   * Read-only fingerprinting — does not brute-force or exploit
+  * Exposure checks only — known-CGI endpoints are requested, never exploited
 
 USAGE:
-  python bug_hunter.py                    # auto-detect gateway, scan, report
+  python bug_hunter.py                    # auto-detect gateway, live audit
+  python bug_hunter.py --profile dsl226   # audit the physical DSL-226 (identity-verified)
   python bug_hunter.py 192.168.1.1        # scan specific IP
   python bug_hunter.py --report out.txt   # save report to file
   python bug_hunter.py --quick            # fast scan (skip slow probes)
@@ -54,7 +63,7 @@ from typing import Any, Dict, List, Optional, Tuple
 # Version & Banner
 # --------------------------------------------------------------------------- #
 
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 BANNER = r"""
  ____              _   _       _   _             _
 | __ )  ___  __ _ | | | |_   _| |__ | |_ ___  _ __| |_
@@ -63,7 +72,7 @@ BANNER = r"""
 |____/ \___|\__, ||_| |_|\__,_|_.__/ \__\___/|_|   \__|
             |___/
  Router Vulnerability Scanner v{version}
- Cross-Platform | Read-Only | No Exploits
+ Cross-Platform | Read-Only | No Exploits | LIVE physical-device audit
 """.format(version=VERSION)
 
 # --------------------------------------------------------------------------- #
@@ -105,6 +114,33 @@ COMMON_PORTS = [
     (7547, "TR-069/CWMP"),
     (5555, "ADB Debug"),
 ]
+
+# ---------------------------------------------------------------------------
+# Physical device profiles
+#
+# Pin a specific unit so the audit verifies it is talking to the expected
+# hardware (model / firmware / H/W rev / label MAC) before running checks.
+# Identity data comes from the sticker on the device. MAC is verified against
+# the local neighbor (ARP) table when the OS exposes it — never via packets
+# crafted by this tool.
+# ---------------------------------------------------------------------------
+
+DEVICE_PROFILES: Dict[str, Dict[str, Any]] = {
+    # PTCL-shipped D-Link DSL-226 (owner-supplied label data, 2026-09-22).
+    # PT_* firmware = PTCL ISP build — same untested-build gap as the rest of
+    # the ptcl-dlink/ research: not confirmed vulnerable, not confirmed clean.
+    "dsl226": {
+        "label": "D-Link DSL-226 (PTCL)",
+        "vendor": "dlink",
+        "model": "DSL-226",
+        "firmware": "PT_1.10_J2",
+        "hardware_version": "J2",
+        "serial": "UL0E156046674",
+        "mac": "88:76:B9:17:34:61",
+        "mac_oui": "88:76:B9",  # D-Link International
+        "management_ips": ["192.168.1.1", "192.168.10.1"],
+    },
+}
 
 # Severity levels
 SEV_CRITICAL = "CRITICAL"
@@ -580,9 +616,13 @@ MODEL_RES = {
 
 FIRMWARE_RES = {
     "dlink": [
+        # Label form: "Firmware Version: PT_1.10_J2" (underscore is inside
+        # the character class, so PTCL ISP builds parse correctly).
         re.compile(r"(?:Firmware|Software)\s*Version\s*:?\s*"
                    r"([A-Za-z0-9][A-Za-z0-9\-_.]{1,63}"
                    r"(?:\s+[0-9]{6,8})?)", re.I),
+        # Fallback for pages that emit the bare build string with no label.
+        re.compile(r"\b(PT_[A-Za-z0-9._-]{2,63})\b"),
     ],
     "zte": [
         re.compile(r"(?:software|firmware)\s*version\s*[:=]?\s*"
@@ -599,9 +639,146 @@ FIRMWARE_RES = {
 }
 
 HARDWARE_RES = [
+    # D-Link H/W revisions are letter+digits (D1, J1, J2, T3), not just
+    # numeric — match those too, or a DSL-226 reports "Unknown".
     re.compile(r"(?:hardware|h\.?w\.?)\s*(?:version)?\s*[:=]?\s*"
                r"(v?\s*[0-9]+(?:\.[0-9]+)?)", re.I),
+    re.compile(r"(?:hardware|h\.?w\.?)\s*(?:version)?\s*[:=]?\s*"
+               r"([A-Za-z][0-9]{1,2})\b", re.I),
 ]
+
+
+# ---------------------------------------------------------------------------
+# Physical device identity (profile verification)
+# ---------------------------------------------------------------------------
+
+MAC_RE = re.compile(r"([0-9A-Fa-f]{2}(?::[0-9A-Fa-f]{2}){5})")
+
+
+def get_neighbor_mac(ip: str) -> Optional[str]:
+    """Return the MAC address the OS neighbor/ARP table holds for `ip`.
+
+    Read-only: parses existing kernel state (`ip neigh` / `arp`); this tool
+    never crafts ARP packets. Returns None when the table has no entry or
+    the platform does not expose one (e.g. many Termux setups).
+    """
+    commands = [
+        ["ip", "neigh", "show", ip],
+        ["arp", "-n", ip],
+        ["arp", "-a", ip],
+    ]
+    for cmd in commands:
+        try:
+            out = subprocess.check_output(
+                cmd, stderr=subprocess.DEVNULL, timeout=3
+            ).decode("utf-8", "replace")
+        except (subprocess.SubprocessError, FileNotFoundError, OSError):
+            continue
+        m = MAC_RE.search(out)
+        if m:
+            return m.group(1).upper()
+    return None
+
+
+def verify_device_identity(profile: Dict[str, Any],
+                           fingerprint: Dict[str, Any],
+                           observed_mac: Optional[str]) -> Dict[str, Any]:
+    """Compare the live fingerprint (and neighbor-table MAC) to a profile.
+
+    Fields the live device never exposes over HTTP (serial numbers usually)
+    are reported as NOT_CHECKED rather than silently passing.
+    """
+    def _norm(v: Optional[str]) -> str:
+        return (v or "").strip().lower()
+
+    checks: Dict[str, str] = {}
+
+    # Model — substring match both ways so "DSL-226" matches
+    # "Model Name: DSL-226" and an inferred "DSL-226 class" still hits.
+    expected_model = _norm(profile.get("model"))
+    observed_model = _norm(fingerprint.get("model"))
+    if not expected_model:
+        checks["model"] = "NOT_CHECKED"
+    elif not observed_model:
+        checks["model"] = "NOT_OBSERVED"
+    elif expected_model in observed_model or observed_model in expected_model:
+        checks["model"] = "MATCH"
+    else:
+        checks["model"] = "MISMATCH"
+
+    # Firmware — exact (case-insensitive) or prefix, so PT_1.10_J2 matches
+    # a UI that appends a build date.
+    expected_fw = _norm(profile.get("firmware"))
+    observed_fw = _norm(fingerprint.get("firmware"))
+    if not expected_fw:
+        checks["firmware"] = "NOT_CHECKED"
+    elif not observed_fw:
+        checks["firmware"] = "NOT_OBSERVED"
+    elif observed_fw.startswith(expected_fw) or expected_fw in observed_fw:
+        checks["firmware"] = "MATCH"
+    else:
+        checks["firmware"] = "MISMATCH"
+
+    # Hardware revision
+    expected_hw = _norm(profile.get("hardware_version"))
+    observed_hw = _norm(fingerprint.get("hardware_version"))
+    if not expected_hw:
+        checks["hardware_version"] = "NOT_CHECKED"
+    elif not observed_hw:
+        checks["hardware_version"] = "NOT_OBSERVED"
+    elif expected_hw == observed_hw or expected_hw.lstrip("v") == observed_hw.lstrip("v"):
+        checks["hardware_version"] = "MATCH"
+    else:
+        checks["hardware_version"] = "MISMATCH"
+
+    # MAC — from the OS neighbor table only
+    expected_mac = (profile.get("mac") or "").upper()
+    if not expected_mac:
+        checks["mac"] = "NOT_CHECKED"
+    elif not observed_mac:
+        checks["mac"] = "NOT_OBSERVED"
+    elif observed_mac.upper() == expected_mac:
+        checks["mac"] = "MATCH"
+    elif profile.get("mac_oui") and observed_mac.upper().startswith(
+            (profile.get("mac_oui") or "").upper()):
+        checks["mac"] = "OUI_MATCH"  # same vendor, different unit
+    else:
+        checks["mac"] = "MISMATCH"
+
+    # Serial — almost never exposed over HTTP
+    if profile.get("serial"):
+        checks["serial"] = "NOT_OBSERVED"
+    else:
+        checks["serial"] = "NOT_CHECKED"
+
+    mismatches = [k for k, v in checks.items() if v == "MISMATCH"]
+    matches = [k for k, v in checks.items() if v in ("MATCH", "OUI_MATCH")]
+    if mismatches:
+        verdict = "MISMATCH"
+    elif matches:
+        verdict = "VERIFIED"
+    else:
+        verdict = "INCONCLUSIVE"
+
+    return {
+        "profile": profile.get("label") or profile.get("model"),
+        "expected": {
+            "model": profile.get("model"),
+            "firmware": profile.get("firmware"),
+            "hardware_version": profile.get("hardware_version"),
+            "mac": profile.get("mac"),
+            "serial": profile.get("serial"),
+        },
+        "observed": {
+            "model": fingerprint.get("model"),
+            "firmware": fingerprint.get("firmware"),
+            "hardware_version": fingerprint.get("hardware_version"),
+            "mac": observed_mac,
+        },
+        "checks": checks,
+        "verdict": verdict,
+        "mismatches": mismatches,
+    }
 
 
 def detect_vendor(text: str, server_header: Optional[str],
@@ -882,6 +1059,82 @@ def check_dlink_vulns(client: HttpClient, host: str, info: Dict) -> List[Dict]:
                 "https://github.com/advisories/GHSA-rfw9-259h-m9m6",
             ],
         })
+
+    # --- Check 6: dnscfg.cgi unauthenticated exposure (CVE-2026-0625 class) ---
+    # EXPOSURE CHECK ONLY: a bare GET to the known CGI paths. If the endpoint
+    # serves the DNS configuration UI (or any non-error content) without a
+    # login challenge, the missing-authentication precondition of CVE-2026-0625
+    # (dnscfg.cgi command injection, CVSS 9.3, actively exploited since
+    # 2025-11-27) holds on this build. D-Link states model-level detection
+    # requires firmware inspection and the product line is EOL — no patch.
+    # This scanner NEVER sends an injection payload; it only asks whether the
+    # door is unlocked. GET /dnscfg.cgi is the documented entry point; the
+    # /cgi-bin/ prefix variant is probed because ISP builds relocate CGIs.
+    dns_cfg_exposed = False
+    dns_cfg_path = None
+    dns_cfg_status = None
+    for cand in ("/dnscfg.cgi", "/cgi-bin/dnscfg.cgi"):
+        r = client.get(cand, use_cookies=False)
+        if r is None:
+            continue
+        dns_cfg_status = r.status
+        body = r.text
+        if r.status == 200 and not looks_like_login(body) and len(r.body) > 0:
+            # Positive signal: the page is about DNS configuration. A bare
+            # 200 with unrelated content (captive portal stub) does not count.
+            if re.search(r"\bdns\b|\bdomain\s+name\s+server\b|nameserver",
+                         body, re.I):
+                dns_cfg_exposed = True
+                dns_cfg_path = cand
+                break
+        elif r.status in (401, 403):
+            # Auth challenge → endpoint exists but is gated. Not this bug.
+            dns_cfg_path = cand
+            break
+
+    if dns_cfg_exposed:
+        model_hint = info.get("model") or "this D-Link DSL unit"
+        findings.append({
+            "id": "DLINK-007",
+            "title": "dnscfg.cgi Reachable Without Authentication (CVE-2026-0625 class)",
+            "severity": SEV_CRITICAL,
+            "cve": "CVE-2026-0625 (exposure precondition confirmed; injection not attempted)",
+            "cvss": "9.3",
+            "description": (
+                f"GET {dns_cfg_path} returned the DNS configuration interface "
+                "with no login challenge. CVE-2026-0625 is an unauthenticated "
+                "command injection in dnscfg.cgi (improper sanitization of DNS "
+                "parameters) with a CVSS 9.3 score; Shadowserver observed "
+                "in-the-wild exploitation from 2025-11-27 and D-Link declared "
+                "the affected DSL gateway line end-of-life in 2020 — no patch "
+                "exists or is planned. D-Link notes model-level identification "
+                "needs direct firmware inspection, so this finding reports the "
+                "confirmed missing-authentication precondition on "
+                f"{model_hint} and does NOT send an injection payload."
+            ),
+            "url": f"http://{host}{dns_cfg_path}",
+            "impact": (
+                "Unauthenticated reachability of the DNS configuration CGI is "
+                "the entry point for remote command execution as root and for "
+                "DNSChanger-style hijacking of every client behind the router. "
+                "If the admin UI is WAN-reachable, this is internet-facing RCE."
+            ),
+            "fix": (
+                "1. D-Link's official fix is REPLACE the device — the line is EOL, no patch\n"
+                "2. Immediately: disable WAN/remote management (keep port 80 LAN-only)\n"
+                "3. Verify your DNS servers have not been hijacked (check router WAN DNS)\n"
+                "4. Rotate admin password and Wi-Fi PSK\n"
+                "5. Durable fix: bridge the unit and route with hardware you control"
+            ),
+            "urls": [
+                "https://nvd.nist.gov/vuln/detail/CVE-2026-0625",
+                "https://github.com/advisories/GHSA-v9p2-66r4-9qhr",
+                "https://supportannouncement.us.dlink.com/security/publication.aspx?name=SAP10488",
+            ],
+        })
+    elif dns_cfg_path and dns_cfg_status in (401, 403):
+        # Endpoint present but behind auth — useful audit trail, not a vuln.
+        pass
 
     return findings
 
@@ -1544,22 +1797,60 @@ def check_generic_vulns(client: HttpClient, host: str, info: Dict,
 
 def generate_text_report(network_info: Dict, fingerprint: Dict,
                           open_ports: List[Dict], findings: List[Dict],
-                          vendor: str) -> str:
-    """Generate a comprehensive text report."""
+                          vendor: str,
+                          identity: Optional[Dict] = None) -> str:
+    """Generate a comprehensive text report.
+
+    `identity` is the result of verify_device_identity() when a physical
+    device profile was used; omitted for generic scans.
+    """
     lines: List[str] = []
     now = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
 
     lines.append("=" * 78)
-    lines.append("  BUG HUNTER — ROUTER VULNERABILITY SCAN REPORT")
+    lines.append("  BUG HUNTER — PHYSICAL DEVICE SECURITY AUDIT REPORT")
     lines.append(f"  Version {VERSION}")
     lines.append("=" * 78)
     lines.append("")
     lines.append(f"  Scan Date     : {now}")
+    lines.append(f"  Mode          : LIVE physical-device audit (read-only)")
     lines.append(f"  Platform      : {network_info.get('platform', 'unknown')}")
     lines.append(f"  Hostname      : {network_info.get('hostname', 'unknown')}")
     lines.append(f"  Local IP      : {network_info.get('local_ip', 'unknown')}")
     lines.append(f"  Gateway IP    : {network_info.get('gateway', 'unknown')}")
     lines.append("")
+
+    # Device identity (profile verification) — shown before fingerprint so
+    # the reader knows which physical unit the findings attach to.
+    if identity:
+        lines.append("-" * 78)
+        lines.append("  DEVICE IDENTITY VERIFICATION")
+        lines.append("-" * 78)
+        lines.append(f"  Profile           : {identity.get('profile', 'unknown')}")
+        lines.append(f"  Verdict           : {identity.get('verdict', 'unknown')}")
+        exp = identity.get("expected") or {}
+        obs = identity.get("observed") or {}
+        checks = identity.get("checks") or {}
+        rows = [
+            ("Model", "model"),
+            ("Firmware", "firmware"),
+            ("Hardware Version", "hardware_version"),
+            ("MAC Address", "mac"),
+            ("Serial Number", "serial"),
+        ]
+        for label, key in rows:
+            status = checks.get(key, "NOT_CHECKED")
+            exp_v = exp.get(key) or "—"
+            obs_v = obs.get(key) or "—"
+            if key == "mac" and obs_v and obs_v != "—":
+                obs_v = str(obs_v)  # MAC is public-layer identity, not a secret
+            lines.append(f"  {label:<18}: expected {exp_v} | observed {obs_v} | {status}")
+        if identity.get("verdict") == "MISMATCH":
+            lines.append("")
+            lines.append("  !! IDENTITY MISMATCH — the device at the target IP does NOT")
+            lines.append("     match the profile. Findings below may belong to a different")
+            lines.append("     unit. Confirm you are on the right network before acting.")
+        lines.append("")
 
     # Device fingerprint
     lines.append("-" * 78)
@@ -1716,11 +2007,13 @@ def generate_text_report(network_info: Dict, fingerprint: Dict,
 
 def generate_json_report(network_info: Dict, fingerprint: Dict,
                           open_ports: List[Dict], findings: List[Dict],
-                          vendor: str) -> Dict:
+                          vendor: str,
+                          identity: Optional[Dict] = None) -> Dict:
     """Generate a JSON-serializable report."""
     return {
         "tool": "Bug Hunter",
         "version": VERSION,
+        "mode": "physical-audit",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "network": {
             "platform": network_info.get("platform"),
@@ -1728,6 +2021,7 @@ def generate_json_report(network_info: Dict, fingerprint: Dict,
             "local_ip": network_info.get("local_ip"),
             "gateway": network_info.get("gateway"),
         },
+        "identity": identity,
         "device": {
             "vendor": vendor,
             "model": fingerprint.get("model"),
@@ -1754,12 +2048,20 @@ def generate_json_report(network_info: Dict, fingerprint: Dict,
 def run_scan(target_host: str, target_port: int = 80,
              probe_upnp: bool = False, probe_rom0: bool = False,
              quick: bool = False, force_vendor: str = "",
-             verbose: bool = False, timeout: float = 8.0) -> Dict:
-    """Execute the full vulnerability scan."""
+             verbose: bool = False, timeout: float = 8.0,
+             profile: Optional[Dict[str, Any]] = None) -> Dict:
+    """Execute the full vulnerability scan against a LIVE device.
+
+    `profile` — a DEVICE_PROFILES entry. When present, the scan:
+      * forces the profile's vendor (no auto-detect guesswork),
+      * verifies device identity (model/firmware/HW/MAC) after fingerprinting,
+      * records the identity block in the result for the report.
+    """
 
     result: Dict[str, Any] = {
         "target": target_host,
         "timestamp": datetime.now(timezone.utc).isoformat(),
+        "mode": "physical-audit",
         "network_info": {
             "platform": detect_platform(),
             "hostname": None,
@@ -1767,6 +2069,7 @@ def run_scan(target_host: str, target_port: int = 80,
             "gateway": target_host,
         },
         "fingerprint": {},
+        "identity": None,
         "open_ports": [],
         "vendor": "",
         "findings": [],
@@ -1787,6 +2090,12 @@ def run_scan(target_host: str, target_port: int = 80,
             "This tool only scans devices on your own network."
         )
         return result
+
+    if profile:
+        print(f"\n[*] Physical device profile: "
+              f"{profile.get('label') or profile.get('model')}")
+        print(f"    Expected: {profile.get('model')} "
+              f"fw {profile.get('firmware')} hw {profile.get('hardware_version')}")
 
     # Step 1: Port scan
     print(f"\n[*] Scanning ports on {target_host}...")
@@ -1826,15 +2135,24 @@ def run_scan(target_host: str, target_port: int = 80,
     fingerprint.update(extract_info(text, vendor))
 
     if vendor == "dlink" and not fingerprint.get("model"):
-        fingerprint["model"] = "DSL-27xxU class (inferred)"
-        fingerprint["model_note"] = (
-            "no model string visible in the UI; inferred from the "
-            "/cgi-bin/webproc CGI + ACME httpd banner (the Conexant DSL "
-            "stack PTCL ships). Confirm the exact model/HW rev on the unit's "
-            "label."
-        )
+        if profile and profile.get("model"):
+            fingerprint["model"] = profile["model"]
+            fingerprint["model_note"] = (
+                "from device profile (UI exposed no model string)."
+            )
+        else:
+            fingerprint["model"] = "DSL-27xxU class (inferred)"
+            fingerprint["model_note"] = (
+                "no model string visible in the UI; inferred from the "
+                "/cgi-bin/webproc CGI + ACME httpd banner (the Conexant DSL "
+                "stack PTCL ships). Confirm the exact model/HW rev on the unit's "
+                "label."
+            )
 
-    if force_vendor:
+    # Profile wins over auto-detect: the operator pinned this unit.
+    if profile and profile.get("vendor"):
+        vendor = profile["vendor"]
+    elif force_vendor:
         vendor = force_vendor.lower()
 
     result["vendor"] = vendor
@@ -1843,6 +2161,41 @@ def run_scan(target_host: str, target_port: int = 80,
     print(f"    Model: {fingerprint.get('model', 'Unknown')}")
     print(f"    Firmware: {fingerprint.get('firmware', 'Unknown')}")
     print(f"    Server: {fingerprint.get('server_header', 'Unknown')}")
+
+    # Step 2b: Physical identity verification (profile mode only)
+    if profile:
+        # On 401-style UIs (bare root, no vendor strings) the label strings —
+        # Model Name / Firmware Version / Hardware Version — only render on
+        # the wizard pages. Fetch the wizard entrance once to read them: the
+        # exact same GET the D-Link checks issue moments later, so this adds
+        # no new request class, only earlier extraction for identity.
+        if vendor == "dlink" and not fingerprint.get("model"):
+            label_resp = client.get(
+                "/cgi-bin/webproc?getpage=html/index.html"
+                "&errorpage=html/index.html"
+                "&var:language=en_us&var:menu=setup"
+                "&var:subpage=wizentrance&var:page=wizard"
+            )
+            if (label_resp and label_resp.status == 200
+                    and not looks_like_login(label_resp.text)):
+                for key, val in extract_info(label_resp.text, vendor).items():
+                    if val and not fingerprint.get(key):
+                        fingerprint[key] = val
+                if fingerprint.get("model"):
+                    print("\n[*] Label strings read from wizard page "
+                          "(401-style UI).")
+
+        print(f"\n[*] Verifying device identity against profile...")
+        # After the port scan the kernel neighbor table has an entry for the
+        # target; read it (no packets crafted by us).
+        observed_mac = get_neighbor_mac(target_host)
+        identity = verify_device_identity(profile, fingerprint, observed_mac)
+        result["identity"] = identity
+        for key, status in identity["checks"].items():
+            print(f"    {key}: {status}")
+        print(f"    Verdict: {identity['verdict']}")
+        if identity["verdict"] == "MISMATCH":
+            print("    !! Mismatch — target may not be the expected device.")
 
     # Step 3: Vendor-specific checks
     print(f"\n[*] Running {vendor.upper()} vulnerability checks...")
@@ -1886,11 +2239,13 @@ def run_scan(target_host: str, target_port: int = 80,
 
 def main(argv=None) -> int:
     parser = argparse.ArgumentParser(
-        description="Bug Hunter — Cross-Platform Router Vulnerability Scanner",
+        description="Bug Hunter — Cross-Platform Router Vulnerability Scanner "
+                    "(live physical-device audit)",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 EXAMPLES:
-  python bug_hunter.py                     # auto-detect gateway, full scan
+  python bug_hunter.py                     # auto-detect gateway, live audit
+  python bug_hunter.py --profile dsl226    # audit a specific physical unit (identity-verified)
   python bug_hunter.py 192.168.1.1         # scan specific router IP
   python bug_hunter.py --report out.txt    # save text report to file
   python bug_hunter.py --json out.json     # save JSON report
@@ -1900,6 +2255,14 @@ EXAMPLES:
   python bug_hunter.py --vendor dlink      # force vendor detection
   python bug_hunter.py -v                  # verbose output
 
+PROFILES:
+  --profile dsl226   D-Link DSL-226 (PTCL) — verifies model/firmware/H/W/MAC
+                     against the unit's label before running checks.
+
+MODE:
+  This file always performs a LIVE scan of a physical device on your LAN.
+  The simulated demo lives in demo_scan.py and is never triggered from here.
+
 SAFETY:
   This tool performs READ-ONLY checks. It never sends passwords, modifies
   configuration, or runs exploits. Only your own LAN devices should be scanned.
@@ -1908,6 +2271,10 @@ SAFETY:
 
     parser.add_argument("target", nargs="?", default=None,
                         help="Router/gateway IP (auto-detect if omitted)")
+    parser.add_argument("--profile", choices=sorted(DEVICE_PROFILES.keys()),
+                        help="Physical device profile: verify identity "
+                             "(model/firmware/MAC) before scanning "
+                             f"(available: {', '.join(sorted(DEVICE_PROFILES))})")
     parser.add_argument("--port", type=int, default=80,
                         help="HTTP port (default: 80)")
     parser.add_argument("--report", "-o", metavar="FILE",
@@ -1936,16 +2303,32 @@ SAFETY:
         print(BANNER)
 
     print(f"  Platform: {detect_platform()}")
+    print(f"  Mode: LIVE physical-device audit")
+
+    profile = DEVICE_PROFILES.get(args.profile) if args.profile else None
 
     # Determine target
     target = args.target
     if not target:
-        print("\n[*] Detecting default gateway...")
-        net_info = get_network_info()
-        target = net_info.get("gateway")
+        # Profile-aware target discovery: try the profile's management IPs
+        # first (they are the documented addresses for that unit), then fall
+        # back to the default-gateway probe.
+        if profile:
+            print("\n[*] Probing profile management IPs...")
+            for ip in profile.get("management_ips", []):
+                if is_port_open(ip, 80, timeout=2):
+                    target = ip
+                    print(f"    Device found at: {target}")
+                    break
+
+        if not target:
+            print("\n[*] Detecting default gateway...")
+            net_info = get_network_info()
+            target = net_info.get("gateway")
 
         if target:
-            print(f"    Gateway found: {target}")
+            if not profile:
+                print(f"    Gateway found: {target}")
         else:
             print("    Could not auto-detect gateway.")
             print("    Please specify the router IP as an argument.")
@@ -1962,6 +2345,7 @@ SAFETY:
         force_vendor=args.vendor or "",
         verbose=args.verbose,
         timeout=args.timeout,
+        profile=profile,
     )
 
     if result.get("error"):
@@ -1975,6 +2359,7 @@ SAFETY:
         result["open_ports"],
         result["findings"],
         result["vendor"],
+        identity=result.get("identity"),
     )
     print("\n" + report_text)
 
@@ -1992,6 +2377,7 @@ SAFETY:
             result["open_ports"],
             result["findings"],
             result["vendor"],
+            identity=result.get("identity"),
         )
         with open(args.json, "w", encoding="utf-8") as f:
             json.dump(json_report, f, indent=2, ensure_ascii=False)

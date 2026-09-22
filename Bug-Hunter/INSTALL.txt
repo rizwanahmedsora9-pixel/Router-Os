@@ -46,8 +46,15 @@ PLATFORM-SPECIFIC INSTRUCTIONS
 USAGE EXAMPLES
 --------------
 
-  # Auto-detect and scan your router
+  # LIVE physical-device audit — auto-detect your router and scan it
   python3 bug_hunter.py
+
+  # LIVE audit of a specific physical unit, with identity verification
+  # (checks model / firmware / H/W rev / MAC against the device label)
+  python3 bug_hunter.py --profile dsl226
+
+  # Same, pinned to an IP
+  python3 bug_hunter.py 192.168.1.1 --profile dsl226
 
   # Scan a specific IP address
   python3 bug_hunter.py 192.168.1.1
@@ -74,15 +81,22 @@ USAGE EXAMPLES
   python3 bug_hunter.py --help
 
 
-DEMO MODE
----------
+PHYSICAL DEVICE AUDIT vs DEMO
+------------------------------
 
-See Bug Hunter in action with a simulated vulnerable router:
+bug_hunter.py ALWAYS runs a live audit against a physical device on your
+LAN. It never falls back to simulation.
+
+  # the real thing — probes your actual router
+  python3 bug_hunter.py --profile dsl226
+
+Optional demo (separate script, localhost only, no real device):
 
   python3 demo_scan.py
 
-This starts a mock D-Link router and shows how the tool detects
-vulnerabilities and generates reports.
+The demo starts a mock D-Link router and shows how the tool detects
+vulnerabilities and generates reports. Use it to preview the report
+format; use bug_hunter.py for the actual security audit.
 
 
 TESTING
@@ -99,6 +113,8 @@ WHAT THE TOOL CHECKS
 --------------------
 
 ✓ Auto-detects your router/gateway
+✓ Optional device identity verification (--profile): model, firmware,
+  H/W revision, and MAC address against the unit's label
 ✓ Fingerprints vendor (D-Link, ZTE, TP-Link, Huawei, Netgear, etc.)
 ✓ Scans for open ports (HTTP, SSH, Telnet, FTP, SNMP, UPnP, etc.)
 ✓ Checks vendor-specific vulnerabilities:
