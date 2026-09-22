@@ -192,6 +192,15 @@ curl -sI http://192.168.10.1/ | grep -i server
 nmap -sV -p 80,8080,8090 192.168.10.1
 ```
 
+Or the repo's own probe, which does the banner capture **and** maps it to the ACME
+family → CVE table (Section 5) in one step — this is the right first command on
+Termux, where `nmap` may not be installed:
+
+```sh
+cd ptcl-dlink
+python3 tools/micro_httpd_probe.py 192.168.10.1        # fingerprint only, zero risk
+```
+
 If you have a shell on the unit:
 
 ```sh
@@ -221,6 +230,14 @@ Cross-reference any version string you find on
 
 1. **Long-URI DoS — CVE-2014-4927 confirmation.** Warning: if the device crashes, the admin
    page is gone until power-cycle. Do this last, not first.
+
+   ```sh
+   python3 tools/micro_httpd_probe.py 192.168.10.1 --dos
+   ```
+
+   Staged lengths (10 000 → 64 000 × `A`) on fresh connections, then an automatic
+   health check that reports whether the admin UI still answers. Manual equivalent,
+   if you prefer raw curl:
 
    ```sh
    curl -s "http://192.168.10.1/$(printf 'A%.0s' {1..50000})" -o /dev/null -w "%{http_code}\n"
@@ -305,7 +322,7 @@ request pins a privileged session open until a reboot
 | # | question | how to close it |
 |---|---|---|
 | 1 | Exact httpd binary path + version string inside the PTCL image | `strings` on the binary (6.1) or firmware image extraction |
-| 2 | Does the PTCL build answer the long-URI GET (CVE-2014-4927 live?) | probe 6.3.1 (accept reboot) |
+| 2 | Does the PTCL build answer the long-URI GET (CVE-2014-4927 live?) | `tools/micro_httpd_probe.py <ip> --dos` (accept reboot) |
 | 3 | Is `getpage=` traversal live on the PTCL build (CVE-2025-34048 class)? | `ptcl_check.py` probe 5 (reachability only, contents masked) |
 | 4 | Is the box reachable from the internet today? | 6.3.4 mobile-data check |
 | 5 | What does PTCL say about a firmware update? | ask them with your serial + H/W revision; keep the ticket number for this repo |
@@ -353,6 +370,7 @@ request pins a privileged session open until a reboot
 
 **Tooling (this repo)**
 
-* [`tools/ptcl_check.py`](../tools/ptcl_check.py) — read-only, GET-only, LAN-only detector
-* [`tools/selftest_mock.py`](../tools/selftest_mock.py) — offline mock router for testing the detector
+* [`tools/ptcl_check.py`](../tools/ptcl_check.py) — read-only, GET-only, LAN-only detector (the `webproc` half)
+* [`tools/micro_httpd_probe.py`](../tools/micro_httpd_probe.py) — httpd front-door banner fingerprint + opt-in long-URI probe (this half)
+* [`tools/selftest_mock.py`](../tools/selftest_mock.py) — offline mock router for testing both detectors (`--server` simulates ACME banners)
 * [`tools/README.md`](../tools/README.md) — tool reference

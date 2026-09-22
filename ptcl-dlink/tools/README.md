@@ -1,6 +1,6 @@
 # tools
 
-Two standard-library-only Python 3 scripts. Nothing here writes to a router.
+Three standard-library-only Python 3 scripts. Nothing here writes to a router.
 
 ## `ptcl_check.py`
 
@@ -79,6 +79,81 @@ score `NOT VULNERABLE` on check 2 and still leak on check 3 if its wizard templa
 populated but gated differently. Read the five checks individually rather than only the
 headline verdict.
 
+## `micro_httpd_probe.py`
+
+Read-only fingerprint of the **httpd front door on port 80** — the ACME Labs
+`micro_httpd` / `thttpd` / `mini_httpd` family that serves the static layer in
+front of `/cgi-bin/webproc` on the same port. This is the half of the web stack
+that `ptcl_check.py` does not touch; the full write-up is in
+[`../research/micro-httpd-report.md`](../research/micro-httpd-report.md).
+
+```bash
+python3 micro_httpd_probe.py 192.168.10.1                    # fingerprint only - zero risk
+python3 micro_httpd_probe.py 192.168.10.1 --json report.json
+python3 micro_httpd_probe.py 127.0.0.1 --port 8099           # against selftest_mock.py
+python3 micro_httpd_probe.py 192.168.10.1 --dos              # LAST: long-URI DoS probe
+```
+
+| flag | meaning |
+|---|---|
+| `--port N` | management port, default `80` |
+| `--timeout S` | per-request timeout, default `6.0` |
+| `--json PATH` | also write the raw result as JSON |
+| `--dos` | **also** run the staged long-URI probe (CVE-2014-4927 shape). Off by default because it can crash the admin UI on an unpatched build |
+| `-v`, `--verbose` | log every request |
+
+**Exit codes:** `0` = not exposed / inconclusive · `1` = **exposed** (a known-vulnerable
+ACME banner, or the DoS probe took the UI down) · `2` = refused, the target is not on your LAN.
+
+### What it does
+
+1. `GET /` — records the `Server:` banner (following one redirect if the build 302s to a
+   login page) and confirms the UI is alive
+2. `GET /cgi-bin/webproc` (a neutral device-info page) — confirms the CGI shares the port,
+   without minting a session (the wizard URL is deliberately *not* used)
+3. matches the banner against the ACME family table and lists the CVEs that apply to the
+   reported version (`micro_httpd` any → CVE-2014-4927; `thttpd` → CVE-2009-4490 /
+   CVE-2017-17663; `mini_httpd` → CVE-2017-17663 / CVE-2018-18778 / CVE-2026-68005)
+4. **only with `--dos`:** staged long-URI GETs (`/` + 10 000 → 64 000 × `'A'`, each on a
+   fresh connection), then a health check (`GET /`, twice) of whether the admin UI still
+   answers
+
+### Interpreting the output
+
+* **`EXPOSED: … banner with applicable CVEs`** — the banner maps to a CVE in the table.
+  Exposure is the only real control: keep port 80 off the WAN.
+* **`EXPOSED: DoS confirmed`** — the long-URI probe stopped the UI answering. Power-cycle
+  the router, then re-run to confirm it is back.
+* **`BANNER UNKNOWN`** — the banner is not an ACME-family string. That is *inconclusive*,
+  not clean: the banner simply cannot be mapped to the table. Only `--dos` tests that
+  question directly.
+* **`NO EXPOSURE FOUND: … survived the long-URI probe`** — surviving 64 000 chars is not
+  proof of a patch (the crash length varies by build); it just means this box did not die
+  at these lengths.
+
+### Safety
+
+* GET only, LAN only, same target policy as `ptcl_check.py` — public IPs are refused
+  before any socket is opened.
+* The long-URI probe is opt-in (`--dos` must be typed) because on an unpatched
+  build it is the documented crash (CVE-2014-4927), not a read-only check.
+* A mock never crashes, so `--dos` against `selftest_mock.py` just validates the plumbing.
+
+### Verified behaviour
+
+Run against `selftest_mock.py` on 2026-09-22:
+
+| case | result |
+|---|---|
+| mock default banner (`Conexant/1.0`) | `BANNER UNKNOWN`, exit `0` |
+| mock `--server "micro_httpd"` | `EXPOSED: micro_httpd banner…` (CVE-2014-4927), exit `1` |
+| mock `--server "thttpd/2.25b"` | CVE-2009-4490 + CVE-2017-17663 listed, exit `1` |
+| mock `--server "thttpd/2.30"` | `NO EXPOSURE FOUND` (version past the table), exit `0` |
+| mock `--server "mini_httpd/1.29"` | CVE-2018-18778 + CVE-2026-68005 listed, exit `1` |
+| `--dos` against mock | all four stages answered, health check `UP`, exit per banner verdict |
+| `8.8.8.8` | refused, exit `2`, before any socket is opened |
+| redirecting root (`302 → /login`) | history reported as `302 -> 200` |
+
 ## `selftest_mock.py`
 
 A local HTTP server that imitates a vulnerable PTCL D-Link `webproc` so the detector can be
@@ -95,6 +170,15 @@ python3 ptcl_check.py 127.0.0.1 --port 8098     # -> VERDICT: NOT VULNERABLE, ex
 
 Both directions are part of the test: a detector that can only ever answer "vulnerable" is
 worthless, so `--secure` exists specifically to prove the negative path.
+
+`--server BANNER` overrides the `Server:` header the mock sends (default
+`Conexant/1.0`), so the banner classification in `micro_httpd_probe.py` can be exercised
+offline against every ACME family:
+
+```bash
+python3 selftest_mock.py --port 8099 --server "thttpd/2.25b" &
+python3 micro_httpd_probe.py 127.0.0.1 --port 8099   # -> CVE-2009-4490 + CVE-2017-17663, exit 1
+```
 
 ## Verified behaviour
 

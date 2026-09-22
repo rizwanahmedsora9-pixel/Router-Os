@@ -13,8 +13,8 @@ Router-Os/
 │
 ├── ptcl-dlink/                    ← D-Link DSL-series as shipped by PTCL
 │   ├── notes/                     the webproc authentication-bypass writeup
-│   ├── tools/                     read-only LAN detector + offline self-test mock
-│   └── research/                  sourced findings and links
+│   ├── tools/                     read-only LAN detectors (webproc + httpd front door) + mock
+│   └── research/                  sourced findings and links (incl. the micro_httpd report)
 │
 ├── ptcl-zte/                      ← PTCL-associated ZTE DSL/VDSL research
 │   ├── tools/                     LAN-only H168N checker + UPnP mock
